@@ -31,11 +31,11 @@ const SeatDetailsPage = () => {
     <View style={styles.container}>
       {/* Header with Back Arrow */}
       <View style={styles.header}>
-         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonContainer}>
-                  <View style={styles.backButtonCircle}>
-                    <Text style={styles.backButton}>{'<'}</Text>
-                  </View>
-                </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
+          <View style={styles.backButtonCircle}>
+            <Text style={styles.backButton}>{'<'}</Text>
+          </View>
+        </TouchableOpacity>
         <Text style={styles.headerText}>Seat Details</Text>
       </View>
 
@@ -103,7 +103,7 @@ const SeatDetailsPage = () => {
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => navigation.navigate("UserApp/Home/ConfirmDetails")}
+            onPress={() => navigation.navigate("ConfirmDetails")}
           >
             <Text style={styles.buttonText}>Next</Text>
           </TouchableOpacity>

@@ -7,9 +7,12 @@ import {
   FlatList,
   Image,
 } from "react-native";
+import { useNavigation } from '@react-navigation/native';
+
 
 const SelectSeats = () => {
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const navigation = useNavigation();
 
   const seats = [
     ["available", "booked", "ladies", "available", "booked", "ladies"],
@@ -19,6 +22,10 @@ const SelectSeats = () => {
     ["available", "selected", "booked", "available", "selected", "available"],
   ];
 
+  const handleBookNowPress = () => {
+    // Navigate to the BookingDetails screen when the button is pressed
+    navigation.navigate('BookingDetails');
+  };
   // Add a new seat to the first row at the first column
   seats[0].unshift("available"); // Adds a seat at the top-left section column
 
@@ -119,9 +126,9 @@ const SelectSeats = () => {
   <View style={[styles.seat, styles.availableSeat]} />
 </TouchableOpacity>
 
-<TouchableOpacity style={styles.bookNowButton}>
-        <Text style={styles.bookNowText}>Book Now</Text>
-      </TouchableOpacity>
+<TouchableOpacity style={styles.bookNowButton} onPress={handleBookNowPress}>
+      <Text style={styles.bookNowText}>Book Now</Text>
+    </TouchableOpacity>
     </View>
   );
 };

@@ -22,7 +22,7 @@ const SelectVehicle = () => {
         {/* By Bus */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('SelectTour', { vehicleType: 'Bus' })}>
+          onPress={() => navigation.navigate('Home', { vehicleType: 'Bus' })}>
           <Image source={require('@/assets/images/Bus.png')} style={styles.image} />
           <Text style={styles.label}>By Bus</Text>
         </TouchableOpacity>
@@ -30,7 +30,7 @@ const SelectVehicle = () => {
         {/* By Car */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('SelectTour', { vehicleType: 'Car' })}>
+          onPress={() => navigation.navigate('Home', { vehicleType: 'Car' })}>
           <Image source={require('@/assets/images/Car.png')} style={styles.image} />
           <Text style={styles.label}>By Car</Text>
         </TouchableOpacity>

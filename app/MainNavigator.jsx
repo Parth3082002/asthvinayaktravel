@@ -3,8 +3,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import Index from './(tabs)/index';
 import Otp from './(tabs)/Otp'; 
-import Login from './(tabs)/Login'; 
-import Temp from './(tabs)/Temp'; 
+import Login from './(tabs)/Login';
+import SelectVehicle from './(tabs)/SelectVehicle'; 
+
+import ConfirmDetails from './(tabs)/ConfirmDetails'; 
 
 
 
@@ -22,7 +24,9 @@ export default function MainNavigator() {
       <Stack.Screen name="Login" component={Login} />
 
       <Stack.Screen name="Otp" component={Otp} />
-      <Stack.Screen name="Temp" component={Temp} />
+      <Stack.Screen name="SelectVehicle" component={SelectVehicle} />
+
+      <Stack.Screen name="ConfirmDetails" component={ConfirmDetails} />
 
 
 

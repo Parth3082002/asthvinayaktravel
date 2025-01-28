@@ -10,8 +10,12 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const Temp = () => {
+import { useNavigation } from "@react-navigation/native"; // React Navigation
+const Standardpu12 = () => {
+    const navigation = useNavigation(); 
+    const handleBookNowPress = () => {
+        navigation.navigate("SelectDate"); // Navigate to the SelectDate page
+      };
   return (
     <ScrollView style={styles.container}>
       {/* Background Image */}
@@ -137,10 +141,10 @@ const Temp = () => {
     <Text style={styles.costText}>Tour Cost</Text>
     <Text style={styles.priceText}>₹ 2500</Text>
   </View>
-  <View style={styles.bookButton}>
-  <Text style={styles.bookButtonText}>Book Now</Text>
-  <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 10 }} />
-</View>
+  <TouchableOpacity style={styles.bookButton} onPress={handleBookNowPress}>
+      <Text style={styles.bookButtonText}>Book Now</Text>
+      <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 10 }} />
+    </TouchableOpacity>
 
 </View>
 
@@ -309,4 +313,4 @@ const styles = StyleSheet.create({
   
 });
 
-export default Temp;
+export default Standardpu12;

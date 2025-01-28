@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const TourOptionsScreen = () => {
+const SelectTour = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const navigation = useNavigation();
@@ -21,17 +21,22 @@ const TourOptionsScreen = () => {
 
   const handleNextPress = () => {
     if (selectedCategory && selectedPackage) {
-      console.log('Category:', selectedCategory, 'Package:', selectedPackage);
-      navigation.navigate('NextPage');
+      if (selectedCategory === 1 && selectedPackage === 1) {
+        navigation.navigate('Standardpu12'); // Redirect to Standardpu12 page
+      } else {
+        console.log('Category:', selectedCategory, 'Package:', selectedPackage);
+        navigation.navigate('NextPage');
+      }
     } else {
       console.log('Please select both category and package!');
     }
   };
+  
 
   return (
     <View style={styles.container}>
       {/* Header */}
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonContainer}>
+      <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
         <View style={styles.backButtonCircle}>
           <Text style={styles.backButton}>{'<'}</Text>
         </View>
@@ -200,7 +205,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   nextButton: {
-    marginTop: 'auto',
+    marginTop: 130,
     backgroundColor: '#FF5722',
     borderRadius: 5,
     paddingVertical: 15,
@@ -252,4 +257,4 @@ const styles = StyleSheet.create({
  
 });
 
-export default TourOptionsScreen;
+export default SelectTour;
