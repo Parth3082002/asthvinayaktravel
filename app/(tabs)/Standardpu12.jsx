@@ -1,316 +1,198 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ImageBackground,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from "@react-navigation/native"; // React Navigation
-const Standardpu12 = () => {
-    const navigation = useNavigation(); 
-    const handleBookNowPress = () => {
-        navigation.navigate("SelectDate"); // Navigate to the SelectDate page
-      };
-  return (
-    <ScrollView style={styles.container}>
-      {/* Background Image */}
-      <ImageBackground
-        source={require('../../assets/images/back.png')}
-        style={styles.headerImage}
-      >
-        <View style={styles.headerContent}>
-  <View style={styles.inclusionRow}>
-    <Text style={styles.inclusionText}>Inclusion:</Text>
-    <Text style={styles.cityText}>Pune</Text>
-  </View>
-  <Text style={styles.inclusionDetails}>
-  •  Non-AC Deluxe Bus{'\n'}
-  •  1 Night Stay at Bhakt-Niwas                            {'\t'} at Lenyadri/Ozar{'\n'}
-    {'\n'}
-    •  Meals{'\n'}
-         {'\t\t'}- 2 Breakfast{'\n'}
-         {'\t\t'}- 2 Lunch{'\n'}
-         {'\t\t'}- 1 Dinner
-  </Text>
-</View>
+import React, { useEffect, useState } from "react";
+import { View, Text, FlatList, ActivityIndicator, StyleSheet } from "react-native";
+import { useRoute } from "@react-navigation/native";
 
-      </ImageBackground>
+const PackageDetails = ({ route: propRoute }) => {
+  const route = useRoute();
+  const [error, setError] = useState(null);
+  const routeParams = route.params || {};
+  const { selectedCategory, selectedPackage, cityId, cityName } = route.params || {};
+  const categoryId = propRoute?.categoryId || routeParams.categoryId;
+  const packageId = propRoute?.packageId || routeParams.packageId;
 
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>1 Night 2 Days (Standard)</Text>
-        <View style={styles.searchBox}>
-          <Ionicons name="location" size={23} color="#ff5722" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search Pickup Location"
-            placeholderTextColor="#888"
-          />
-        </View>
+  const [packageData, setPackageData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (cityId && selectedCategory && selectedPackage && cityName) {
+      fetchPackageDetails(cityId, selectedCategory, selectedPackage);
+    } else {
+      setLoading(false);
+      setError("Invalid parameters received");
+    }
+  }, [cityId, selectedCategory, selectedPackage, cityName]);
+
+  const fetchPackageDetails = async (cityId, categoryId, packageId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const encodedPackageId = encodeURIComponent(packageId);
+      const apiUrl = `http://ashtavinayak.somee.com/api/Package/GetPackagePrice/${cityId}/${categoryId}/${encodedPackageId}`;
+
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data. Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setPackageData(data || {});
+    } catch (error) {
+      setError('Something went wrong. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const groupRoutesByDay = (routes) => {
+    if (!routes || routes.length === 0) return [];
+
+    const groupedRoutes = {};
+
+    routes.forEach((route) => {
+      const day = route.day || "Day1"; // Default to "Day1" if no day is specified
+      if (!groupedRoutes[day]) {
+        groupedRoutes[day] = [];
+      }
+      groupedRoutes[day].push(route);
+    });
+
+    return groupedRoutes;
+  };
+
+  const groupSubRoutes = (dayRoutes) => {
+    const mainRoutes = [];
+    const subRoutes = {};
+
+    dayRoutes.forEach((route) => {
+      if (route.parentId === null) {
+        mainRoutes.push(route); // Main route
+      } else {
+        if (!subRoutes[route.parentId]) {
+          subRoutes[route.parentId] = [];
+        }
+        subRoutes[route.parentId].push(route); // Sub-route
+      }
+    });
+
+    return { mainRoutes, subRoutes };
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#007bff" />
+        <Text>Loading package details...</Text>
       </View>
+    );
+  }
 
-      {/* Itinerary */}
-      <View style={styles.dayContainer}>
-        {/* Day 1 */}
-        <Text style={styles.dayText}>DAY 1 -</Text>
-        <View style={styles.itineraryRow}>
-          {/* Image */}
-          <Image
-            source={require('../../assets/images/Day1.png')} // Replace with Day 1 image URL
-            style={styles.dayImage}
-          />
+  return (
+    <View style={styles.container}>
+      <Text style={styles.heading}>Package Details</Text>
+      {packageData ? (
+        <View style={styles.card}>
+          <Text style={styles.packageTitle}>
+            {packageData.packageName} - ${packageData.price}
+          </Text>
+          <Text style={styles.info}>Category: {packageData.category}</Text>
+          <Text style={styles.info}>City: {packageData.city}</Text>
+          <Text style={styles.info}>Inclusions: {packageData.inclusions}</Text>
 
-          {/* Timeline */}
-          <View style={styles.timelineContainer}>
-  {/* Vertical Line with Dots and Lines */}
-  <View style={styles.verticalLine}>
-    {['Pune', 'Morgaon', 'Siddhatek', 'Theur', 'Ranjangaon'].map((location, index) => (
-      <React.Fragment key={index}>
-        {/* If it's the first location, show the vertical line first */}
-        {index === 0 && (
-          <View style={{ height: 28, width: 2, backgroundColor: '#ccc',marginTop:-20 }} />
-        )}
-        <View style={styles.dot} />
-        {/* Line before dot (except for the last one) */}
-        {index < 5 && (
-          <View style={{ height: 0,  backgroundColor: '#ccc',  }} />
-        )}
-      </React.Fragment>
-    ))}
-  </View>
+          <Text style={styles.subHeading}>Routes:</Text>
 
-  {/* Locations */}
-  <View style={styles.timeline}>
-    {['Pune', 'Morgaon', 'Siddhatek', 'Theur', 'Ranjangaon'].map((location, index) => (
-      <Text key={index} style={styles.timelineText}>{location}</Text>
-    ))}
-  </View>
-</View>
+          {Object.keys(groupRoutesByDay(packageData.routes)).map((day) => {
+            const { mainRoutes, subRoutes } = groupSubRoutes(groupRoutesByDay(packageData.routes)[day]);
 
+            return (
+              <View key={day}>
+                <Text style={styles.dayHeading}>{day}</Text>
 
+                {/* Render Main Routes */}
+                {mainRoutes.map((route) => (
+                  <View key={route.trid}>
+                    <Text style={styles.route}>
+                      {route.pointName}
+                    </Text>
+                    {/* Render Sub-routes under the Main Route */}
+                    {subRoutes[route.trid] && subRoutes[route.trid].map((subRoute) => (
+                      <Text key={subRoute.trid} style={styles.subRoute}>
+                        {subRoute.pointName}
+                      </Text>
+                    ))}
+                  </View>
+                ))}
+              </View>
+            );
+          })}
         </View>
-        <Text style={styles.nightText}>Night Halt at Lenyadri Or Ozar</Text>
-
-        {/* Day 2 */}
-        <Text style={styles.dayText}>DAY 2 -</Text>
-<View style={styles.itineraryRow}>
-  {/* Image */}
-  <Image
-     source={require('../../assets/images/Day2.png')} // Replace with Day 2 image URL
-    style={styles.dayImage}
-  />
-
-  {/* Timeline */}
-  <View style={styles.timelineContainer}>
-  {/* Vertical Line with Dots and Lines */}
-  <View style={styles.verticalLine}>
-    {['Lenyadri', 'Ozar', 'Pali', 'Mahad', 'Pune'].map((location, index) => (
-      <React.Fragment key={index}>
-        {/* If it's the first location, show the vertical line first */}
-        {index === 0 && (
-          <View style={{ height: 28, width: 2, backgroundColor: '#ccc', marginTop:-20 }} />
-        )}
-        <View style={styles.dot} />
-        {/* Line before dot (except for the last one) */}
-        {index < 4 && (
-          <View style={{ height: 0, backgroundColor: '#ccc',}} />
-        )}
-      </React.Fragment>
-    ))}
-  </View>
-
-  {/* Locations */}
-  <View style={styles.timeline}>
-    {['Lenyadri', 'Ozar', 'Pali', 'Mahad', 'Pune'].map((location, index) => (
-      <Text key={index} style={styles.timelineText}>{location}</Text>
-    ))}
-  </View>
-</View>
-
-</View>
-</View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-  <View>
-    <Text style={styles.costText}>Tour Cost</Text>
-    <Text style={styles.priceText}>₹ 2500</Text>
-  </View>
-  <TouchableOpacity style={styles.bookButton} onPress={handleBookNowPress}>
-      <Text style={styles.bookButtonText}>Book Now</Text>
-      <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 10 }} />
-    </TouchableOpacity>
-
-</View>
-
-
-    </ScrollView>
+      ) : (
+        <Text style={styles.errorText}>No package details available.</Text>
+      )}
+    </View>
   );
 };
+
+export default PackageDetails;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    padding: 16,
+    backgroundColor: "#f5f5f5",
   },
-  headerImage: {
-    width: '100%',
-    height: 230,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop:40,
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  headerContent: {
-    padding: 38,
-  },
-  inclusionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  heading: {
+    fontSize: 22,
+    fontWeight: "bold",
     marginBottom: 10,
   },
-  inclusionText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
+  card: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  cityText: {
-    fontSize: 22,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  inclusionDetails: {
-    fontSize: 15,
-    color: '#fff',
-    marginTop: 10,
-    textAlign: 'left',
-    fontWeight:'bold',
-  },
- 
-  titleContainer: {
-    padding: 15,
-  },
-  title: {
+  packageTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
+    fontWeight: "bold",
+    marginBottom: 6,
   },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 2,
-  },
-  searchInput: {
-    marginLeft: 8,
+  info: {
     fontSize: 16,
-    flex: 1,
+    marginBottom: 4,
   },
-  dayContainer: {
-    padding: 20,
-    marginTop:-20,
-  },
-  dayText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 10,
-    color:'rgba(0, 122, 211, 1)',
-  },
-  itineraryRow: {
-    flexDirection: 'row',
-    marginVertical: 30,
-  },
-  dayImage: {
-    width: 135,
-    height: 215,
-    // borderRadius: 10?,
-    marginRight: 20,
-    borderTopLeftRadius: 10,
-  borderTopRightRadius: 10,
-  marginVertical:-15,
-  },
-  timelineContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    // marginVertical: 20,
-  },
-  verticalLine: {
-    position: 'relative',
-    width: 2,
-    backgroundColor: '#ccc', // Vertical line color
-    marginRight: 20,
-    alignItems: 'center',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(0, 122, 211, 1)', // Dot color
-    marginBottom: 30, // Space between dots
-  },
-  timeline: {
-    justifyContent: 'flex-start',
-  },
-  timelineText: {
-    fontSize: 16,
-    color: '#555', // Text color
-    marginBottom: 20, // Space between text and dots
-    // marginTop:20,
-    
-  },
-  nightText: {
-    fontSize: 16,
-    // fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: -5,
-
-    color: '#555',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    marginTop:-40,
-    // borderTopWidth: 1,
-    // borderColor: '#ddd',
-  },
-  costText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft:5,
-  },
-  priceText: {
+  subHeading: {
     fontSize: 18,
-    color: 'rgba(0, 227, 9, 1)',
-    fontWeight: 'bold',
-    marginLeft:5,
+    fontWeight: "bold",
+    marginTop: 12,
   },
-  bookButton: {
-    backgroundColor: '#ff5722',
-    padding: 10,
-    borderRadius: 5,
-    flexDirection: 'row', // This makes the text and icon align horizontally
-    alignItems: 'center',  // Vertically centers the text and the icon
-    justifyContent: 'center', // Centers the content
-  },  
-  bookButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    marginRight: 0,  // Adds space between text and the arrow
-    marginLeft:10,
-    
+  dayHeading: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 12,
+    color: "#007bff",
   },
-  
+  route: {
+    fontSize: 16,
+    paddingVertical: 2,
+  },
+  subRoute: {
+    fontSize: 16,
+    paddingVertical: 2,
+    marginLeft: 16,
+    color: "#666",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "red",
+    textAlign: "center",
+  },
 });
 
-export default Standardpu12;

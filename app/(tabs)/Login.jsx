@@ -11,12 +11,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
-  Image, // Added Image import for the illustration
+  Image,
 } from "react-native";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Ionicons from "react-native-vector-icons/Ionicons";
 
 const { width, height } = Dimensions.get("window");
 
@@ -30,30 +29,34 @@ const Login = () => {
       Alert.alert("Error", "Please enter a valid 10-digit mobile number");
       return;
     }
-  
+
     try {
       const response = await axios.post(
-        "https://trialapp.somee.com/api/LoginAndRegistration/send-otp",
-        { mobileNo }
+        "http://ashtavinayak.somee.com/api/User/LoginByOTP",
+        { MobileNo: mobileNo }
       );
-  
+
       if (response.status === 200) {
         // Save the mobile number to local storage
-        await AsyncStorage.setItem('mobileNo', mobileNo);
-  
+        await AsyncStorage.setItem("mobileNo", mobileNo);
+
         Alert.alert("Success", "OTP sent successfully!");
-  
+
         // Navigate to OTP screen with mobileNo as a parameter
         navigation.navigate("Otp", { mobileNo }); // Correct navigation path
       } else {
         Alert.alert("Error", "Failed to send OTP. Please try again.");
       }
     } catch (error) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
-      console.error(error);
+      if (error.response) {
+        // Handling server response error and displaying it in the alert
+        Alert.alert("Error", error.response.data || "Something went wrong. Please try again.");
+      } else {
+        Alert.alert("Error", "Something went wrong. Please try again.");
+      }
+      // console.error(error);
     }
   };
-  
 
   // Function to dismiss keyboard
   const dismissKeyboard = () => {
@@ -67,22 +70,14 @@ const Login = () => {
     >
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <View style={styles.innerContainer}>
-          
-
           {/* Logo Illustration */}
-          {/* <Image
-            source={require("../../assets/Logo.jpg")} 
-            style={styles.logo}
-          /> */}
-         <Image
-          source={require("@/assets/images/Login.png")} 
-          style={styles.image}
-        />
+          <Image
+            source={require("@/assets/images/Login.png")}
+            style={styles.image}
+          />
 
           {/* Heading */}
-          <Text style={styles.subheading}>
-            Enter Your Mobile Number 
-          </Text>
+          <Text style={styles.subheading}>Enter Your Mobile Number</Text>
 
           {/* Mobile Input with country code */}
           <View style={styles.inputContainer}>
@@ -101,6 +96,14 @@ const Login = () => {
           <TouchableOpacity style={styles.button} onPress={sendOtp}>
             <Text style={styles.buttonText}>Send OTP</Text>
           </TouchableOpacity>
+
+          {/* Don't have an account? Register */}
+          <TouchableOpacity onPress={() => navigation.navigate("Registration")}>
+            <Text style={styles.registerText}>
+              Don't have an account?{" "}
+              <Text style={styles.registerLink}>Register</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -116,45 +119,24 @@ const styles = StyleSheet.create({
   innerContainer: {
     flex: 1,
     justifyContent: "center",
-    alignItems: "center", 
-  },
-  backArrow: {
-    marginTop: -30,
-    marginBottom: 20,
-    marginLeft:-310
-  },
-  logo: {
-    width: width * 0.3,
-    height: height * 0.15,
-    resizeMode: "contain",
-    marginBottom: 30,
-    borderRadius:100,
-    marginTop:-20,
+    alignItems: "center",
   },
   image: {
-    width: width * 0.95, // Increased width
-    height: height * 0.5, // Increased height
+    width: width * 0.95,
+    height: height * 0.5,
     alignSelf: "center",
     resizeMode: "contain",
     marginBottom: 0,
     marginTop: 80,
   },
-  
-  heading: {
-    fontSize: 26,
-    fontWeight: "700",
-    textAlign: "center",
-    color: "#333", // Dark color for contrast
-    marginBottom: 8,
-  },
   subheading: {
     fontSize: 16,
     fontWeight: "700",
     textAlign: "center",
-    color: "#000", // Soft gray for subtext
+    color: "#000",
     marginBottom: 20,
     paddingHorizontal: 10,
-    marginLeft:-130,
+    marginLeft: -130,
   },
   inputContainer: {
     flexDirection: "row",
@@ -168,7 +150,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2, // Android shadow
+    elevation: 2,
   },
   countryCode: {
     fontSize: 16,
@@ -193,11 +175,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 3,
-    width:180,
+    width: 180,
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  registerText: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginTop: 10,
+  },
+  registerLink: {
+    color: "#D44206",
     fontWeight: "600",
   },
 });

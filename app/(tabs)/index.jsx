@@ -1,14 +1,32 @@
 import React, { useEffect } from "react";
 import { Text, View, Image, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Index = () => {
   const router = useRouter();
 
   useEffect(() => {
+    const checkToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token"); // Checking if token exists in AsyncStorage
+        if (token) {
+          router.push("SelectVehicle"); // Navigate to SelectVehicle page if token exists
+        } else {
+          router.push("Login"); // Navigate to Login page if no token
+        }
+      } catch (error) {
+        console.error("Error reading token from AsyncStorage", error);
+        router.push("Login"); // Default fallback if error occurs
+      }
+    };
+
+    // Check the token on component mount
+    checkToken();
+
     // Redirect to the next page after 5 seconds
     const timer = setTimeout(() => {
-      router.push("./Login");
+      checkToken();
     }, 5000);
 
     return () => clearTimeout(timer); // Cleanup the timer

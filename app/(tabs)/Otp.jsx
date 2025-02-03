@@ -79,7 +79,7 @@ const Otp = () => {
 
     try {
       const response = await axios.post(
-        "https://trialapp.somee.com/api/LoginAndRegistration/verify-otp",
+        "http://ashtavinayak.somee.com/api/User/VerifyOTP", // Updated API URL
         { mobileNo, otp: enteredOtp },
         {
           headers: {
@@ -103,7 +103,7 @@ const Otp = () => {
             {
               text: "OK",
               onPress: () => {
-                navigation.navigate("Home");
+                navigation.navigate("SelectVehicle");
               },
             },
           ]);
@@ -122,9 +122,13 @@ const Otp = () => {
           ]);
         }
 
-        // Store mobileNo and token in AsyncStorage
+        // Store mobileNo, token, and user details in AsyncStorage
         await AsyncStorage.setItem("mobileNo", mobileNo);
         await AsyncStorage.setItem("token", token);
+        await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
+
+        // Optionally, you can log the user data and token to confirm successful storage
+        console.log("User Details Stored:", response.data.user);
       } else {
         Alert.alert("Error", "Invalid OTP. Please try again.");
       }

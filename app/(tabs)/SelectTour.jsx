@@ -1,104 +1,170 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const SelectTour = () => {
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedPackage, setSelectedPackage] = useState(null);
-  const navigation = useNavigation();
+    const [categories, setCategories] = useState([]);
+    const [packages, setPackages] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedPackage, setSelectedPackage] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [packageLoading, setPackageLoading] = useState(false);
+    const [cityId, setCityId] = useState(null);
+    const [cityName, setCityName] = useState('');
 
-  const categories = [
-    { id: 1, label: 'Standard', description: '(Non AC Bus & Stay in Bhakt Niwas)' },
-    { id: 2, label: 'Delux', description: '(AC Bus & Stay in Deluxe Hotel)' },
-    { id: 3, label: 'Premium', description: '(AC Bus & Stay in 3 Star Hotel)' },
-  ];
+    const navigation = useNavigation();
+    const route = useRoute();
+    const { selectedCityId } = route.params || {}; // Get the cityId from the route params
 
-  const packages = [
-    { id: 1, label: '1Night / 2Days' },
-    { id: 2, label: '2Night / 3Days' },
-    { id: 3, label: 'Shastrokt' },
-  ];
+    useEffect(() => {
+        fetchCategories();
+    }, []);
 
-  const handleNextPress = () => {
-    if (selectedCategory && selectedPackage) {
-      if (selectedCategory === 1 && selectedPackage === 1) {
-        navigation.navigate('Standardpu12'); // Redirect to Standardpu12 page
-      } else {
-        console.log('Category:', selectedCategory, 'Package:', selectedPackage);
-        navigation.navigate('NextPage');
-      }
-    } else {
-      console.log('Please select both category and package!');
-    }
-  };
-  
+    useEffect(() => {
+        if (selectedCityId) {
+            fetchCityDetails(selectedCityId); // Use the cityId passed from the Home screen
+        }
+    }, [selectedCityId]);
 
-  return (
-    <View style={styles.container}>
-      {/* Header */}
-      <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
-        <View style={styles.backButtonCircle}>
-          <Text style={styles.backButton}>{'<'}</Text>
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch('http://ashtavinayak.somee.com/api/categorys');
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const result = await response.json();
+            setCategories(result.data || []);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            setCategories([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchCityDetails = async (cityId) => {
+        setPackageLoading(true);
+        try {
+            const response = await fetch('http://ashtavinayak.somee.com/api/City');
+            const cities = await response.json();
+            const selectedCityData = cities.find(city => city.cityId === cityId); // Use cityId for selection
+
+            if (selectedCityData) {
+                setCityId(selectedCityData.cityId);
+                setCityName(selectedCityData.cityName);  // Store city name
+                fetchPackages(selectedCityData.cityId);
+            } else {
+                console.log('City not found');
+                setPackageLoading(false);
+                setPackages([]);
+            }
+        } catch (error) {
+            console.error('Error fetching city details:', error);
+            setPackageLoading(false);
+            setPackages([]);
+        }
+    };
+
+    const fetchPackages = async (cityId) => {
+        try {
+            const response = await fetch(`http://ashtavinayak.somee.com/api/Package/GetPackages/${cityId}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const result = await response.json();
+            setPackages(result || []);
+        } catch (error) {
+            console.error('Error fetching packages:', error);
+            setPackages([]);
+        } finally {
+            setPackageLoading(false);
+        }
+    };
+
+    const handleNextPress = () => {
+        if (selectedCategory && selectedPackage && cityId) {
+            navigation.navigate('Standardpu12', {
+                selectedCategory,
+                selectedPackage,
+                cityId,
+                cityName,  // Send cityName along with cityId to the next screen
+            });
+        } else {
+            console.log('Please select both category and package!');
+        }
+    };
+
+    return (
+        <View style={styles.container}>
+            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
+                <View style={styles.backButtonCircle}>
+                    <Text style={styles.backButton}>{'<'}</Text>
+                </View>
+            </TouchableOpacity>
+
+            <Text style={styles.sectionTitle}>Select Category</Text>
+
+            {loading ? (
+                <ActivityIndicator size="large" color="#FF5722" />
+            ) : (
+                <View style={styles.leftAlignedOptionsContainer}>
+                    {categories.map((category) => (
+                        <TouchableOpacity
+                            key={category.categoryId}
+                            style={styles.option}
+                            onPress={() => setSelectedCategory(category.categoryId)}
+                        >
+                            <View style={styles.optionContent}>
+                                <View style={[styles.checkbox, selectedCategory === category.categoryId && styles.checkboxSelected]}>
+                                    {selectedCategory === category.categoryId && <Text style={styles.tick}>✔</Text>}
+                                </View>
+                                <View>
+                                    <Text style={styles.optionLabel}>{category.categoryName}</Text>
+                                    <Text style={styles.optionDescription}>
+                                        {`${category.busType} Bus & Stay in ${category.stayType}`}
+                                    </Text>
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            )}
+
+            <Text style={styles.sectionTitle1}>Select Package</Text>
+
+            {packageLoading ? (
+                <ActivityIndicator size="large" color="#FF5722" />
+            ) : packages.length > 0 ? (
+                <View style={styles.optionsContainer}>
+                    {packages.map((pkg) => (
+                        <TouchableOpacity
+                            key={pkg.packageId}
+                            style={styles.option1}
+                            onPress={() => setSelectedPackage(pkg.packageId)}
+                        >
+                            <View style={styles.optionContent}>
+                                <View style={[styles.radioCircle, selectedPackage === pkg.packageId && styles.radioCircleSelected]}>
+                                    {selectedPackage === pkg.packageId && <View style={styles.radioInner} />}
+                                </View>
+                                <Text style={styles.optionLabel}>{pkg.packageName}</Text>
+                                <Text style={styles.optionDescription}>
+                                    {pkg.description}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            ) : (
+                <Text>No packages available for this city.</Text>
+            )}
+
+            <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
+                <Text style={styles.nextButtonText}>Next</Text>
+            </TouchableOpacity>
         </View>
-      </TouchableOpacity>
-
-      {/* Select Category */}
-      <Text style={styles.sectionTitle}>Select Category</Text>
-      <View style={styles.leftAlignedOptionsContainer}>
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category.id}
-            style={styles.option}
-            onPress={() => setSelectedCategory(category.id)}
-          >
-            <View style={styles.optionContent}>
-              <View
-                style={[
-                  styles.checkbox,
-                  selectedCategory === category.id && styles.checkboxSelected,
-                ]}
-              >
-                {selectedCategory === category.id && <Text style={styles.tick}>✔</Text>}
-              </View>
-              <View>
-                <Text style={styles.optionLabel}>{category.label}</Text>
-                <Text style={styles.optionDescription}>{category.description}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Select Package */}
-     {/* Select Package */}
-      <Text style={styles.sectionTitle1}>Select Package</Text>
-      <View style={styles.optionsContainer}>
-        {packages.map((pkg) => (
-          <TouchableOpacity
-            key={pkg.id}
-            style={styles.option1}
-            onPress={() => setSelectedPackage(pkg.id)}
-          >
-            <Text style={styles.optionLabel}>{pkg.label}</Text>
-            <View
-              style={[
-                styles.radioCircle,
-                selectedPackage === pkg.id && styles.radioCircleSelected,
-              ]}
-            >
-              {selectedPackage === pkg.id && <View style={styles.radioInner} />}
-            </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Next Button */}
-      <TouchableOpacity style={styles.nextButton} onPress={handleNextPress}>
-        <Text style={styles.nextButtonText}>Next</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -193,7 +259,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 10,
+    marginRight: 10,  // Adjust margin to ensure they are in one row
   },
   radioCircleSelected: {
     borderColor: '#FF5722',
@@ -204,6 +270,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF5722',
     borderRadius: 5,
   },
+
   nextButton: {
     marginTop: 130,
     backgroundColor: '#FF5722',
@@ -217,44 +284,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  option: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
-   
-  },
   option1: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'flex-start', // Ensure all options are left aligned
+    alignItems: 'center',  // Align the radio button and text in a row
     paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
- 
- 
-
-  radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  radioCircleSelected: {
-    borderColor: '#FF5722',
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
-    backgroundColor: '#FF5722',
-    borderRadius: 5,
-  },
-  
- 
 });
 
 export default SelectTour;

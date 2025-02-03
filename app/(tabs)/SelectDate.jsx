@@ -1,29 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from "@react-navigation/native";
 
-const SelectDateScreen = ({  }) => {
+const SelectDateScreen = () => {
   const [selectedDate, setSelectedDate] = useState(null);
+  const [dates, setDates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
-  const dates = [
-    "01/28/2025",
-    "01/29/2025",
-    "01/30/2025",
-    "01/31/2025",
-    "02/01/2025",
-    "02/02/2025",
-    "02/03/2025",
-    "02/04/2025",
-    "02/05/2025",
-    "02/06/2025",
-  ];
+  useEffect(() => {
+    const fetchDates = async () => {
+      try {
+        const response = await fetch(
+          "http://ashtavinayak.somee.com/api/Trip"
+        );
+        const result = await response.json();
+        if (result.data) {
+          const formattedDates = result.data.map((trip) => trip.tripDate);
+          setDates(formattedDates);
+        }
+      } catch (error) {
+        console.error("Error fetching dates:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDates();
+  }, []);
 
   const handleNextPress = () => {
     if (selectedDate) {
@@ -33,7 +44,6 @@ const SelectDateScreen = ({  }) => {
       alert("Please select a date");
     }
   };
-  
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
@@ -56,23 +66,30 @@ const SelectDateScreen = ({  }) => {
     <View style={styles.container}>
       {/* Back Button */}
       <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
-        <View style={styles.backButtonCircle}>
-          <Text style={styles.backButton}>{'<'}</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Home")}
+          style={styles.backButtonContainer}
+        >
+          <View style={styles.backButtonCircle}>
+            <Text style={styles.backButton}>{"<"}</Text>
+          </View>
+        </TouchableOpacity>
 
-      {/* Title */}
-      <Text style={styles.headerText}>Select Dates</Text>
+        {/* Title */}
+        <Text style={styles.headerText}>Select Dates</Text>
       </View>
 
       {/* Date List */}
-      <FlatList
-        data={dates}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#FF5722" style={{ flex: 1 }} />
+      ) : (
+        <FlatList
+          data={dates}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContainer}
+        />
+      )}
 
       {/* Next Button */}
       <TouchableOpacity
@@ -94,16 +111,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     paddingTop: 10,
-    
   },
-  // backButton: {
-  //   marginBottom: 16,
-  // },
-  // backButtonText: {
-  //   color: "#FF5722",
-  //   fontSize: 20,
-  // },
-
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -117,40 +125,33 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   backButtonCircle: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 4, // Adds shadow on Android
-    marginTop:5,
-    marginLeft:-100,
+    elevation: 4,
+    marginTop: 5,
+    marginLeft: -100,
   },
   backButton: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-   
+    fontWeight: "bold",
+    color: "#000",
   },
   headerText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 16,
-  },
   listContainer: {
-    marginTop:20,
+    marginTop: 20,
     paddingHorizontal: 16,
-
     paddingBottom: 16,
   },
   dateRow: {
@@ -186,12 +187,11 @@ const styles = StyleSheet.create({
   nextButton: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-
     borderRadius: 8,
     marginBottom: 20,
-    width:'80%',
+    width: "80%",
     alignItems: "center",
-    marginLeft:40,
+    marginLeft: 40,
   },
   nextButtonText: {
     color: "#fff",
