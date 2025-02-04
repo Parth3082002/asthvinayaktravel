@@ -32,6 +32,8 @@ const PackageDetails = ({ route: propRoute }) => {
   const [filteredPickupPoints, setFilteredPickupPoints] = useState([]); // For filtered locations
   const navigation = useNavigation();
 
+  const { vehicleType } = route.params || {}; 
+
   useEffect(() => {
     if (cityId && selectedCategory && selectedPackage && cityName) {
       fetchPackageDetails(cityId, selectedCategory, selectedPackage);
@@ -88,6 +90,7 @@ const PackageDetails = ({ route: propRoute }) => {
     console.log("Category ID:", packageData.categoryId);
     console.log("Selected Pickup Point:", selectedPickupPoint);
     console.log("Price:", packageData.price);
+    console.log("Selected Vehicle Type:", vehicleType); 
   
     // Navigate to the "Select Date" page, passing all required parameters
     navigation.navigate("SelectDate", {
@@ -99,6 +102,7 @@ const PackageDetails = ({ route: propRoute }) => {
       categoryId: packageData.categoryId, // Ensure the correct categoryId is passed
       selectedPickupPoint: selectedPickupPoint,
       price: packageData.price,
+      vehicleType: vehicleType,
     });
   };
    

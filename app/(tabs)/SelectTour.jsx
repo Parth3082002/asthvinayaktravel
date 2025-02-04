@@ -12,10 +12,11 @@ const SelectTour = () => {
     const [cityId, setCityId] = useState(null);
     const [cityName, setCityName] = useState('');
 
+
     const navigation = useNavigation();
     const route = useRoute();
     const { selectedCityId } = route.params || {}; // Get the cityId from the route params
-
+    const { vehicleType } = route.params || {}; 
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -83,11 +84,14 @@ const SelectTour = () => {
 
     const handleNextPress = () => {
         if (selectedCategory && selectedPackage && cityId) {
+            console.log("Selected Vehicle Type:", vehicleType); 
             navigation.navigate('Standardpu12', {
                 selectedCategory,
                 selectedPackage,
                 cityId,
                 cityName,  // Send cityName along with cityId to the next screen
+                vehicleType: vehicleType,
+                
             });
         } else {
             console.log('Please select both category and package!');

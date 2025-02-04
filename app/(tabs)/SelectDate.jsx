@@ -39,7 +39,8 @@ const SelectDateScreen = () => {
   const handleNextPress = () => {
     if (selectedDate) {
       console.log("Selected Date:", selectedDate);
-      navigation.navigate("SelectSeats"); // Navigate to SelectSeats screen
+      // Pass the selected date as a parameter to the SelectSeats screen
+      navigation.navigate("SelectSeats", { selectedDate: selectedDate });
     } else {
       alert("Please select a date");
     }
@@ -64,7 +65,6 @@ const SelectDateScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Back Button */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.navigate("Home")}
@@ -75,11 +75,9 @@ const SelectDateScreen = () => {
           </View>
         </TouchableOpacity>
 
-        {/* Title */}
         <Text style={styles.headerText}>Select Dates</Text>
       </View>
 
-      {/* Date List */}
       {loading ? (
         <ActivityIndicator size="large" color="#FF5722" style={{ flex: 1 }} />
       ) : (
@@ -91,7 +89,6 @@ const SelectDateScreen = () => {
         />
       )}
 
-      {/* Next Button */}
       <TouchableOpacity
         style={[
           styles.nextButton,

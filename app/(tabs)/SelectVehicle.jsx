@@ -5,6 +5,14 @@ import { useNavigation } from '@react-navigation/native'; // Importing useNaviga
 const SelectVehicle = () => {
   const navigation = useNavigation(); // Using the hook to get navigation
 
+  const handleVehicleSelect = (vehicleType) => {
+    // Print the selected vehicle type to the console
+    console.log('Selected Vehicle Type:', vehicleType);
+
+    // Navigate to Home and send the selected vehicle type as a parameter
+    navigation.navigate('Home', { vehicleType: vehicleType });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Top Navbar */}
@@ -22,7 +30,7 @@ const SelectVehicle = () => {
         {/* By Bus */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('Home', { vehicleType: 'Bus' })} // Pass 'Bus' as parameter
+          onPress={() => handleVehicleSelect('Bus')} // Call the function and pass 'Bus'
         >
           <Image source={require('@/assets/images/Bus.png')} style={styles.image} />
           <Text style={styles.label}>By Bus</Text>
@@ -31,7 +39,7 @@ const SelectVehicle = () => {
         {/* By Car */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('Home', { vehicleType: 'Car' })} // Pass 'Car' as parameter
+          onPress={() => handleVehicleSelect('Car')} // Call the function and pass 'Car'
         >
           <Image source={require('@/assets/images/Car.png')} style={styles.image} />
           <Text style={styles.label}>By Car</Text>
@@ -40,6 +48,8 @@ const SelectVehicle = () => {
     </SafeAreaView>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
