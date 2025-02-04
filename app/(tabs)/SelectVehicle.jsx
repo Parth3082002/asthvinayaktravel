@@ -22,7 +22,8 @@ const SelectVehicle = () => {
         {/* By Bus */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('Home', { vehicleType: 'Bus' })}>
+          onPress={() => navigation.navigate('Home', { vehicleType: 'Bus' })} // Pass 'Bus' as parameter
+        >
           <Image source={require('@/assets/images/Bus.png')} style={styles.image} />
           <Text style={styles.label}>By Bus</Text>
         </TouchableOpacity>
@@ -30,7 +31,8 @@ const SelectVehicle = () => {
         {/* By Car */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('Home', { vehicleType: 'Car' })}>
+          onPress={() => navigation.navigate('Home', { vehicleType: 'Car' })} // Pass 'Car' as parameter
+        >
           <Image source={require('@/assets/images/Car.png')} style={styles.image} />
           <Text style={styles.label}>By Car</Text>
         </TouchableOpacity>
@@ -66,13 +68,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4, // Adds shadow on Android
-    marginTop:-20,
+    marginTop: -20,
   },
   backButton: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
-   
   },
   navbarTitle: {
     fontSize: 20,

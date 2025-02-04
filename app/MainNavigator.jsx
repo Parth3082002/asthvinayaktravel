@@ -9,6 +9,7 @@ import ConfirmDetails from './(tabs)/ConfirmDetails';
 import SelectTour from './(tabs)/SelectTour'; // Import the SelectTour component
 import Home from './(tabs)/Home';
 import Registration from './(tabs)/Registration';
+import Book from './(tabs)/Book';
 
 const Stack = createNativeStackNavigator(); // Create a stack navigator
 
@@ -23,6 +24,7 @@ export default function MainNavigator() {
       
      
       <Stack.Screen name="Home" component={Home} />
+      <Stack.Screen name="Book" component={Book} />
       <Stack.Screen name="Index" component={Index} />
       <Stack.Screen name="Registration" component={Registration} />
       <Stack.Screen name="Login" component={Login} />
