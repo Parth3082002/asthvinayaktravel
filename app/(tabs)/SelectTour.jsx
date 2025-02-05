@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, BackHandler } from 'react-native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 
 const SelectTour = () => {
     const [categories, setCategories] = useState([]);
@@ -12,11 +12,43 @@ const SelectTour = () => {
     const [cityId, setCityId] = useState(null);
     const [cityName, setCityName] = useState('');
 
-
     const navigation = useNavigation();
     const route = useRoute();
     const { selectedCityId } = route.params || {}; // Get the cityId from the route params
-    const { vehicleType } = route.params || {}; 
+    const { vehicleType } = route.params || {};
+
+    useFocusEffect(
+        React.useCallback(() => {
+            // Reset category and package states when the screen is focused again
+            setSelectedCategory(null);
+            setSelectedPackage(null);
+
+            return () => {
+                // Cleanup if needed
+            };
+        }, [])
+    );
+
+    useEffect(() => {
+        const backAction = () => {
+            // Reset navigation stack and navigate back to Home
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Home' }],
+            });
+            return true;  // Prevent default back action
+        };
+
+        // Add event listener for physical back button
+        const backHandler = BackHandler.addEventListener(
+            'hardwareBackPress',
+            backAction
+        );
+
+        // Clean up the event listener on component unmount
+        return () => backHandler.remove();
+    }, [navigation]);
+
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -85,6 +117,7 @@ const SelectTour = () => {
     const handleNextPress = () => {
         if (selectedCategory && selectedPackage && cityId) {
             console.log("Selected Vehicle Type:", vehicleType); 
+            console.log("cityid",cityId);
             navigation.navigate('Standardpu12', {
                 selectedCategory,
                 selectedPackage,
@@ -168,7 +201,6 @@ const SelectTour = () => {
         </View>
     );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -299,4 +331,3 @@ const styles = StyleSheet.create({
 });
 
 export default SelectTour;
-  

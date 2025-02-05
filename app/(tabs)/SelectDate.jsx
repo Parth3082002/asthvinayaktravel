@@ -6,15 +6,18 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
+  BackHandler,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
 const SelectDateScreen = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [dates, setDates] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+  const route = useRoute(); // Access navigation params
 
+  // Fetch dates from the API
   useEffect(() => {
     const fetchDates = async () => {
       try {
@@ -36,11 +39,54 @@ const SelectDateScreen = () => {
     fetchDates();
   }, []);
 
+  useEffect(() => {
+    const backAction = () => {
+      // Reset navigation stack and navigate back to Home
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+      return true; // Prevent default back action
+    };
+
+    // Add event listener for physical back button
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    // Clean up the event listener on component unmount
+    return () => backHandler.remove();
+  }, [navigation]);
+
   const handleNextPress = () => {
     if (selectedDate) {
+      // Log all the received data along with the selected date
+      console.log("Navigating with the following data:");
+      console.log("City Name:", route.params.cityName);
+      console.log("City ID:", route.params.cityId);
+      console.log("Package Name:", route.params.packageName);
+      console.log("Package ID:", route.params.packageId);
+      console.log("Category Name:", route.params.categoryName);
+      console.log("Category ID:", route.params.categoryId);
+      console.log("Selected Pickup Point:", route.params.selectedPickupPoint);
+      console.log("Price:", route.params.price);
+      console.log("Selected Vehicle Type:", route.params.vehicleType);
       console.log("Selected Date:", selectedDate);
-      // Pass the selected date as a parameter to the SelectSeats screen
-      navigation.navigate("SelectSeats", { selectedDate: selectedDate });
+
+      // Pass the selected date and all other parameters to the "SelectSeatsj" page
+      navigation.navigate("SelectSeats", {
+        cityName: route.params.cityName,
+        cityId: route.params.cityId,
+        packageName: route.params.packageName,
+        packageId: route.params.packageId,
+        categoryName: route.params.categoryName,
+        categoryId: route.params.categoryId,
+        selectedPickupPoint: route.params.selectedPickupPoint,
+        price: route.params.price,
+        vehicleType: route.params.vehicleType,
+        selectedDate: selectedDate, // Pass selected date here
+      });
     } else {
       alert("Please select a date");
     }
@@ -66,14 +112,11 @@ const SelectDateScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Home")}
-          style={styles.backButtonContainer}
-        >
-          <View style={styles.backButtonCircle}>
-            <Text style={styles.backButton}>{"<"}</Text>
-          </View>
-        </TouchableOpacity>
+       <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
+                       <View style={styles.backButtonCircle}>
+                           <Text style={styles.backButton}>{'<'}</Text>
+                       </View>
+                   </TouchableOpacity>
 
         <Text style={styles.headerText}>Select Dates</Text>
       </View>
@@ -102,6 +145,8 @@ const SelectDateScreen = () => {
     </View>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {

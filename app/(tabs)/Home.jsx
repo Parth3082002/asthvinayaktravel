@@ -1,45 +1,93 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, ActivityIndicator, BackHandler } from "react-native";
 import { Svg, Path } from "react-native-svg";
 import { useNavigation, useRoute } from "@react-navigation/native"; // Importing useRoute to access route params
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
 
 const Home = () => {
     const navigation = useNavigation();
     const route = useRoute(); // Accessing route params
     const [cities, setCities] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [vehicleType, setVehicleType] = useState(null); // State to store the vehicle type
+    const [selectedCity, setSelectedCity] = useState({ cityId: null, cityName: null }); // State for selected city
 
-    const { vehicleType } = route.params || {}; // Extracting vehicleType from route params
-
+    // Fetch the vehicleType from AsyncStorage
     useEffect(() => {
-        if (!vehicleType) {
-            console.log("No vehicle type selected, going back to SelectVehicle...");
-            navigation.navigate("SelectVehicle"); // If vehicleType is missing, navigate back to SelectVehicle
-        } else {
-            fetch("http://ashtavinayak.somee.com/api/City/")
-                .then((response) => response.json())
-                .then((data) => {
-                    setCities(data);
-                    setLoading(false); // Set loading to false after data is fetched
-                })
-                .catch((error) => {
-                    console.error("Error fetching cities:", error);
-                    setLoading(false); // Set loading to false even in case of an error
-                });
-        }
-    }, [vehicleType]); // Only run effect when vehicleType changes
+        const fetchVehicleType = async () => {
+            try {
+                const storedVehicleType = await AsyncStorage.getItem("vehicleType");
+                if (storedVehicleType) {
+                    setVehicleType(storedVehicleType); // Set the vehicleType state from AsyncStorage
+                }
+            } catch (error) {
+                console.error("Error fetching vehicle type from storage:", error);
+            }
+        };
 
-    const handlePress = (cityId, cityName) => {
+        fetchVehicleType(); // Call function to fetch vehicle type
+    }, []); // Only run this once when the component mounts
+
+    // Fetch cities
+    useEffect(() => {
+        fetch("http://ashtavinayak.somee.com/api/City/")
+            .then((response) => response.json())
+            .then((data) => {
+                setCities(data);
+                setLoading(false); // Set loading to false after data is fetched
+            })
+            .catch((error) => {
+                console.error("Error fetching cities:", error);
+                setLoading(false); // Set loading to false even in case of an error
+            });
+    }, []);
+
+    // Handle physical back button press to reset navigation stack
+    useEffect(() => {
+        const backAction = () => {
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'SelectVehicle' }],
+            });
+            return true;  // Prevent default back action
+        };
+
+        const backHandler = BackHandler.addEventListener(
+            'hardwareBackPress',
+            backAction
+        );
+
+        return () => backHandler.remove();
+    }, []);
+
+    // Store selected city to AsyncStorage
+    const storeCityData = async (cityId, cityName) => {
+        try {
+            await AsyncStorage.setItem("selectedCityId", cityId.toString());
+            await AsyncStorage.setItem("selectedCityName", cityName);
+        } catch (error) {
+            console.error("Error storing city data:", error);
+        }
+    };
+
+    // Handle city selection
+    const handlePress = async (cityId, cityName) => {
         console.log("Selected City ID:", cityId);
         console.log("Selected City Name:", cityName);
         console.log("Selected Vehicle Type:", vehicleType); // Log the vehicleType
+
+        // Store city info to AsyncStorage
+        await storeCityData(cityId, cityName);
 
         // Navigate to the next page and pass city information and vehicleType
         navigation.navigate("SelectTour", {
             selectedCityId: cityId,
             selectedCityName: cityName,
-            vehicleType: vehicleType, // Passing vehicleType to the next screen
+            vehicleType: vehicleType, // Pass the vehicleType to the next screen
         });
+
+        // Update the local state for selected city
+        setSelectedCity({ cityId, cityName });
     };
 
     return (
@@ -77,13 +125,11 @@ const Home = () => {
                 )}
             </View>
 
-            {/* Upcoming Journey */}
             <View style={styles.journeyContainer}>
                 <Text style={styles.sectionTitle}>Upcoming Journey</Text>
                 <Text style={styles.detailsText}>PNR/Ticket No: 12345678</Text>
                 <Text style={styles.detailsText}>Booking Time: 7.00 pm</Text>
 
-                {/* Journey Details */}
                 <View style={styles.journeyCard}>
                     <View style={styles.journeyRow}>
                         <View style={styles.icon}>
@@ -110,11 +156,10 @@ const Home = () => {
                         <Text style={styles.timeText}>RAIGAD {"\n"} 6:30 AM{"\n"}Mon, 14 Jan</Text>
                     </View>
                 </View>
-            </View>
+            </View> 
         </ScrollView>
     );
 };
-
 
 const styles = StyleSheet.create({
     container: {

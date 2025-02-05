@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { 
   View, Text, FlatList, ActivityIndicator, StyleSheet, 
-  ScrollView, Image, ImageBackground, TextInput, TouchableOpacity, TouchableWithoutFeedback,Keyboard
+  ScrollView, Image, ImageBackground, TextInput, TouchableOpacity, TouchableWithoutFeedback,Keyboard,BackHandler,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +33,29 @@ const PackageDetails = ({ route: propRoute }) => {
   const navigation = useNavigation();
 
   const { vehicleType } = route.params || {}; 
+
+
+
+  useEffect(() => {
+    const backAction = () => {
+        // Reset navigation stack and navigate back to Home
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'Home' }],
+        });
+        return true;  // Prevent default back action
+    };
+
+    // Add event listener for physical back button
+    const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backAction
+    );
+
+    // Clean up the event listener on component unmount
+    return () => backHandler.remove();
+}, [navigation]);
+
 
   useEffect(() => {
     if (cityId && selectedCategory && selectedPackage && cityName) {
@@ -103,6 +126,7 @@ const PackageDetails = ({ route: propRoute }) => {
       selectedPickupPoint: selectedPickupPoint,
       price: packageData.price,
       vehicleType: vehicleType,
+      
     });
   };
    

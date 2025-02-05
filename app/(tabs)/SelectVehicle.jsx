@@ -1,23 +1,59 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Importing useNavigation
+import React, { useEffect, useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, SafeAreaView, BackHandler } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SelectVehicle = () => {
-  const navigation = useNavigation(); // Using the hook to get navigation
+function SelectVehicle() {
+  const nav = useNavigation();
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
 
-  const handleVehicleSelect = (vehicleType) => {
-    // Print the selected vehicle type to the console
+  useEffect(() => {
+    // Fetch the saved vehicle type from AsyncStorage
+    const getStoredVehicleType = async () => {
+      try {
+        const storedVehicle = await AsyncStorage.getItem('vehicleType');
+        if (storedVehicle) {
+          setSelectedVehicle(storedVehicle); // Set the selected vehicle from storage
+        }
+      } catch (error) {
+        console.error('Error retrieving vehicle type:', error);
+      }
+    };
+
+    getStoredVehicleType();
+
+    const backAction = () => {
+        // Exit the app and reset all the navigation stacks
+        BackHandler.exitApp();
+        return true;  // Prevent default back action
+    };
+
+    // Add event listener for physical back button
+    const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backAction
+    );
+
+    // Clean up the event listener on component unmount
+    return () => backHandler.remove();
+  }, []);
+
+  const handleVehicleSelect = async (vehicleType) => {
     console.log('Selected Vehicle Type:', vehicleType);
-
-    // Navigate to Home and send the selected vehicle type as a parameter
-    navigation.navigate('Home', { vehicleType: vehicleType });
+    try {
+      // Store the selected vehicle type in AsyncStorage
+      await AsyncStorage.setItem('vehicleType', vehicleType);
+      setSelectedVehicle(vehicleType); // Update local state
+      nav.navigate('Home', { vehicleType });
+    } catch (error) {
+      console.error('Error saving vehicle type:', error);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top Navbar */}
       <View style={styles.navbar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButtonContainer}>
+        <TouchableOpacity onPress={() => nav.goBack()} style={styles.backButtonContainer}>
           <View style={styles.backButtonCircle}>
             <Text style={styles.backButton}>{'<'}</Text>
           </View>
@@ -27,19 +63,17 @@ const SelectVehicle = () => {
 
       {/* Vehicle Options */}
       <View style={styles.vehicleContainer}>
-        {/* By Bus */}
         <TouchableOpacity
-          style={styles.card}
-          onPress={() => handleVehicleSelect('Bus')} // Call the function and pass 'Bus'
+          style={[styles.card, selectedVehicle === 'Bus' && styles.selectedCard]} // Highlight selected card
+          onPress={() => handleVehicleSelect('Bus')}
         >
           <Image source={require('@/assets/images/Bus.png')} style={styles.image} />
           <Text style={styles.label}>By Bus</Text>
         </TouchableOpacity>
 
-        {/* By Car */}
         <TouchableOpacity
-          style={styles.card}
-          onPress={() => handleVehicleSelect('Car')} // Call the function and pass 'Car'
+          style={[styles.card, selectedVehicle === 'Car' && styles.selectedCard]} // Highlight selected card
+          onPress={() => handleVehicleSelect('Car')}
         >
           <Image source={require('@/assets/images/Car.png')} style={styles.image} />
           <Text style={styles.label}>By Car</Text>
@@ -47,9 +81,7 @@ const SelectVehicle = () => {
       </View>
     </SafeAreaView>
   );
-};
-
-
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -106,6 +138,11 @@ const styles = StyleSheet.create({
     elevation: 3,
     overflow: 'hidden',
     marginTop: 20,
+  },
+  selectedCard: {
+    // Remove border and highlight when selected
+    borderColor: 'transparent', // No border
+    borderWidth: 0, // Remove any border width
   },
   image: {
     width: '100%',
