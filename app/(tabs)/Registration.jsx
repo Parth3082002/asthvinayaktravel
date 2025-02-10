@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Image,
+  BackHandler,
 } from "react-native";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
@@ -25,18 +26,38 @@ const Registration = () => {
   const [passwordHash, setPasswordHash] = useState("");
   const navigation = useNavigation();
 
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, [navigation]);
+
+  // Function to reset fields
+  const resetFields = () => {
+    setUserName("");
+    setEmail("");
+    setPhoneNumber("");
+    setPasswordHash("");
+  };
+
   // Function to handle user registration
   const handleRegistration = async () => {
     if (!userName || !email || !phoneNumber || !passwordHash) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
-
+  
     if (phoneNumber.length !== 10) {
       Alert.alert("Error", "Please enter a valid 10-digit phone number");
       return;
     }
-
+  
     try {
       const response = await axios.post(
         "http://ashtavinayak.somee.com/api/User/Register",
@@ -47,10 +68,17 @@ const Registration = () => {
           PasswordHash: passwordHash,
         }
       );
-
+  
       if (response.status === 200) {
-        Alert.alert("Success", "Registration successful!");
-        navigation.navigate("Login"); // Navigate back to the login screen
+        Alert.alert("Success", "Registration successful!", [
+          { 
+            text: "OK", 
+            onPress: () => {
+              navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+              resetFields(); // Reset fields only after navigating
+            } 
+          }
+        ]);
       } else {
         Alert.alert("Error", "Registration failed. Please try again.");
       }
@@ -59,63 +87,33 @@ const Registration = () => {
       console.error(error);
     }
   };
-
+  
   // Function to dismiss keyboard
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
 
   return (
-    <KeyboardAvoidingView
-    //   behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView style={styles.container}>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <View style={styles.innerContainer}>
           {/* Logo Illustration */}
-          <Image
-            source={require("@/assets/images/register.png")} // Update the path to your registration image
-            style={styles.image}
-          />
+          <Image source={require("@/assets/images/register.png")} style={styles.image} />
 
           {/* Heading */}
           <Text style={styles.heading}>Create an Account</Text>
 
           {/* User Name Input */}
-          <TextInput
-            style={styles.input}
-            placeholder="User Name"
-            value={userName}
-            onChangeText={setUserName}
-          />
+          <TextInput style={styles.input} placeholder="User Name" value={userName} onChangeText={setUserName} />
 
           {/* Email Input */}
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
+          <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" value={email} onChangeText={setEmail} />
 
           {/* Phone Number Input */}
-          <TextInput
-            style={styles.input}
-            placeholder="Phone Number"
-            keyboardType="numeric"
-            maxLength={10}
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-          />
+          <TextInput style={styles.input} placeholder="Phone Number" keyboardType="numeric" maxLength={10} value={phoneNumber} onChangeText={setPhoneNumber} />
 
           {/* Password Input */}
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            secureTextEntry
-            value={passwordHash}
-            onChangeText={setPasswordHash}
-          />
+          <TextInput style={styles.input} placeholder="Password" secureTextEntry value={passwordHash} onChangeText={setPasswordHash} />
 
           {/* Register Button */}
           <TouchableOpacity style={styles.button} onPress={handleRegistration}>
@@ -123,16 +121,19 @@ const Registration = () => {
           </TouchableOpacity>
 
           {/* Link to Login Screen */}
-          <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.loginText}>
-              Already have an account? <Text style={styles.loginLink}>Login</Text>
-            </Text>
+          <TouchableOpacity onPress={() => {
+            resetFields();
+            navigation.reset({ index: 0, routes: [{ name: "Login" }] });
+          }}>
+            <Text style={styles.loginText}>Already have an account? <Text style={styles.loginLink}>Login</Text></Text>
           </TouchableOpacity>
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {

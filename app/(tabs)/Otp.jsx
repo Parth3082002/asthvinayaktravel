@@ -12,12 +12,12 @@ import {
   KeyboardAvoidingView,
   Keyboard,
   Platform,
+  BackHandler,
 } from "react-native";
 import axios from "axios";
-import { useNavigation, useRoute } from "@react-navigation/native";
-import Ionicons from "react-native-vector-icons/Ionicons"; // Ensure this is installed
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Buffer } from "buffer"; // Use Buffer for base64 decoding
+import { Buffer } from "buffer"; 
 
 const { width, height } = Dimensions.get("window");
 
@@ -32,12 +32,35 @@ const Otp = () => {
   const route = useRoute();
   const { mobileNo } = route.params || {};
 
+  // Reset OTP Fields When Page is Focused
+  useFocusEffect(
+    React.useCallback(() => {
+      setOtp(["", "", "", "", "", ""]); // Clear OTP fields
+    }, [])
+  );
+
+  // Handle Back Button Press (Navigates to Login)
+  useFocusEffect(
+    React.useCallback(() => {
+      const backAction = () => {
+        navigation.navigate("Login"); // Navigate to Login Page
+        return true; // Prevent default back action
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+
+      return () => backHandler.remove();
+    }, [navigation])
+  );
+
   const handleInputChange = (text, index) => {
     const updatedOtp = [...otp];
     updatedOtp[index] = text;
     setOtp(updatedOtp);
 
-    // Move focus to the next input if there's a value
     if (text && index < otp.length - 1) {
       otpRefs.current[index + 1]?.focus();
     }
@@ -61,11 +84,7 @@ const Otp = () => {
         Alert.alert("Error", "Failed to resend OTP. Please try again.");
       }
     } catch (error) {
-      const errorMessage =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? error.response.data.message
-          : "Failed to resend OTP. Please try again.";
-      Alert.alert("Error", errorMessage);
+      Alert.alert("Error", "Failed to resend OTP. Please try again.");
       console.error(error);
     }
   };
@@ -79,7 +98,7 @@ const Otp = () => {
 
     try {
       const response = await axios.post(
-        "http://ashtavinayak.somee.com/api/User/VerifyOTP", // Updated API URL
+        "http://ashtavinayak.somee.com/api/User/VerifyOTP", 
         { mobileNo, otp: enteredOtp },
         {
           headers: {
@@ -92,63 +111,48 @@ const Otp = () => {
         const token = response.data.token;
         console.log("Generated Token:", token);
 
-        // Decode the token using Buffer
         const decodedPayload = decodeToken(token);
         console.log("Decoded Payload:", decodedPayload);
 
-        // Check if the email exists in the decoded token
         if (decodedPayload && decodedPayload.email) {
-          // If email exists, redirect to Home page
           Alert.alert("Success", "OTP verified successfully!", [
             {
               text: "OK",
-              onPress: () => {
-                navigation.navigate("SelectVehicle");
-              },
+              onPress: () => navigation.navigate("Dashboard"),
             },
           ]);
         } else {
-          // If email does not exist, redirect to Registration page
           Alert.alert("Success", "OTP verified successfully!", [
             {
               text: "OK",
-              onPress: () => {
+              onPress: () =>
                 navigation.navigate("SelectVehicle", {
                   token,
                   mobileNo,
-                });
-              },
+                }),
             },
           ]);
         }
 
-        // Store mobileNo, token, and user details in AsyncStorage
         await AsyncStorage.setItem("mobileNo", mobileNo);
         await AsyncStorage.setItem("token", token);
         await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
 
-        // Optionally, you can log the user data and token to confirm successful storage
         console.log("User Details Stored:", response.data.user);
       } else {
         Alert.alert("Error", "Invalid OTP. Please try again.");
       }
     } catch (error) {
-      const errorMessage =
-        axios.isAxiosError(error) && error.response?.data?.message
-          ? error.response.data.message
-          : "Failed to verify OTP. Please try again.";
-      Alert.alert("Error", errorMessage);
-      console.error(error);
+      Alert.alert("Error", "Failed to verify OTP. Please try again.");
+      // console.error(error);
     }
   };
 
   const decodeToken = (token) => {
     try {
-      // Split the token into three parts: header, payload, and signature
       const parts = token.split(".");
       if (parts.length === 3) {
         const payload = parts[1];
-        // Decode the payload from Base64 to UTF-8
         const decodedPayload = Buffer.from(payload, "base64").toString("utf-8");
         return JSON.parse(decodedPayload);
       } else {
@@ -167,21 +171,18 @@ const Otp = () => {
     >
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <View style={styles.container}>
-          {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={require("@/assets/images/Verify.png")} // Ensure the image path is correct
+              source={require("@/assets/images/Verify.png")}
               style={styles.image}
             />
           </View>
 
-          {/* OTP Verification Title */}
           <Text style={styles.verificationHeading}>OTP Verification</Text>
 
           <Text style={styles.title}>Check your phone for the OTP</Text>
           <Text style={styles.subtitle}>Sent to: {mobileNo}</Text>
 
-          {/* OTP Input Fields */}
           <View style={styles.otpContainer}>
             {otp.map((digit, index) => (
               <TextInput
@@ -205,17 +206,14 @@ const Otp = () => {
             ))}
           </View>
 
-          {/* Not Received Text */}
           <Text style={styles.notReceivedText}>
             Not received yet? Resend it
           </Text>
 
-          {/* Resend Code Link */}
           <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp}>
             <Text style={styles.resendText}>Resend Code</Text>
           </TouchableOpacity>
 
-          {/* Verify OTP Button */}
           <TouchableOpacity style={styles.nextButton} onPress={verifyOtp}>
             <Text style={styles.nextText}>Verify OTP</Text>
           </TouchableOpacity>
@@ -224,6 +222,7 @@ const Otp = () => {
     </KeyboardAvoidingView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

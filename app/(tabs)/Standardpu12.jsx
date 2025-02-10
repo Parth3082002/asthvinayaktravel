@@ -30,6 +30,7 @@ const PackageDetails = ({ route: propRoute }) => {
   const [selectedPickupPoint, setSelectedPickupPoint] = useState("");
   const [showDropdown, setShowDropdown] = useState(false); 
   const [filteredPickupPoints, setFilteredPickupPoints] = useState([]); // For filtered locations
+  const [selectedPickupPointId, setSelectedPickupPointId] = useState(null);
   const navigation = useNavigation();
 
   const { vehicleType } = route.params || {}; 
@@ -95,6 +96,7 @@ const PackageDetails = ({ route: propRoute }) => {
     }
   };
   
+  
   const handleBookNow = () => {
     // Check if the pickup location is selected
     if (!selectedPickupPoint.trim()) {
@@ -102,7 +104,7 @@ const PackageDetails = ({ route: propRoute }) => {
       alert("Please select a pickup location first");
       return; // Prevent navigation if no pickup location is selected
     }
-  
+    console.log("Pickup Point ID:", selectedPickupPointId); // Debugging log
     // Log all parameters to the console
     console.log("Navigating to Select Date with the following parameters:");
     console.log("City Name:", packageData.city);
@@ -112,6 +114,8 @@ const PackageDetails = ({ route: propRoute }) => {
     console.log("Category Name:", packageData.category);
     console.log("Category ID:", packageData.categoryId);
     console.log("Selected Pickup Point:", selectedPickupPoint);
+    console.log("Selected Pickup ID:", selectedPickupPointId);
+
     console.log("Price:", packageData.price);
     console.log("Selected Vehicle Type:", vehicleType); 
   
@@ -124,28 +128,38 @@ const PackageDetails = ({ route: propRoute }) => {
       categoryName: packageData.category,
       categoryId: packageData.categoryId, // Ensure the correct categoryId is passed
       selectedPickupPoint: selectedPickupPoint,
+      selectedPickupPointId: selectedPickupPointId,  // Pass the pickup ID
       price: packageData.price,
       vehicleType: vehicleType,
-      
-    });
-  };
-   
+      
+    });
+  };
 
-  const fetchPickupPoints = async (cityId) => {
-    try {
-      const apiUrl = `http://ashtavinayak.somee.com/api/Pickup/City/${cityId}`;
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error('Failed to fetch pickup points');
-      }
-
-      const data = await response.json();
-      setPickupPoints(data.data || []);
-      setFilteredPickupPoints(data.data || []);  // Set the filtered points initially
-    } catch (error) {
-      setError("Failed to fetch pickup points");
+const fetchPickupPoints = async (cityId) => {
+  try {
+    const apiUrl = `http://ashtavinayak.somee.com/api/Pickup/City/${cityId}`;
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error('Failed to fetch pickup points');
     }
-  };
+
+    const data = await response.json();
+    if (data.data) {
+      // Ensure all items follow a consistent naming convention
+      const formattedData = data.data.map(point => ({
+        ...point,
+        pickupPointId: point.pickupPointID, // Normalize key name
+      }));
+      setPickupPoints(formattedData);
+      setFilteredPickupPoints(formattedData);
+    } else {
+      setPickupPoints([]);
+      setFilteredPickupPoints([]);
+    }
+  } catch (error) {
+    setError("Failed to fetch pickup points");
+  }
+};
 
   const handleSearch = (text) => {
     setSelectedPickupPoint(text);
@@ -159,43 +173,39 @@ const PackageDetails = ({ route: propRoute }) => {
     }
   };
 
-  const groupRoutesByDay = (routes) => {
-    if (!routes || routes.length === 0) return [];
+  // Function to extract and sort routes
+const groupRoutesByDay = (routes) => {
+  if (!routes || routes.length === 0) return [];
 
-    const groupedRoutes = {};
-    routes.forEach((route) => {
-      const day = route.day || "Day1"; // Default to "Day1" if no day is specified
-      if (!groupedRoutes[day]) {
-        groupedRoutes[day] = [];
-      }
-      groupedRoutes[day].push(route);
-    });
+  const groupedRoutes = {};
+  
+  routes.forEach((route) => {
+    const day = route.day || "Day 1"; // Default to "Day 1" if day is missing
+    if (!groupedRoutes[day]) {
+      groupedRoutes[day] = [];
+    }
+    
+    // Extract the number before ')' if it exists
+    const match = route.pointName.match(/^(\d+)\)/);
+    const number = match ? parseInt(match[1], 10) : 9999; // Default large number if missing
 
-    return groupedRoutes;
-  };
+    groupedRoutes[day].push({ ...route, number });
+  });
 
-  const groupSubRoutes = (dayRoutes) => {
-    const mainRoutes = [];
-    const subRoutes = {};
+  // Sort routes within each day based on extracted number
+  Object.keys(groupedRoutes).forEach((day) => {
+    groupedRoutes[day].sort((a, b) => a.number - b.number);
+  });
 
-    dayRoutes.forEach((route) => {
-      if (route.parentId === null) {
-        mainRoutes.push(route);
-      } else {
-        if (!subRoutes[route.parentId]) {
-          subRoutes[route.parentId] = [];
-        }
-        subRoutes[route.parentId].push(route);
-      }
-    });
+  return groupedRoutes;
+};
 
-    return { mainRoutes, subRoutes };
-  };
+const handleDropdownClick = (point) => {
+  setSelectedPickupPoint(point.pickupPointName);
+  setSelectedPickupPointId(point.pickupPointID); // Use the correct property name
+  setShowDropdown(false);
+};
 
-  const handleDropdownClick = (point) => {
-    setSelectedPickupPoint(point.pickupPointName);
-    setShowDropdown(false);
-  };
 
   const handleOutsidePress = () => {
     setShowDropdown(false); // Hide the dropdown when clicking outside
@@ -282,70 +292,62 @@ const PackageDetails = ({ route: propRoute }) => {
               </View>
 
               <View style={styles.dayContainer}>
-                {Object.keys(groupRoutesByDay(packageData.routes)).map((day) => {
-                  const { mainRoutes, subRoutes } = groupSubRoutes(groupRoutesByDay(packageData.routes)[day]);
-
-                  return (
-                    <View key={day} style={styles.container1}>
-                <Text style={styles.dayText}>{`${day}`}</Text>
-                <View style={styles.itineraryRow}>
-                  <Image
-                    source={images[parseInt(day.replace("Day", ""), 10) - 1]}
-                    style={styles.dayImage}
-                  />
-                  <View style={styles.routeContainer}>
-                  <Svg height="100%" width="10">
-  {mainRoutes.map((route, index) => {
-    const subRouteCount = subRoutes[route.trid]?.length || 0;
-    const sectionHeight = subRouteCount > 0 ? 40 + subRouteCount * 20 : 40;
-    const startY = index === 0 ? 0 : mainRoutes.slice(0, index).reduce((acc, r) => {
-      const subHeight = subRoutes[r.trid]?.length || 0;
-      return acc + (subHeight > 0 ? 40 + subHeight * 20 : 40);
-    }, 0);
-    const dots = Math.floor(sectionHeight / 10); // Ensure even spacing
+  {Object.keys(groupRoutesByDay(packageData.routes)).map((day) => {
+    const dayRoutes = groupRoutesByDay(packageData.routes)[day];
 
     return (
-      <React.Fragment key={route.trid}>
-        {/* Full start dot */}
-        <Circle cx="5" cy={startY} r="2.5" fill="blue" />
-        {/* Consistent dotted line */}
-        {Array.from({ length: dots }).map((_, dotIndex) => (
-          <Circle
-            key={dotIndex}
-            cx="5"
-            cy={startY + dotIndex * 10}
-            r="2.5"
-            fill="blue"
+      <View key={day} style={styles.container1}>
+        <Text style={styles.dayText}>{`${day}`}</Text>
+        <View style={styles.itineraryRow}>
+          <Image
+            source={images[parseInt(day.replace("Day", ""), 10) - 1]}
+            style={styles.dayImage}
           />
-        ))}
-      </React.Fragment>
-    );
-  })}
+          <View style={styles.routeContainer}>
+          <Svg height="100%" width="10">
+  {dayRoutes.map((route, index) => (
+    <React.Fragment key={route.trid}>
+      {/* Add a starting line before the first dot */}
+      {index === 0 && (
+        <Line x1="5" y1="0" x2="5" y2="20" stroke="blue" strokeWidth="2" />
+      )}
+
+      {/* Draw the dot */}
+      <Circle cx="5" cy={index * 40 + 20} r="4" fill="blue" />
+
+      {/* Draw lines between dots (except for the last item) */}
+      {index !== dayRoutes.length - 1 && (
+        <Line x1="5" y1={index * 40 + 20} x2="5" y2={(index + 1) * 40 + 20} stroke="blue" strokeWidth="2" />
+      )}
+    </React.Fragment>
+  ))}
 </Svg>
 
-                    <View>
-                      {mainRoutes.map((route, index) => {
-                        const subRouteCount = subRoutes[route.trid]?.length || 0;
-                        const sectionHeight = subRouteCount > 0 ? 25 + subRouteCount * 20 : 25;
 
-                        return (
-                          <View key={route.trid} style={{ height: sectionHeight, justifyContent: "center" }}>
-                            <Text style={styles.route}>{route.pointName}</Text>
-                            {subRoutes[route.trid] &&
-                              subRoutes[route.trid].map((subRoute) => (
-                                <Text key={subRoute.trid} style={styles.subRoute}>
-                                  {subRoute.pointName}
-                                </Text>
-                              ))}
-                          </View>
-                        );
-                      })}
-                    </View>
-                  </View>
-                </View>
-              </View>  );
-                })}
-              </View>
+<ScrollView 
+  style={{ maxHeight: 220 }} 
+  contentContainerStyle={{ flexGrow: 1 }} 
+  showsVerticalScrollIndicator={true} 
+  nestedScrollEnabled={true} // Important if inside another scroll view
+>
+  <View>
+    {dayRoutes.map((route, index) => (
+      <View key={route.trid} style={{ height: 40, justifyContent: "center" }}>
+        <Text style={styles.route}>
+          {`${index + 1}) ${route.pointName.replace(/^\d+\)\s*/, "")}`}
+        </Text>
+      </View>
+    ))}
+  </View>
+</ScrollView>
+
+
+          </View>
+        </View>
+      </View>
+    );
+  })}
+</View>
 
               <View style={styles.footer}>
                 <View>
@@ -390,9 +392,9 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   headerContent: {
-    padding: 38,
+    padding: 35,
     width: '100%',
-    marginTop: -100,
+    // marginTop: -100,
   },
   inclusionRow: {
     flexDirection: 'row',
@@ -414,7 +416,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   inclusionDetailsContainer: {
-    marginTop: 10,
+    // marginTop: 10,
     marginLeft: 10,
   },
   inclusionDetails: {
@@ -499,6 +501,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginLeft: 10,
+    marginTop:10,
   },
   subRoute: {
     fontSize: 14,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,9 +12,10 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Image,
+  BackHandler,
 } from "react-native";
 import axios from "axios";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
@@ -22,6 +23,23 @@ const { width, height } = Dimensions.get("window");
 const Login = () => {
   const [mobileNo, setMobileNo] = useState("");
   const navigation = useNavigation();
+
+  // Reset fields when navigating back or forward
+  useFocusEffect(
+    useCallback(() => {
+      setMobileNo(""); // Reset input field
+    }, [])
+  );
+
+  // Handle back button press to navigate to Index page
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
+      navigation.navigate("index"); // Navigate to Index page
+      return true; // Prevent default back action
+    });
+
+    return () => backHandler.remove(); // Cleanup event listener
+  }, [navigation]);
 
   // Function to handle OTP sending
   const sendOtp = async () => {
@@ -37,24 +55,21 @@ const Login = () => {
       );
 
       if (response.status === 200) {
-        // Save the mobile number to local storage
         await AsyncStorage.setItem("mobileNo", mobileNo);
-
-        Alert.alert("Success", "OTP sent successfully!");
-
-        // Navigate to OTP screen with mobileNo as a parameter
-        navigation.navigate("Otp", { mobileNo }); // Correct navigation path
+        
+        // Show alert and navigate only after clicking "OK"
+        Alert.alert("Success", "OTP sent successfully!", [
+          { text: "OK", onPress: () => navigation.navigate("Otp", { mobileNo }) }
+        ]);
+        
       } else {
         Alert.alert("Error", "Failed to send OTP. Please try again.");
       }
     } catch (error) {
-      if (error.response) {
-        // Handling server response error and displaying it in the alert
-        Alert.alert("Error", error.response.data || "Something went wrong. Please try again.");
-      } else {
-        Alert.alert("Error", "Something went wrong. Please try again.");
-      }
-      // console.error(error);
+      Alert.alert(
+        "Error",
+        error.response?.data || "Something went wrong. Please try again."
+      );
     }
   };
 
@@ -110,6 +125,8 @@ const Login = () => {
   );
 };
 
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -127,7 +144,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     resizeMode: "contain",
     marginBottom: 0,
-    marginTop: 80,
+    marginTop: 10,
   },
   subheading: {
     fontSize: 16,

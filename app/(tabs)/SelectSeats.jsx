@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 
 const SelectSeats = () => {
@@ -8,8 +8,7 @@ const SelectSeats = () => {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [tripId, setTripId] = useState(null);
   const navigation = useNavigation();
-  
-  const selectedDate = params?.selectedDate;  // Retrieve selectedDate from params
+  const selectedDate = params?.selectedDate;
 
   useEffect(() => {
     fetchSeatData();
@@ -18,46 +17,51 @@ const SelectSeats = () => {
   const fetchSeatData = async () => {
     try {
       const response = await fetch(
-       `http://ashtavinayak.somee.com/api/Trip/TripsByDate/${selectedDate}`
+        `http://ashtavinayak.somee.com/api/Trip/TripsByDate/${selectedDate}`
       );
-      const data = await response.json();
-
-      if (data && data.data && data.data.length > 0) {
-        const totalSeats = data.data[0].totalSeats;
-        const availableSeats = data.data[0].availableSeats;
-        setTripId(data.data[0].tripId); // Store TripId for booking API
-
-        let seatsLayout = generateSeatsLayout(totalSeats, availableSeats);
-        setSeats(seatsLayout);
+      const result = await response.json();
+  
+      if (!result || !result.data || result.data.length === 0) {
+        console.error("No trip data found for the selected date.");
+        return;
       }
+  
+      const trip = result.data[0]; // Assuming first trip is relevant
+      setTripId(trip.tripId);
+      
+      console.log("Fetched tripId:", trip.tripId);
+  
+      let seatsLayout = generateSeatsLayout(trip.totalSeats, trip.availableSeats);
+      setSeats(seatsLayout);
     } catch (error) {
       console.error("Error fetching seat data:", error);
     }
   };
-
+  
   const generateSeatsLayout = (totalSeats, availableSeats) => {
     let layout = [];
     let availableSeatsSet = new Set();
-
+  
     while (availableSeatsSet.size < availableSeats) {
       let randomSeat = Math.floor(Math.random() * totalSeats);
       availableSeatsSet.add(randomSeat);
     }
-
+  
     for (let i = 0; i < totalSeats; i++) {
-      layout.push(availableSeatsSet.has(i) ? "available" : "booked");
+      layout.push({
+        seatNumber: `S${i + 1}`,
+        status: availableSeatsSet.has(i) ? "available" : "booked"
+      });
     }
-
-    let rows = [];
-    for (let i = 0; i < layout.length; i += 4) {
-      rows.push(layout.slice(i, i + 4));
-    }
-
-    return rows;
+  
+    return layout;
   };
 
-  const toggleSeat = (rowIndex, colIndex) => {
-    const seatKey = `${rowIndex}-${colIndex}`;
+  const toggleSeat = (index) => {
+    const seat = seats[index];
+    if (seat.status === "booked") return;
+
+    const seatKey = seat.seatNumber;
     if (selectedSeats.includes(seatKey)) {
       setSelectedSeats(selectedSeats.filter((seat) => seat !== seatKey));
     } else {
@@ -65,87 +69,38 @@ const SelectSeats = () => {
     }
   };
 
-  const handleBookNowPress = async () => {
-    if (selectedSeats.length === 0) {
-      Alert.alert("Error", "Please select at least one seat.");
-      return;
-    }
-  
-    if (!tripId) {
-      Alert.alert("Error", "Trip ID not found. Please try again.");
-      return;
-    }
-  
-    const bookingData = selectedSeats.map((seatKey) => {
-      const seatNumber = seatKey.split("-")[1]; // Extract seat number from key
-      return {
-        SeatNumber: seatNumber,
-        Adults: 1,
-        Childwithseat: 0,
-        Childwithoutseat: 0,
-        TripId: tripId,
-        UserId: 1, // Replace with actual user ID
-      };
-    });
-  
-    try {
-      const response = await fetch("http://ashtavinayak.somee.com/api/Trip/BookSeats", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bookingData),
+  const handleNextPress = () => {
+    if (selectedSeats.length > 0) {
+      console.log("Navigating with the following data:", selectedSeats);
+      navigation.navigate("Book", {
+        ...params,
+        selectedSeats: selectedSeats,
+        tripId: tripId,
       });
-  
-      console.log("Response Status:", response.status);
-      console.log("Response Headers:", response.headers);
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log("Error Response:", errorText || "No error message from server.");
-        Alert.alert("Booking Failed", errorText || "Server did not return an error message.");
-        return;
-      }
-  
-      const text = await response.text();
-      console.log("Response Text:", text);
-  
-      if (!text) {
-        Alert.alert("Error", "Server returned an empty response.");
-        return;
-      }
-  
-      const result = JSON.parse(text);
-      console.log("Parsed JSON:", result);
-  
-      Alert.alert("Success", "Seats booked successfully!");
-      setSelectedSeats([]);
-      fetchSeatData();
-    } catch (error) {
-      console.error("Booking error:", error);
-      Alert.alert("Error", "Something went wrong while booking seats.");
+    } else {
+      alert("Please select at least one seat");
     }
   };
-  
-  const renderSeat = (seatType, rowIndex, colIndex) => {
-    const isSelected = selectedSeats.includes(`${rowIndex}-${colIndex}`);
+
+  const renderSeat = ({ item, index }) => {
+    const isSelected = selectedSeats.includes(item.seatNumber);
     let seatStyle = styles.availableSeat;
 
     if (isSelected) {
       seatStyle = styles.selectedSeat;
-    } else if (seatType === "booked") {
+    } else if (item.status === "booked") {
       seatStyle = styles.bookedSeat;
-    } else if (seatType === "available") {
-      seatStyle = styles.availableSeat;
     }
-
+    
     return (
       <TouchableOpacity
-        key={`${rowIndex}-${colIndex}`}
+        key={index}
         style={[styles.seat, seatStyle]}
-        disabled={seatType === "booked"}
-        onPress={() => toggleSeat(rowIndex, colIndex)}
-      />
+        disabled={item.status === "booked"}
+        onPress={() => toggleSeat(index)}
+      >
+        <Text style={styles.seatText}>{item.seatNumber}</Text>
+      </TouchableOpacity>
     );
   };
 
@@ -153,7 +108,6 @@ const SelectSeats = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Select Seats for Date: {selectedDate}</Text>
 
-      {/* Seat Indicators */}
       <View style={styles.legendContainer}>
         <View style={styles.legendItem}>
           <View style={[styles.legendColor, styles.availableSeat]} />
@@ -171,17 +125,18 @@ const SelectSeats = () => {
 
       <FlatList
         data={seats}
-        renderItem={({ item, index: rowIndex }) => (
-          <View style={styles.row}>
-            {item.map((seatType, colIndex) => renderSeat(seatType, rowIndex, colIndex))}
-          </View>
-        )}
+        renderItem={renderSeat}
         keyExtractor={(item, index) => index.toString()}
+        numColumns={5}  // Set 5 columns for seat layout
         contentContainerStyle={styles.seatMap}
       />
 
-      <TouchableOpacity style={styles.bookNowButton} onPress={handleBookNowPress}>
-        <Text style={styles.bookNowText}>Book Now</Text>
+      <TouchableOpacity
+        style={[styles.nextButton, { backgroundColor: selectedSeats.length > 0 ? "#FF5722" : "#e0e0e0" }]}
+        onPress={handleNextPress}
+        disabled={selectedSeats.length === 0}
+      >
+        <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity>
     </View>
   );
@@ -215,20 +170,17 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 5,
   },
-  row: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
   seatMap: {
-    flexGrow: 1,
     justifyContent: "center",
+    alignItems: "center",
   },
   seat: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    margin: 5,
+    width: 50,  // Increased seat width
+    height: 50, // Increased seat height
+    borderRadius: 25, // Adjusted for circular shape
+    margin: 8, // Increased spacing for better visibility
+    justifyContent: "center",
+    alignItems: "center",
   },
   availableSeat: {
     backgroundColor: "#FF5722",
@@ -239,15 +191,18 @@ const styles = StyleSheet.create({
   selectedSeat: {
     backgroundColor: "#4CAF50",
   },
-  bookNowButton: {
-    backgroundColor: "#FF5722",
+  seatText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  nextButton: {
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 20,
   },
-  bookNowText: {
+  nextButtonText: {
     color: "#fff",
     fontSize: 18,
   },

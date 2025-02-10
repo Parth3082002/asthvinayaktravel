@@ -22,21 +22,17 @@ function SelectVehicle() {
 
     getStoredVehicleType();
 
-    const backAction = () => {
-        // Exit the app and reset all the navigation stacks
-        BackHandler.exitApp();
-        return true;  // Prevent default back action
-    };
+    // BackHandler to navigate to the index page
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      nav.reset({
+        index: 0,
+        routes: [{ name: 'Dashboard' }],
+      });
+      return true;
+    });
 
-    // Add event listener for physical back button
-    const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        backAction
-    );
-
-    // Clean up the event listener on component unmount
     return () => backHandler.remove();
-  }, []);
+  }, [nav]);
 
   const handleVehicleSelect = async (vehicleType) => {
     console.log('Selected Vehicle Type:', vehicleType);
@@ -53,7 +49,7 @@ function SelectVehicle() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.navbar}>
-        <TouchableOpacity onPress={() => nav.goBack()} style={styles.backButtonContainer}>
+        <TouchableOpacity onPress={() => nav.navigate('Dashboard')} style={styles.backButtonContainer}>
           <View style={styles.backButtonCircle}>
             <Text style={styles.backButton}>{'<'}</Text>
           </View>
@@ -82,6 +78,7 @@ function SelectVehicle() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

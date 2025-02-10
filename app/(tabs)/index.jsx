@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { View, Image, Animated, StyleSheet, Dimensions, TouchableOpacity, Text } from "react-native";
+import { View, Image, Animated, StyleSheet, Dimensions, TouchableOpacity, Text, BackHandler } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -31,6 +31,20 @@ const Index = () => {
     ).start();
   }, []);
 
+  useEffect(() => {
+    const backAction = () => {
+      BackHandler.exitApp(); // Exit the app
+      return true;  // Prevent default back action
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Cleanup
+  }, []);
+
   // Interpolation to calculate the movement of images around the circle
   const interpolatedMove = moveAnim.interpolate({
     inputRange: [0, 1],
@@ -41,7 +55,7 @@ const Index = () => {
     try {
       const token = await AsyncStorage.getItem("token"); // Checking if token exists in AsyncStorage
       if (token) {
-        router.push("SelectVehicle"); // Navigate to SelectVehicle page if token exists
+        router.push("Dashboard"); // Navigate to SelectVehicle page if token exists
       } else {
         router.push("Login"); // Navigate to Login page if no token
       }
@@ -93,7 +107,7 @@ const Index = () => {
       {/* Footer with Login Button */}
       <View style={styles.footer}>
         <TouchableOpacity style={styles.loginButton} onPress={handleLoginPress}>
-          <Text style={styles.loginButtonText}>Login</Text>
+          <Text style={styles.loginButtonText}>Get Started</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -147,4 +161,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Index;
+export default Index;

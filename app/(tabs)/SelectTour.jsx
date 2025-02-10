@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, BackHandler, ScrollView } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 
 const SelectTour = () => {
@@ -107,7 +107,7 @@ const SelectTour = () => {
             const result = await response.json();
             setPackages(result || []);
         } catch (error) {
-            console.error('Error fetching packages:', error);
+            // console.error('Error fetching Spackages:', error);
             setPackages([]);
         } finally {
             setPackageLoading(false);
@@ -168,32 +168,43 @@ const SelectTour = () => {
             )}
 
             <Text style={styles.sectionTitle1}>Select Package</Text>
+            <View style={styles.container}>
+  {/* <Text style={styles.headerText}>Select Package</Text> */}
 
-            {packageLoading ? (
-                <ActivityIndicator size="large" color="#FF5722" />
-            ) : packages.length > 0 ? (
-                <View style={styles.optionsContainer}>
-                    {packages.map((pkg) => (
-                        <TouchableOpacity
-                            key={pkg.packageId}
-                            style={styles.option1}
-                            onPress={() => setSelectedPackage(pkg.packageId)}
-                        >
-                            <View style={styles.optionContent}>
-                                <View style={[styles.radioCircle, selectedPackage === pkg.packageId && styles.radioCircleSelected]}>
-                                    {selectedPackage === pkg.packageId && <View style={styles.radioInner} />}
-                                </View>
-                                <Text style={styles.optionLabel}>{pkg.packageName}</Text>
-                                <Text style={styles.optionDescription}>
-                                    {pkg.description}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            ) : (
-                <Text>No packages available for this city.</Text>
-            )}
+  {/* Scrollable package list */}
+  <ScrollView contentContainerStyle={styles.scrollViewContent}>
+    {packageLoading ? (
+      <ActivityIndicator size="large" color="#FF5722" />
+    ) : packages.length > 0 ? (
+      <View style={styles.optionsContainer}>
+        {packages.map((pkg) => (
+          <TouchableOpacity
+            key={pkg.packageId}
+            style={styles.option1}
+            onPress={() => setSelectedPackage(pkg.packageId)}
+          >
+            <View style={styles.optionContent}>
+              <View style={[styles.radioCircle, selectedPackage === pkg.packageId && styles.radioCircleSelected]}>
+                {selectedPackage === pkg.packageId && <View style={styles.radioInner} />}
+              </View>
+              <Text style={styles.optionLabel}>{pkg.packageName}</Text>
+              <Text style={styles.optionDescription}>
+                {pkg.description}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+    ) : (
+      <Text style={styles.noPackagesText}>No packages available for this city.</Text>
+    )}
+  </ScrollView>
+
+  {/* Fixed Footer Button */}
+  {/* <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
+    <Text style={styles.nextButtonText}>Next</Text>
+  </TouchableOpacity> */}
+</View>
 
             <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
                 <Text style={styles.nextButtonText}>Next</Text>
@@ -204,10 +215,15 @@ const SelectTour = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingTop: 20,
+    // flex: 1,
+    // backgroundColor: '#FFFFFF',
+    // paddingHorizontal: 16,
+    // paddingTop: 20,
+    flex: 1, // Ensures the entire screen is used properly
+      backgroundColor: '#FFFFFF',
+      padding: 20,
+
+    //   paddingLeft:20,
   },
   backButtonContainer: {
     position: 'absolute',
@@ -233,7 +249,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
-    marginVertical: 0,
+    marginVertical: 15,
     marginTop:80,
   },
 
@@ -242,7 +258,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#000',
     marginVertical: 0,
-    marginTop:10,
+    marginTop:0,
   },
 
   leftAlignedOptionsContainer: {
@@ -258,6 +274,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom:10,
   },
   optionLabel: {
     fontSize: 16,
@@ -307,19 +324,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 
-  nextButton: {
-    marginTop: 130,
-    backgroundColor: '#FF5722',
-    borderRadius: 5,
-    paddingVertical: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+
   option1: {
     flexDirection: 'row',
     justifyContent: 'flex-start', // Ensure all options are left aligned
@@ -328,6 +333,83 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
+
+
+ 
+    // container: {
+    //   flex: 1, // Ensures the entire screen is used properly
+    //   backgroundColor: '#FFFFFF',
+    //   padding: 20,
+    // },
+  
+    scrollViewContent: {
+      flexGrow: 1, // Ensures content inside scroll view takes available space
+      paddingBottom: 20, // Prevents content from overlapping with the footer button
+    },
+    optionsContainer: {
+      flex: 1, // Allows ScrollView to take available space
+    },
+    // option1: {
+    //   backgroundColor: '#F5F5F5',
+    //   padding: 15,
+    //   borderRadius: 10,
+    //   marginBottom: 10,
+    // },
+    // optionContent: {
+    //   flexDirection: 'column',
+    //   alignItems: 'flex-start',
+    // },
+    // radioCircle: {
+    //   width: 20,
+    //   height: 20,
+    //   borderRadius: 10,
+    //   borderWidth: 2,
+    //   borderColor: '#FF5722',
+    //   alignItems: 'center',
+    //   justifyContent: 'center',
+    //   marginBottom: 5,
+    // },
+    // radioCircleSelected: {
+    //   backgroundColor: '#FF5722',
+    // },
+    // radioInner: {
+    //   width: 10,
+    //   height: 10,
+    //   borderRadius: 5,
+    //   backgroundColor: '#FFFFFF',
+    // },
+    // optionLabel: {
+    //   fontSize: 16,
+    //   fontWeight: 'bold',
+    //   marginBottom: 5,
+    // },
+    // optionDescription: {
+    //   fontSize: 14,
+    //   color: '#666',
+    // },
+    // noPackagesText: {
+    //   textAlign: 'center',
+    //   fontSize: 16,
+    //   color: 'gray',
+    //   marginTop: 20,
+    // },
+    nextButton: {
+      position: 'absolute', // Fix button at the bottom
+      bottom: 0,
+      left: 20,
+      right: 20,
+      backgroundColor: '#FF5722',
+      borderRadius: 5,
+      paddingVertical: 15,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    nextButtonText: {
+      color: '#FFFFFF',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+  
 });
 
 export default SelectTour;

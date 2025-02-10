@@ -16,7 +16,7 @@ const SelectDateScreen = () => {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const route = useRoute(); // Access navigation params
-
+  // const { selectedPickupPointId } = route.params || {};
   // Fetch dates from the API
   useEffect(() => {
     const fetchDates = async () => {
@@ -73,6 +73,9 @@ const SelectDateScreen = () => {
       console.log("Price:", route.params.price);
       console.log("Selected Vehicle Type:", route.params.vehicleType);
       console.log("Selected Date:", selectedDate);
+      console.log("Received Pickup Point ID:", route.params.selectedPickupPointId);
+
+
 
       // Pass the selected date and all other parameters to the "SelectSeatsj" page
       navigation.navigate("SelectSeats", {
@@ -86,6 +89,7 @@ const SelectDateScreen = () => {
         price: route.params.price,
         vehicleType: route.params.vehicleType,
         selectedDate: selectedDate, // Pass selected date here
+        selectedPickupPointId:route.params.selectedPickupPointId,
       });
     } else {
       alert("Please select a date");

@@ -11,6 +11,16 @@ import Book from './(tabs)/Book';
 import Standardpu12 from './(tabs)/Standardpu12';
 import SelectSeats from './(tabs)/SelectSeats';
 import SelectDate from './(tabs)/SelectDate'; // ✅ Add missing import
+import Dashboard from './(tabs)/Dashboard';
+import Bappa1 from './(tabs)/Bappa1';
+import Bappa2 from './(tabs)/Bappa2';
+import Bappa3 from './(tabs)/Bappa3';
+import Bappa4 from './(tabs)/Bappa4';
+import Bappa5 from './(tabs)/Bappa5';
+import Bappa6 from './(tabs)/Bappa6';
+import Bappa7 from './(tabs)/Bappa7';
+import Bappa8 from './(tabs)/Bappa8';
+import History from './(tabs)/History';
 
 const Stack = createStackNavigator(); // ✅ Correct stack creation
 
@@ -31,6 +41,16 @@ export default function MainNavigator() {
       <Stack.Screen name="SelectDate" component={SelectDate} /> {/* ✅ Fixed */}
       <Stack.Screen name="Book" component={Book} />
       <Stack.Screen name="SelectSeats" component={SelectSeats} />
+      <Stack.Screen name="Dashboard" component={Dashboard} />
+      <Stack.Screen name="Bappa1" component={Bappa1} />
+      <Stack.Screen name="Bappa2" component={Bappa2} />
+      <Stack.Screen name="Bappa3" component={Bappa3} />
+      <Stack.Screen name="Bappa4" component={Bappa4} />
+      <Stack.Screen name="Bappa5" component={Bappa5} />
+      <Stack.Screen name="Bappa6" component={Bappa6} />
+      <Stack.Screen name="Bappa7" component={Bappa7} />
+      <Stack.Screen name="Bappa8" component={Bappa8} />
+      <Stack.Screen name="History" component={History} />
     </Stack.Navigator>
   );
 }
