@@ -33,7 +33,7 @@ const Girijatmaj = () => {
 
       {/* Ganpati Image */}
       <Animated.View entering={FadeInDown.delay(200).duration(1000)}>
-        <Image source={require("../../assets/images/Bappa.png")} style={styles.image} />
+        <Image source={require("../../assets/images/girjamaj.png")} style={styles.image} />
       </Animated.View>
 
       {/* Description Card */}

@@ -34,7 +34,7 @@ const Vighneshwar = () => {
 
       {/* Ganpati Image */}
       <Animated.View entering={FadeInDown.delay(200).duration(1000)}>
-        <Image source={require("../../assets/images/Bappa.png")} style={styles.image} />
+        <Image source={require("../../assets/images/vigneshwar.png")} style={styles.image} />
       </Animated.View>
 
       {/* Description Card */}
