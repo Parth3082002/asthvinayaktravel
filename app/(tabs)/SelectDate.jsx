@@ -81,21 +81,22 @@ const SelectDateScreen = () => {
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.dateRow}
-      onPress={() => setSelectedDate(item)}
+  <TouchableOpacity
+    style={styles.dateRow}
+    onPress={() => setSelectedDate(item)}
+  >
+    <Text style={styles.dateText}>{item.tripDate}</Text>
+    <View
+      style={[
+        styles.radioCircle,
+        selectedDate?.tripId === item.tripId && styles.radioCircleSelected, // Compare by tripId
+      ]}
     >
-      <Text style={styles.dateText}>{item.tripDate}</Text>
-      <View
-        style={[
-          styles.radioCircle,
-          selectedDate?.tripDate === item.tripDate && styles.radioCircleSelected,
-        ]}
-      >
-        {selectedDate?.tripDate === item.tripDate && <View style={styles.radioInner} />}
-      </View>
-    </TouchableOpacity>
-  );
+      {selectedDate?.tripId === item.tripId && <View style={styles.radioInner} />}
+    </View>
+  </TouchableOpacity>
+);
+
 
   return (
     <View style={styles.container}>

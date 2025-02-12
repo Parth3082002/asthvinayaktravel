@@ -199,6 +199,11 @@ const SelectTour = () => {
       <Text style={styles.noPackagesText}>No packages available for this city.</Text>
     )}
   </ScrollView>
+
+  {/* Fixed Footer Button */}
+  {/* <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
+    <Text style={styles.nextButtonText}>Next</Text>
+  </TouchableOpacity> */}
 </View>
 
             <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
@@ -210,10 +215,15 @@ const SelectTour = () => {
 
 const styles = StyleSheet.create({
   container: {
-
-    flex: 1, 
+    // flex: 1,
+    // backgroundColor: '#FFFFFF',
+    // paddingHorizontal: 16,
+    // paddingTop: 20,
+    flex: 1, // Ensures the entire screen is used properly
       backgroundColor: '#FFFFFF',
       padding: 20,
+
+    //   paddingLeft:20,
   },
   backButtonContainer: {
     position: 'absolute',
@@ -323,6 +333,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
   },
+
+
+ 
+    // container: {
+    //   flex: 1, // Ensures the entire screen is used properly
+    //   backgroundColor: '#FFFFFF',
+    //   padding: 20,
+    // },
   
     scrollViewContent: {
       flexGrow: 1, // Ensures content inside scroll view takes available space
@@ -331,6 +349,50 @@ const styles = StyleSheet.create({
     optionsContainer: {
       flex: 1, // Allows ScrollView to take available space
     },
+    // option1: {
+    //   backgroundColor: '#F5F5F5',
+    //   padding: 15,
+    //   borderRadius: 10,
+    //   marginBottom: 10,
+    // },
+    // optionContent: {
+    //   flexDirection: 'column',
+    //   alignItems: 'flex-start',
+    // },
+    // radioCircle: {
+    //   width: 20,
+    //   height: 20,
+    //   borderRadius: 10,
+    //   borderWidth: 2,
+    //   borderColor: '#FF5722',
+    //   alignItems: 'center',
+    //   justifyContent: 'center',
+    //   marginBottom: 5,
+    // },
+    // radioCircleSelected: {
+    //   backgroundColor: '#FF5722',
+    // },
+    // radioInner: {
+    //   width: 10,
+    //   height: 10,
+    //   borderRadius: 5,
+    //   backgroundColor: '#FFFFFF',
+    // },
+    // optionLabel: {
+    //   fontSize: 16,
+    //   fontWeight: 'bold',
+    //   marginBottom: 5,
+    // },
+    // optionDescription: {
+    //   fontSize: 14,
+    //   color: '#666',
+    // },
+    // noPackagesText: {
+    //   textAlign: 'center',
+    //   fontSize: 16,
+    //   color: 'gray',
+    //   marginTop: 20,
+    // },
     nextButton: {
       position: 'absolute', // Fix button at the bottom
       bottom: 0,

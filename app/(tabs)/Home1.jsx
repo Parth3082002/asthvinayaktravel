@@ -1,58 +1,55 @@
 import React, { useEffect, useState } from "react";
-import { 
-    View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, 
-    ActivityIndicator, BackHandler, Dimensions, Platform, useWindowDimensions 
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, ActivityIndicator, BackHandler } from "react-native";
 import { Svg, Path } from "react-native-svg";
-import { useNavigation, useRoute } from "@react-navigation/native"; 
-import AsyncStorage from "@react-native-async-storage/async-storage"; 
-
-const { width, height } = Dimensions.get("window"); // Get screen width and height
+import { useNavigation, useRoute } from "@react-navigation/native"; // Importing useRoute to access route params
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Import AsyncStorage
 
 const Home = () => {
     const navigation = useNavigation();
-    const route = useRoute(); 
-    const { width: screenWidth } = useWindowDimensions(); // Get dynamic screen width
+    const route = useRoute(); // Accessing route params
     const [cities, setCities] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [vehicleType, setVehicleType] = useState(null); 
-    const [selectedCity, setSelectedCity] = useState({ cityId: null, cityName: null });
+    const [vehicleType, setVehicleType] = useState(null); // State to store the vehicle type
+    const [selectedCity, setSelectedCity] = useState({ cityId: null, cityName: null }); // State for selected city
 
+    // Fetch the vehicleType from AsyncStorage
     useEffect(() => {
         const fetchVehicleType = async () => {
             try {
                 const storedVehicleType = await AsyncStorage.getItem("vehicleType");
                 if (storedVehicleType) {
-                    setVehicleType(storedVehicleType);
+                    setVehicleType(storedVehicleType); // Set the vehicleType state from AsyncStorage
                 }
             } catch (error) {
                 console.error("Error fetching vehicle type from storage:", error);
             }
         };
 
-        fetchVehicleType();
-    }, []);
+        fetchVehicleType(); // Call function to fetch vehicle type
+    }, []); // Only run this once when the component mounts
 
+    // Fetch cities
     useEffect(() => {
         fetch("http://ashtavinayak.somee.com/api/City/")
             .then((response) => response.json())
             .then((data) => {
                 setCities(data);
-                setLoading(false);
+                setLoading(false); // Set loading to false after data is fetched
             })
             .catch((error) => {
                 console.error("Error fetching cities:", error);
-                setLoading(false);
+                setLoading(false); // Set loading to false even in case of an error
             });
     }, []);
 
+    // Handle physical back button press to reset navigation stack
     useEffect(() => {
         const backAction = () => {
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'SelectVehicle1' }],
             });
-            return true;
+            return true;  // Prevent default back action
         };
 
         const backHandler = BackHandler.addEventListener(
@@ -63,7 +60,7 @@ const Home = () => {
         return () => backHandler.remove();
     }, []);
 
-
+    // Store selected city to AsyncStorage
     const storeCityData = async (cityId, cityName) => {
         try {
             await AsyncStorage.setItem("selectedCityId", cityId.toString());
@@ -73,41 +70,44 @@ const Home = () => {
         }
     };
 
+    // Handle city selection
     const handlePress = async (cityId, cityName) => {
         console.log("Selected City ID:", cityId);
         console.log("Selected City Name:", cityName);
-        console.log("Selected Vehicle Type:", vehicleType);
+        console.log("Selected Vehicle Type:", vehicleType); // Log the vehicleType
 
+        // Store city info to AsyncStorage
         await storeCityData(cityId, cityName);
 
+        // Navigate to the next page and pass city information and vehicleType
         navigation.navigate("SelectTour", {
             selectedCityId: cityId,
             selectedCityName: cityName,
-            vehicleType: vehicleType,
+            vehicleType: vehicleType, // Pass the vehicleType to the next screen
         });
 
-        
+        // Update the local state for selected city
         setSelectedCity({ cityId, cityName });
     };
 
     return (
         <ScrollView style={styles.container}>
+            {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.welcomeText}>“ Welcome Back Ganesh !! ”</Text>
                 <Text style={styles.subText}>Where You Want to go ?</Text>
             </View>
 
+            {/* Illustration */}
             <View style={styles.citySelection}>
                 <View style={styles.illustrationContainer}>
-                    <Svg width="100%" height={height * 0.15} viewBox="0 0 200 100">
+                    <Svg width="100%" height="100" viewBox="0 0 200 100">
                         <Path stroke="#E0E0E0" fill="transparent" strokeWidth="2" />
                     </Svg>
-                    <Image 
-                        source={require("../../assets/images/bus1.png")} 
-                        style={[styles.illustration, { width: screenWidth * 0.6 }]} 
-                    />
+                    <Image source={require("../../assets/images/bus1.png")} style={styles.illustration} />
                 </View>
 
+                {/* Start City Buttons */}
                 <Text style={styles.cityLabel}>Select Start City</Text>
 
                 {loading ? (
@@ -116,14 +116,19 @@ const Home = () => {
                     cities.map((city) => (
                         <TouchableOpacity
                             key={city.cityId}
-                            style={[styles.cityButton, { width: screenWidth * 0.4 }]}
-                            onPress={() => handlePress(city.cityId, city.cityName)}
+                            style={styles.cityButton}
+                            onPress={() => handlePress(city.cityId, city.cityName)}  // Pass both cityId and cityName
                         >
                             <Text style={styles.cityText}>{city.cityName}</Text>
                         </TouchableOpacity>
                     ))
                 )}
             </View>
+
+           
+              
+             
+  
         </ScrollView>
     );
 };
@@ -132,45 +137,46 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F5F5F5",
-        marginTop: Platform.OS === "ios" ? height * 0.05 : height * 0.03,
+        marginTop: 40,
     },
     header: {
-        padding: width * 0.05,
-        paddingTop: height * 0.07,
-        height: height * 0.25,
+        padding: 20,
+        paddingTop: 40,
+        height: 200,
         alignItems: "center",
         backgroundColor: "#FF5722",
         position: "relative",
         zIndex: 1,
-        marginBottom: height * 0.015,
+        marginBottom: 10,
     },
     welcomeText: {
-        fontSize: width * 0.08,
+        fontSize: 38,
         fontWeight: "bold",
         color: "#fff",
         textAlign: "center",
     },
     subText: {
-        fontSize: width * 0.04,
+        fontSize: 16,
         color: "#fff",
-        marginTop: height * 0.01,
+        marginTop: 10,
         textAlign: "center",
-        marginBottom: height * 0.07,
+        marginBottom: 50,
     },
     illustrationContainer: {
         alignItems: "center",
-        marginTop: -height * 0.1,
+        marginTop: -80,
         zIndex: 2,
     },
     illustration: {
-        height: height * 0.15,
+        width: 250,
+        height: 120,
         resizeMode: "contain",
     },
     citySelection: {
         alignItems: "center",
-        marginTop: height * 0.05,
+        marginTop: 60,
         backgroundColor: "#fff",
-        padding: width * 0.04,
+        padding: 10,
         borderRadius: 15,
         shadowColor: "#000",
         shadowOpacity: 0.1,
@@ -182,15 +188,16 @@ const styles = StyleSheet.create({
         zIndex: 2,
     },
     cityLabel: {
-        fontSize: width * 0.045,
+        fontSize: 16,
         color: "#555",
-        marginBottom: height * 0.02,
+        marginBottom: 15,
     },
     cityButton: {
         backgroundColor: "#FFCCBC",
-        paddingVertical: height * 0.015,
+        paddingVertical: 10,
+        width: 150,
         borderRadius: 12,
-        marginVertical: height * 0.01,
+        marginVertical: 8,
         shadowColor: "#000",
         shadowOpacity: 0.1,
         shadowOffset: { width: 0, height: 3 },
@@ -201,11 +208,74 @@ const styles = StyleSheet.create({
         flexDirection: "row",
     },
     cityText: {
-        fontSize: width * 0.05,
+        fontSize: 18,
         color: "#D84315",
         fontWeight: "bold",
         textAlign: "center",
     },
+    journeyContainer: {
+        padding: 20,
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        marginBottom: 10,
+    },
+    detailsText: {
+        fontSize: 14,
+        color: "#666",
+        marginBottom: 7,
+    },
+    journeyCard: {
+        backgroundColor: "#fff",
+        padding: 15,
+        borderRadius: 10,
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 3 },
+        shadowRadius: 5,
+        elevation: 5,
+    },
+    journeyRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 10,
+    },
+    icon: {
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        backgroundColor: "#E0E0E0",
+        justifyContent: "center",
+        alignItems: "center",
+        marginRight: 10,
+    },
+    arrow: {
+        fontSize: 16,
+        fontWeight: "bold",
+    },
+    journeyInfo: {
+        flex: 1,
+    },
+    journeyLabel: {
+        fontSize: 14,
+        fontWeight: "bold",
+        marginBottom: 3,
+    },
+    journeyText: {
+        fontSize: 12,
+        color: "#555",
+    },
+    timeText: {
+        textAlign: "right",
+        fontSize: 12,
+        color: "#666",
+    },
+    separator: {
+        height: 1,
+        backgroundColor: "#E0E0E0",
+        marginVertical: 10,
+    },
 });
 
-export default Home;
+export default Home;

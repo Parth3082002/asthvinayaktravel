@@ -126,7 +126,7 @@ const Otp = () => {
             {
               text: "OK",
               onPress: () =>
-                navigation.navigate("SelectVehicle", {
+                navigation.navigate("SelectVehicle1", {
                   token,
                   mobileNo,
                 }),
@@ -165,12 +165,14 @@ const Otp = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-    >
-      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-        <View style={styles.container}>
+//     <KeyboardAvoidingView
+//   behavior={Platform.OS === "ios" ? "padding" : "height"}
+//   keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0} // Adjust offset if needed
+//   style={styles.container}
+// >
+
+<TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
+          <View style={styles.container}>
           <View style={styles.logoContainer}>
             <Image
               source={require("@/assets/images/Verify.png")}
@@ -218,8 +220,8 @@ const Otp = () => {
             <Text style={styles.nextText}>Verify OTP</Text>
           </TouchableOpacity>
         </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+    // </KeyboardAvoidingView>
   );
 };
 
@@ -307,7 +309,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     marginBottom: 20,
     width:200,
-    marginLeft:40,
+    marginLeft:65,
   },
   nextText: {
     color: "#fff",

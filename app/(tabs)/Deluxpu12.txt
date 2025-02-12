@@ -1,312 +1,264 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ImageBackground,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image, FlatList } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
-const Deluxpu12 = () => {
+// Import images
+import BusImage from "@/assets/images/bus1.png";
+import CarImage from "@/assets/images/Car.png";
+import { useNavigation } from "@react-navigation/native";
+
+const cars = [
+  {
+    id: "1",
+    name: "Bus",
+    type: "BUS",
+    description: "A bus offers spacious seating and a comfortable ride for group travel.",
+    image: BusImage,
+  },
+  {
+    id: "2",
+    name: "Car",
+    type: "CAR",
+    description: "A sedan offers comfort, fuel efficiency, and a smooth ride for travel.",
+    image: CarImage,
+  },
+];
+
+const Dashboard = () => {
+  const [selectedFilter, setSelectedFilter] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState(null);
+  const navigation = useNavigation();
+  const [isProfileVisible, setProfileVisible] = useState(false);
+
+  const fetchUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem("user");
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+    } catch (error) {
+      console.error("Error fetching user data", error);
+    }
+  };
+   useEffect(() => {
+      fetchUserData();
+    }, []);
+
+    const handlePress = (screen) => {
+      if (screen) {
+        navigation.navigate(screen);
+      }
+    };
+
+    const handleLogout = async () => {
+      try {
+        await AsyncStorage.clear(); // Clears all stored data
+        setUser(null);
+        setProfileVisible(false);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "Login" }],
+        });
+      } catch (error) {
+        console.error("Error during logout:", error);
+      }
+    };
+
+
+  // Filter cars based on category and search query
+  const filteredCars = cars.filter((item) => {
+    const matchesFilter = selectedFilter === "ALL" || item.type === selectedFilter;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
   return (
-    <ScrollView style={styles.container}>
-      {/* Background Image */}
-      <ImageBackground
-        source={require('../../assets/images/back.png')}
-        style={styles.headerImage}
-      >
-        <View style={styles.headerContent}>
-  <View style={styles.inclusionRow}>
-    <Text style={styles.inclusionText}>Inclusion:</Text>
-    <Text style={styles.cityText}>Pune</Text>
-  </View>
-  <Text style={styles.inclusionDetails}>
-  •  Non-AC Deluxe Bus{'\n'}
-  •  1 Night Stay at Bhakt-Niwas                            {'\t'} at Lenyadri/Ozar{'\n'}
-    {'\n'}
-    •  Meals{'\n'}
-         {'\t\t'}- 2 Breakfast{'\n'}
-         {'\t\t'}- 2 Lunch{'\n'}
-         {'\t\t'}- 1 Dinner
-  </Text>
-</View>
+    <View style={{ flex: 1, backgroundColor: "#fff", padding: 20 }}>
+      {/* Header */}
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <Text style={{ fontSize: 24, fontWeight: "bold" }}>Hello,{"\n"}{user?.userName}!</Text>
 
-      </ImageBackground>
+         <View style={styles.iconContainer}>
+                  <TouchableOpacity onPress={() => handlePress("History")}>
+                    <Icon name="history" size={30} color="black" style={styles.icon} />
+                  </TouchableOpacity>
+                  <Icon name="notifications" size={30} color="black" style={styles.icon} />
+                  <TouchableOpacity onPress={() => setProfileVisible(true)}>
+                    <Icon name="account-circle" size={40} color="black" />
+                  </TouchableOpacity>
 
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>1 Night 2 Days (Standard)</Text>
-        <View style={styles.searchBox}>
-          <Ionicons name="location" size={23} color="#ff5722" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search Pickup Location"
-            placeholderTextColor="#888"
-          />
+ {/* Profile Modal */}
+      {isProfileVisible && user && (
+        <View style={styles.profileModal}>
+          <View style={styles.profileContent}>
+            <Text style={styles.profileText}>User Profile</Text>
+            <Text style={styles.userInfo}>Username: {user.userName}</Text>
+            <Text style={styles.userInfo}>Email: {user.email}</Text>
+            <Text style={styles.userInfo}>Phone No: {user.phoneNumber}</Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+                <Text style={styles.buttonText}>Logout</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.closeButton} onPress={() => setProfileVisible(false)}>
+                <Text style={styles.buttonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
+      )}
+                  
+                </View>
       </View>
 
-      {/* Itinerary */}
-      <View style={styles.dayContainer}>
-        {/* Day 1 */}
-        <Text style={styles.dayText}>DAY 1 -</Text>
-        <View style={styles.itineraryRow}>
-          {/* Image */}
-          <Image
-            source={require('../../assets/images/Day1.png')} // Replace with Day 1 image URL
-            style={styles.dayImage}
-          />
+      {/* Search Bar */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: "#f0f0f0",
+          borderRadius: 10,
+          paddingHorizontal: 10,
+          height: 40,
+        }}
+      >
+        <Ionicons name="search" size={20} color="gray" />
+        <TextInput
+          placeholder="Search here"
+          style={{ flex: 1, marginLeft: 10 }}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
 
-          {/* Timeline */}
-          <View style={styles.timelineContainer}>
-  {/* Vertical Line with Dots and Lines */}
-  <View style={styles.verticalLine}>
-    {['Pune', 'Morgaon', 'Siddhatek', 'Theur', 'Ranjangaon'].map((location, index) => (
-      <React.Fragment key={index}>
-        {/* If it's the first location, show the vertical line first */}
-        {index === 0 && (
-          <View style={{ height: 28, width: 2, backgroundColor: '#ccc',marginTop:-20 }} />
+      {/* Filter Tabs */}
+      <View style={{ flexDirection: "row", marginTop: 20 }}>
+        {["ALL", "CAR", "BUS"].map((filter) => (
+          <TouchableOpacity
+            key={filter}
+            onPress={() => setSelectedFilter(filter)}
+            style={{
+              marginRight: 15,
+              borderBottomWidth: selectedFilter === filter ? 2 : 0,
+              borderBottomColor: selectedFilter === filter ? "black" : "transparent",
+            }}
+          >
+            <Text style={{ fontWeight: selectedFilter === filter ? "bold" : "normal" }}>{filter}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Car List */}
+      <FlatList
+        data={filteredCars}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 10,
+              padding: 15,
+              marginTop: 15,
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 5,
+              elevation: 3,
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: "bold", fontSize: 16 }}>{item.name}</Text>
+              <Text style={{ color: "gray", fontSize: 12 }}>{item.description}</Text>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#ff6600",
+                  paddingVertical: 5,
+                  paddingHorizontal: 15,
+                  borderRadius: 5,
+                  marginTop: 10,
+                  alignSelf: "flex-start",
+                }}
+              >
+                <Text style={{ color: "white" }}>Book Now</Text>
+              </TouchableOpacity>
+
+             
+            </View>
+            <Image source={item.image} style={{ width: 150, height: 90, resizeMode: "contain" }} />
+          </View>
         )}
-        <View style={styles.dot} />
-        {/* Line before dot (except for the last one) */}
-        {index < 5 && (
-          <View style={{ height: 0,  backgroundColor: '#ccc',  }} />
-        )}
-      </React.Fragment>
-    ))}
-  </View>
-
-  {/* Locations */}
-  <View style={styles.timeline}>
-    {['Pune', 'Morgaon', 'Siddhatek', 'Theur', 'Ranjangaon'].map((location, index) => (
-      <Text key={index} style={styles.timelineText}>{location}</Text>
-    ))}
-  </View>
-</View>
-
-
-        </View>
-        <Text style={styles.nightText}>Night Halt at Lenyadri Or Ozar</Text>
-
-        {/* Day 2 */}
-        <Text style={styles.dayText}>DAY 2 -</Text>
-<View style={styles.itineraryRow}>
-  {/* Image */}
-  <Image
-     source={require('../../assets/images/Day2.png')} // Replace with Day 2 image URL
-    style={styles.dayImage}
-  />
-
-  {/* Timeline */}
-  <View style={styles.timelineContainer}>
-  {/* Vertical Line with Dots and Lines */}
-  <View style={styles.verticalLine}>
-    {['Lenyadri', 'Ozar', 'Pali', 'Mahad', 'Pune'].map((location, index) => (
-      <React.Fragment key={index}>
-        {/* If it's the first location, show the vertical line first */}
-        {index === 0 && (
-          <View style={{ height: 28, width: 2, backgroundColor: '#ccc', marginTop:-20 }} />
-        )}
-        <View style={styles.dot} />
-        {/* Line before dot (except for the last one) */}
-        {index < 4 && (
-          <View style={{ height: 0, backgroundColor: '#ccc',}} />
-        )}
-      </React.Fragment>
-    ))}
-  </View>
-
-  {/* Locations */}
-  <View style={styles.timeline}>
-    {['Lenyadri', 'Ozar', 'Pali', 'Mahad', 'Pune'].map((location, index) => (
-      <Text key={index} style={styles.timelineText}>{location}</Text>
-    ))}
-  </View>
-</View>
-
-</View>
-</View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-  <View>
-    <Text style={styles.costText}>Tour Cost</Text>
-    <Text style={styles.priceText}>₹ 2500</Text>
-  </View>
-  <View style={styles.bookButton}>
-  <Text style={styles.bookButtonText}>Book Now</Text>
-  <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 10 }} />
-</View>
-
-</View>
-
-
-    </ScrollView>
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
+  container: { flex: 1, backgroundColor: "#f8f8f8" },
+
+  /* Header */
+  header: {
+    height: 100,
+    backgroundColor: "#fff",
+    paddingHorizontal: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop:20
   },
-  headerImage: {
-    width: '100%',
-    height: 230,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop:40,
+  welcomeText: { fontSize: 18, fontWeight: "bold", color: "#ff6600" },
+  subText: { fontSize: 16, color: "black", fontStyle: "italic" },
+  
+  /* Icons on Right Side */
+  iconContainer: { flexDirection: "row", alignItems: "center" },
+  icon: { marginLeft: 10 },
+
+  /* Scrollable Cards */
+  scrollContent: { paddingBottom: 80 },
+  cardsContainer: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", paddingHorizontal: 30, marginTop: 10 },
+  card: { width: "42%", backgroundColor: "#fff", padding: 10, borderRadius: 10, marginBottom: 15, alignItems: "center", elevation: 3 },
+  ganpatiImage: { width: 90, height: 90, borderRadius: 10 },
+  ganpatiName: { marginTop: 6, fontSize: 14, fontWeight: "bold", textAlign: "center" },
+
+  /* Fixed Footer */
+  footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    paddingVertical: 15,
+    alignItems: "center",
+    elevation: 5,
   },
-  headerContent: {
-    padding: 38,
-  },
-  inclusionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  inclusionText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  cityText: {
-    fontSize: 22,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  inclusionDetails: {
-    fontSize: 15,
-    color: '#fff',
-    marginTop: 10,
-    textAlign: 'left',
-    fontWeight:'bold',
+  bookingButton: { backgroundColor: "#ff6600", paddingVertical: 12, paddingHorizontal: 110, borderRadius: 10 },
+  bookingText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+
+  /* Profile Modal */
+  profileModal: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0, 0, 0, 0.5)", justifyContent: "center", alignItems: "center" },
+  profileContent: { backgroundColor: "#fff", padding: 20, borderRadius: 10, width: "80%", alignItems: "center" },
+  profileText: { fontSize: 24, fontWeight: "bold", color: "#ff6600" },
+  userInfo: { fontSize: 16, color: "#333", marginVertical: 2 },
+  buttonContainer: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 10 },
+  logoutButton: { backgroundColor: "#ff6600", paddingVertical: 10, paddingHorizontal: 30, borderRadius: 5 },
+  closeButton: { backgroundColor: "#ff6600", paddingVertical: 10, paddingHorizontal: 30, borderRadius: 5 },
+  buttonText: { fontSize: 18, color: "#fff", textAlign: "center" },
+  overlay: {
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black
+    paddingVertical: 5,
+    alignItems: "center",
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
   },
  
-  titleContainer: {
-    padding: 15,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 2,
-  },
-  searchInput: {
-    marginLeft: 8,
-    fontSize: 16,
-    flex: 1,
-  },
-  dayContainer: {
-    padding: 20,
-    marginTop:-20,
-  },
-  dayText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 10,
-    color:'rgba(0, 122, 211, 1)',
-  },
-  itineraryRow: {
-    flexDirection: 'row',
-    marginVertical: 30,
-  },
-  dayImage: {
-    width: 135,
-    height: 215,
-    // borderRadius: 10?,
-    marginRight: 20,
-    borderTopLeftRadius: 10,
-  borderTopRightRadius: 10,
-  marginVertical:-15,
-  },
-  timelineContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    // marginVertical: 20,
-  },
-  verticalLine: {
-    position: 'relative',
-    width: 2,
-    backgroundColor: '#ccc', // Vertical line color
-    marginRight: 20,
-    alignItems: 'center',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(0, 122, 211, 1)', // Dot color
-    marginBottom: 30, // Space between dots
-  },
-  timeline: {
-    justifyContent: 'flex-start',
-  },
-  timelineText: {
-    fontSize: 16,
-    color: '#555', // Text color
-    marginBottom: 20, // Space between text and dots
-    // marginTop:20,
-    
-  },
-  nightText: {
-    fontSize: 16,
-    // fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: -5,
-
-    color: '#555',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    marginTop:-40,
-    // borderTopWidth: 1,
-    // borderColor: '#ddd',
-  },
-  costText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft:5,
-  },
-  priceText: {
-    fontSize: 18,
-    color: 'rgba(0, 227, 9, 1)',
-    fontWeight: 'bold',
-    marginLeft:5,
-  },
-  bookButton: {
-    backgroundColor: '#ff5722',
-    padding: 10,
-    borderRadius: 5,
-    flexDirection: 'row', // This makes the text and icon align horizontally
-    alignItems: 'center',  // Vertically centers the text and the icon
-    justifyContent: 'center', // Centers the content
-  },  
-  bookButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    marginRight: 0,  // Adds space between text and the arrow
-    marginLeft:10,
-    
-  },
   
 });
 
-export default Deluxpu12;
+export default Dashboard;

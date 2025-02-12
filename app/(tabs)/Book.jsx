@@ -504,14 +504,14 @@ const styles = StyleSheet.create({
     height: 50,
     resizeMode: "contain",
   },
-  payNowButton: {
+  payButton: {
     backgroundColor: "#D44206",
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 20,
   },
-  buttonText1: {
+  payButtonText: {
     color: "#fff",
     fontSize: 16,
   },
@@ -522,6 +522,7 @@ const styles = StyleSheet.create({
     display: 'flex', // Ensure it's a flex container
     gap: 10, // Creates a gap between the fields in the same row
   },
+  
   halfWidth: {
     flex: 5,
     marginLeft:2,

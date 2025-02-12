@@ -30,7 +30,7 @@ const History = () => {
     const backAction = () => {
       navigation.reset({
         index: 0, // Set the index to 0 to go to the first screen
-        routes: [{ name: 'Dashboard' }], // Replace the entire stack with the Dashboard screen
+        routes: [{ name: 'SelectVehicle1' }], // Replace the entire stack with the Dashboard screen
       });
       return true; // Prevent default back button behavior
     };

@@ -55,7 +55,7 @@ const Index = () => {
     try {
       const token = await AsyncStorage.getItem("token"); // Checking if token exists in AsyncStorage
       if (token) {
-        router.push("Dashboard"); // Navigate to SelectVehicle page if token exists
+        router.push("SelectVehicle1"); // Navigate to SelectVehicle page if token exists
       } else {
         router.push("Login"); // Navigate to Login page if no token
       }

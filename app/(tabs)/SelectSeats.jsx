@@ -195,10 +195,11 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
+    marginTop:20,
   },
   legendContainer: {
     flexDirection: "row",

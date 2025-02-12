@@ -116,7 +116,7 @@ const Dashboard = () => {
 
       {/* Fixed Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.bookingButton} onPress={() => handlePress("SelectVehicle")}>
+        <TouchableOpacity style={styles.bookingButton} onPress={() => handlePress("SelectVehicle1")}>
           <Text style={styles.bookingText}>Start Booking</Text>
         </TouchableOpacity>
       </View>
