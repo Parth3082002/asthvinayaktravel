@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Alert } from "react-native"; // Import Alert
 import { CommonActions } from '@react-navigation/native';
 
@@ -17,39 +17,27 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from "@expo/vector-icons"; // For the date icon
 import Icon from "react-native-vector-icons/Ionicons"; // For icons
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {  useRoute } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
 
 const Book = () => {
-  // const [date, setDate] = useState(null);
-  // const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [roomType, setRoomType] = useState("");
-  // const [childWithSeat, setChildWithSeat] = useState(0);
-  // const [childWithoutSeat, setChildWithoutSeat] = useState(0);
   const navigation = useNavigation(); // Navigation hook
   const route = useRoute(); // To access route params
   const [date, setDate] = useState(route.params.selectedDate || "dd-MM-yyyy");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [pickupLocation, setPickupLocation] = useState(route.params.selectedPickupPoint || "");
-  // const [pickupLocationId, setPickupLocationId] = useState(route.params.selectedPickupPointId || "");
-
   const [totalAmount, setTotalAmount] = useState(route.params.price || ""); // Ensure route.params.price is correct
-    const [mobileNo, setMobileNo] = useState(null);
-    const [token, setToken] = useState(null);
-    const [user, setUser] = useState(null);
-// const [pickupLocation, setPickupLocation] = useState(route.params.selectedPickupPoint || "");
-//   const [totalAmount, setTotalAmount] = useState(route.params.price || "");
-const [advanceAmount, setAdvanceAmount] = useState(totalAmount / 2); // Dynamic initial value
+  const [mobileNo, setMobileNo] = useState(null);
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [advanceAmount, setAdvanceAmount] = useState(totalAmount / 2); // Dynamic initial value
   const [errorMessage, setErrorMessage] = useState("");
-  // const [seatNumber, setSeatNumber] = useState(route.params.seatNumber || ""); // Fetching seat number
-  // const { selectedSeats } = route.params || { selectedSeats: [] };
   const selectedSeats = route.params.selectedSeats.map(seat => seat.seatNumber || seat);
-
   const [seatNumber, setSeatNumber] = useState("");
-
   const [adults, setAdults] = useState(""); // Manual input
   const [childWithSeat, setChildWithSeat] = useState("");
   const [childWithoutSeat, setChildWithoutSeat] = useState("");
-
+  const [errors, setErrors] = useState({}); // To store error messages for each field
 
   useEffect(() => {
     if (route?.params?.seatNumber) {
@@ -57,136 +45,151 @@ const [advanceAmount, setAdvanceAmount] = useState(totalAmount / 2); // Dynamic 
     }
   }, [route?.params?.seatNumber]); // Runs when seatNumber updates
 
-    useEffect(() => {
-      // Log passed parameters from SelectSeats
-      console.log("Passed Data from SelectSeats:");
-      console.log("City Name:", route.params.cityName);
-      console.log("City ID:", route.params.cityId);
-      console.log("Package Name:", route.params.packageName);
-      console.log("Package ID:", route.params.packageId);
-      console.log("Category Name:", route.params.categoryName);
-      console.log("Category ID:", route.params.categoryId);
-      
-      console.log("Selected Pickup Point:", route.params.selectedPickupPoint);
-      console.log("Price:", route.params.price);
-      console.log("Selected Date:", route.params.selectedDate);
-      console.log("Received Pickup Point ID:", route.params.selectedPickupPointId);
-      console.log("Trip ID:", route.params.tripId);
+  useEffect(() => {
+    // Log passed parameters from SelectSeats
+    console.log("Passed Data from SelectSeats:");
+    console.log("City Name:", route.params.cityName);
+    console.log("City ID:", route.params.cityId);
+    console.log("Package Name:", route.params.packageName);
+    console.log("Package ID:", route.params.packageId);
+    console.log("Category Name:", route.params.categoryName);
+    console.log("Category ID:", route.params.categoryId);
+    console.log("Selected Pickup Point:", route.params.selectedPickupPoint);
+    console.log("Price:", route.params.price);
+    console.log("Selected Date:", route.params.selectedDate);
+    console.log("Received Pickup Point ID:", route.params.selectedPickupPointId);
+    console.log("Trip ID:", route.params.tripId);
 
-      // Fetch user data from AsyncStorage
-      const fetchUserData = async () => {
-        try {
-          const mobileNo = await AsyncStorage.getItem('mobileNo');
-          const token = await AsyncStorage.getItem('token');
-          const user = await AsyncStorage.getItem('user');
-          
-          if (mobileNo && token && user) {
-            const userObj = JSON.parse(user);
-            setMobileNo(mobileNo);
-            setToken(token);
-            setUser(userObj);
-    
-            // Print userId in console
-            console.log("User ID:", userObj.userId);
-          } else {
-            Alert.alert('Error', 'No data found in AsyncStorage');
-          }
-        } catch (error) {
-          console.error('Error retrieving data from AsyncStorage:', error);
-          Alert.alert('Error', 'Failed to load user data');
+    // Fetch user data from AsyncStorage
+    const fetchUserData = async () => {
+      try {
+        const mobileNo = await AsyncStorage.getItem('mobileNo');
+        const token = await AsyncStorage.getItem('token');
+        const user = await AsyncStorage.getItem('user');
+
+        if (mobileNo && token && user) {
+          const userObj = JSON.parse(user);
+          setMobileNo(mobileNo);
+          setToken(token);
+          setUser(userObj);
+
+          // Print userId in console
+          console.log("User ID:", userObj.userId);
+        } else {
+          Alert.alert('Error', 'No data found in AsyncStorage');
         }
-      };
-    
-      fetchUserData();
-    }, [route.params]);
-
-    const handleAdvanceInputChange = (value) => {
-      const numericValue = parseFloat(value);
-      setAdvanceAmount(numericValue);
-  
-      if (numericValue < totalAmount / 2) {
-        setErrorMessage(`Advance amount should be greater than ${totalAmount / 2}`);
-      } else {
-        setErrorMessage("");
+      } catch (error) {
+        console.error('Error retrieving data from AsyncStorage:', error);
+        Alert.alert('Error', 'Failed to load user data');
       }
     };
-  
-    const handleConfirm = (date) => {
-      const formattedDate = date.toLocaleDateString();  // Format the date
-      setDate(formattedDate); // Update the date state
-      setDatePickerVisibility(false);
-    };
-    console.log("UserId:", user?.userId);
 
+    fetchUserData();
+  }, [route.params]);
 
+  const handleAdvanceInputChange = (value) => {
+    const numericValue = parseFloat(value);
+    setAdvanceAmount(numericValue);
 
-    
-
-const handleBooking = async () => {
-  if (!user || !user.userId || !token) {
-    Alert.alert("Error", "User not found. Please log in again.");
-    return;
-  }
-
-  const bookingData = {
-    UserId: user.userId,
-    TripId: route.params.tripId,
-    PickupPointId: route.params.selectedPickupPointId,
-    DroppointId: route.params.selectedDropPointId || 1,
-    BookingDate: new Date(route.params.selectedDate).toISOString(),
-    Status: "Confirmed",
-    TotalPayment: totalAmount,
-    Advance: advanceAmount,
-    SeatNumbers: selectedSeats.map(seat => seat.seatNumber || seat).map(String),
-    Adults: parseInt(adults) || 0,
-    Childwithseat: parseInt(childWithSeat) || 0,
-    Childwithoutseat: parseInt(childWithoutSeat) || 0,
+    if (numericValue < totalAmount / 2) {
+      setErrorMessage(`Advance amount should be greater than ${totalAmount / 2}`);
+    } else {
+      setErrorMessage("");
+    }
   };
 
-  console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
+  const handleConfirm = (date) => {
+    const formattedDate = date.toLocaleDateString();  // Format the date
+    setDate(formattedDate); // Update the date state
+    setDatePickerVisibility(false);
+  };
 
-  try {
-    const response = await fetch(
-      "http://ashtavinayak.somee.com/api/Booking/CreateBookingWithSeats",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(bookingData),
-      }
-    );
+  const validateFields = () => {
+    const newErrors = {};
 
-    const result = await response.json();
-    console.log("API Response:", result);
+    if (!adults) newErrors.adults = "field is required";
+    if (!childWithSeat) newErrors.childWithSeat = "field is required";
+    if (!childWithoutSeat) newErrors.childWithoutSeat = " field is required";
+    // if (!pickupLocation) newErrors.pickupLocation = "Pickup location is required";
 
-    if (response.ok) {
-      Alert.alert("Success", "Booking successful!", [
-        {
-          text: "OK",
-          onPress: async () => {
-            // Reset navigation stack and navigate to Home
-            navigation.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [{ name: "Home" }],
-              })
-            );
-          },
-        },
-      ]);
-    } else {
-      const errorMessage = result.message || "Booking failed. Please try again.";
-      Alert.alert("Booking Failed", errorMessage);
+    // Validate seat count
+    const totalSeats = parseInt(adults) + parseInt(childWithSeat) + parseInt(childWithoutSeat);
+    if (totalSeats !== selectedSeats.length) {
+      newErrors.seatCount = `Total seats (${selectedSeats.length}) do not match the sum of adults, children with seats, and children without seats.`;
     }
-  } catch (error) {
-    console.error("API Error:", error);
-    Alert.alert("Error", "Something went wrong. Please try again.");
-  }
-};
 
-   
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleBooking = async () => {
+    if (!validateFields()) {
+      return;
+    }
+
+    if (!user || !user.userId || !token) {
+      Alert.alert("Error", "User not found. Please log in again.");
+      return;
+    }
+
+    const bookingData = {
+      UserId: user.userId,
+      TripId: route.params.tripId,
+      PickupPointId: route.params.selectedPickupPointId,
+      DroppointId: route.params.selectedDropPointId || 1,
+      BookingDate: new Date(route.params.selectedDate).toISOString(),
+      Status: "Confirmed",
+      TotalPayment: totalAmount,
+      Advance: advanceAmount,
+      SeatNumbers: selectedSeats.map(seat => seat.seatNumber || seat).map(String),
+      Adults: parseInt(adults) || 0,
+      Childwithseat: parseInt(childWithSeat) || 0,
+      Childwithoutseat: parseInt(childWithoutSeat) || 0,
+    };
+
+    console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
+
+    try {
+      const response = await fetch(
+        "http://ashtavinayak.somee.com/api/Booking/CreateBookingWithSeats",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bookingData),
+        }
+      );
+
+      const result = await response.json();
+      console.log("API Response:", result);
+
+      if (response.ok) {
+        Alert.alert("Success", "Booking successful!", [
+          {
+            text: "OK",
+            onPress: async () => {
+              // Reset navigation stack and navigate to Home
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: "Home" }],
+                })
+              );
+            },
+          },
+        ]);
+      } else {
+        const errorMessage = result.message || "Booking failed. Please try again.";
+        Alert.alert("Booking Failed", errorMessage);
+      }
+    } catch (error) {
+      console.error("API Error:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header with Back Arrow */}
@@ -201,106 +204,110 @@ const handleBooking = async () => {
 
       <ScrollView contentContainerStyle={styles.formContainer}>
         <View style={styles.card}>
+          <View style={styles.inputFieldContainer}>
+            <Text style={styles.label}>Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Your Name"
+              placeholderTextColor="#aaa"
+              value={user?.userName || ""} // Ensuring it doesn't break if user is null
+              editable={false} // Making it non-editable if necessary
+            />
+          </View>
 
-        <View style={styles.inputFieldContainer}>
-  <Text style={styles.label}>Name</Text>
-  <TextInput
-  style={styles.input}
-  placeholder="Your Name"
-  placeholderTextColor="#aaa"
-  value={user?.userName || ""} // Ensuring it doesn't break if user is null
-  editable={false} // Making it non-editable if necessary
-/>
+          <View style={styles.inputFieldContainer}>
+            <Text style={styles.label}>Contact Number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Your Contact"
+              keyboardType="numeric"
+              placeholderTextColor="#aaa"
+              value={user?.phoneNumber || ""}
+              editable={false} // Prevent user modification if required
+            />
+          </View>
 
-</View>
-
-<View style={styles.inputFieldContainer}>
-  <Text style={styles.label}>Contact Number</Text>
-  <TextInput
-  style={styles.input}
-  placeholder="Your Contact"
-  keyboardType="numeric"
-  placeholderTextColor="#aaa"
-  value={user?.phoneNumber || ""}
-  editable={false} // Prevent user modification if required
-/>
-
-</View>
-
-{/* <View style={styles.inputFieldContainer}>
-  <Text style={styles.label}>Mobile No: {mobileNo}</Text>
-</View> */}
-
-            
-<View style={styles.row}>
-      <View style={styles.halfWidth}>
-        <Text style={styles.label}>Seat No</Text>
-        <TextInput 
-  style={styles.input} 
-  keyboardType="numeric"
-  value={selectedSeats.map(seat => seat.seatNumber || seat).join(", ")} // Extract actual seat numbers
-  editable={false} // Making it read-only
-/>
-
-      </View>
-      <View style={styles.halfWidth}>
-        <Text style={styles.label}>Adult</Text>
-        <TextInput style={styles.input} keyboardType="numeric" />
-      </View>
-    </View>
-
-  
+          <View style={styles.row}>
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Seat No</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={selectedSeats.map(seat => seat.seatNumber || seat).join(", ")} // Extract actual seat numbers
+                editable={false} // Making it read-only
+              />
+            </View>
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Adult</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={adults}
+                onChangeText={(text) => setAdults(text)}
+              />
+              {errors.adults && <Text style={styles.errorText}>{errors.adults}</Text>}
+            </View>
+          </View>
 
           <View style={styles.row}>
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Child (3 to 8 Yrs) (With Seat)</Text>
-              <TextInput style={styles.input} keyboardType="numeric" />
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={childWithSeat}
+                onChangeText={(text) => setChildWithSeat(text)}
+              />
+              {errors.childWithSeat && <Text style={styles.errorText}>{errors.childWithSeat}</Text>}
             </View>
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Child (3 to 8 Yrs) (Without Seat)</Text>
-              <TextInput style={styles.input} keyboardType="numeric" />
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                value={childWithoutSeat}
+                onChangeText={(text) => setChildWithoutSeat(text)}
+              />
+              {errors.childWithoutSeat && <Text style={styles.errorText}>{errors.childWithoutSeat}</Text>}
             </View>
           </View>
 
           {/* Room Type and Journey Date in one row */}
           <View style={styles.row}>
-            
-
             <View style={styles.halfWidth}>
-        <Text style={styles.label}>Journey Date</Text>
-        <TouchableOpacity
-          onPress={() => setDatePickerVisibility(false)}
-          style={[styles.datePicker, styles.inputWithIcon]}
-        >
-          <Text style={{ color: date !== "dd-MM-yyyy" ? "#333" : "#aaa" }}>
-            {date}
-          </Text>
-          {/* <Ionicons name="calendar" size={20} color="#333" /> */}
-        </TouchableOpacity>
-        <DateTimePickerModal
-          isVisible={isDatePickerVisible}
-          mode="date"
-          onConfirm={handleConfirm}
-          onCancel={() => setDatePickerVisibility(false)}
-        />
-      </View>
-      </View>
+              <Text style={styles.label}>Journey Date</Text>
+              <TouchableOpacity
+                onPress={() => setDatePickerVisibility(false)}
+                style={[styles.datePicker, styles.inputWithIcon]}
+              >
+                <Text style={{ color: date !== "dd-MM-yyyy" ? "#333" : "#aaa" }}>
+                  {date}
+                </Text>
+              </TouchableOpacity>
+              <DateTimePickerModal
+                isVisible={isDatePickerVisible}
+                mode="date"
+                onConfirm={handleConfirm}
+                onCancel={() => setDatePickerVisibility(false)}
+              />
+            </View>
+          </View>
 
           <View style={styles.row}>
-            
-          <View style={styles.halfInputContainer}>
-          <Text style={styles.label}>Pickup Location</Text>
-          <View style={styles.inputWithIcon}>
-            <Icon name="location-outline" size={20} color="#555" />
-            <TextInput
-              style={styles.inputWithoutPadding}
-              value={pickupLocation}
-              placeholder="Pickup Location"
-              placeholderTextColor="#aaa"
-              onChangeText={(text) => setPickupLocation(text)}
-            />
-          </View>
-          </View>
+            <View style={styles.halfInputContainer}>
+              <Text style={styles.label}>Pickup Location</Text>
+              <View style={styles.inputWithIcon}>
+                <Icon name="location-outline" size={20} color="#555" />
+                <TextInput
+                  style={styles.inputWithoutPadding}
+                  value={pickupLocation}
+                  placeholder="Pickup Location"
+                  placeholderTextColor="#aaa"
+                  onChangeText={(text) => setPickupLocation(text)}
+                />
+              </View>
+              {errors.pickupLocation && <Text style={styles.errorText}>{errors.pickupLocation}</Text>}
+            </View>
             <View style={styles.halfInputContainer}>
               <Text style={styles.label}>Drop Location</Text>
               <View style={styles.inputWithIcon}>
@@ -314,25 +321,24 @@ const handleBooking = async () => {
             </View>
           </View>
 
-            {/* Total Amount */}
-            <View style={styles.inputFieldContainer}>
-  <Text style={styles.label}>Total Amount</Text>
-  <TextInput
-    style={styles.input}
-    keyboardType="numeric"
-    value={totalAmount ? totalAmount.toString() : ''}  // Ensure totalAmount is a string for display
-    placeholder="Total Amount"
-    placeholderTextColor="#aaa"
-    editable={false} // If you do not want it to be editable, set editable to false
-  />
-</View>
+          {/* Total Amount */}
+          <View style={styles.inputFieldContainer}>
+            <Text style={styles.label}>Total Amount</Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              value={totalAmount ? totalAmount.toString() : ''}  // Ensure totalAmount is a string for display
+              placeholder="Total Amount"
+              placeholderTextColor="#aaa"
+              editable={false} // If you do not want it to be editable, set editable to false
+            />
+          </View>
 
-          
-                  <TouchableOpacity style={[styles.button, styles.payFullButton]}>
-                    <Text style={styles.buttonText}>Pay Full</Text>
-                  </TouchableOpacity>
-          
-                  <View style={styles.row}>
+          <TouchableOpacity style={[styles.button, styles.payFullButton]}>
+            <Text style={styles.buttonText}>Pay Full</Text>
+          </TouchableOpacity>
+
+          <View style={styles.row}>
             <TouchableOpacity style={[styles.button, styles.payAdvanceButton]}>
               <Text style={styles.buttonText}>Pay Advance</Text>
             </TouchableOpacity>
@@ -347,28 +353,28 @@ const handleBooking = async () => {
           </View>
 
           {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-          
-                  {/* Payment Icons */}
-                  <View style={styles.paymentIconsContainer}>
-                    <Image
-                      source={require("@/assets/images/GooglePay.png")}
-                      style={styles.icon}
-                    />
-                    <Image
-                      source={require("@/assets/images/PhonePay.png")}
-                      style={styles.icon}
-                    />
-                    <Image
-                      source={require("@/assets/images/MasterCard.png")}
-                      style={styles.icon}
-                    />
-                  </View>
-          
-                  <TouchableOpacity style={styles.payButton} onPress={handleBooking}>
-  <Text style={styles.payButtonText}>Pay Now</Text>
-</TouchableOpacity>
+          {errors.seatCount && <Text style={styles.errorText}>{errors.seatCount}</Text>}
 
-                  </View>
+          {/* Payment Icons */}
+          <View style={styles.paymentIconsContainer}>
+            <Image
+              source={require("@/assets/images/GooglePay.png")}
+              style={styles.icon}
+            />
+            <Image
+              source={require("@/assets/images/PhonePay.png")}
+              style={styles.icon}
+            />
+            <Image
+              source={require("@/assets/images/MasterCard.png")}
+              style={styles.icon}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.payButton} onPress={handleBooking}>
+            <Text style={styles.payButtonText}>Pay Now</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );

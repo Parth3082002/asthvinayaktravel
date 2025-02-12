@@ -3,64 +3,110 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList } from "react-native
 import { useNavigation, useRoute } from "@react-navigation/native";
 
 const SelectSeats = () => {
-  const { params } = useRoute();
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [tripId, setTripId] = useState(null);
   const navigation = useNavigation();
+  const { params } = useRoute();
   const selectedDate = params?.selectedDate;
+  const tripId = params?.tripId;
+  const packageId = params?.packageId;
+  const route = useRoute(); 
 
   useEffect(() => {
     fetchSeatData();
-  }, [selectedDate]);
+  }, [packageId]);
 
+
+  
+  useEffect(() => {
+    if (route.params?.bookedSeats) {
+      setSeats((prevSeats) =>
+        prevSeats.map((seat) =>
+          route.params.bookedSeats.includes(seat.seatNumber)
+            ? { ...seat, status: "booked" }
+            : seat
+        )
+      );
+    }
+  }, [route.params?.bookedSeats]);
+
+  
   const fetchSeatData = async () => {
+    if (!packageId) {
+      console.error("packageId is missing");
+      return;
+    }
+    
     try {
       const response = await fetch(
-        `http://ashtavinayak.somee.com/api/Trip/TripsByDate/${selectedDate}`
+        `http://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
       );
-      const result = await response.json();
-  
-      if (!result || !result.data || result.data.length === 0) {
-        console.error("No trip data found for the selected date.");
+
+      if (!response.ok) {
+        throw new Error(`HTTP Error! Status: ${response.status}`);
+      }
+
+      const responseText = await response.text();
+      if (!responseText) {
+        console.error("Empty response received from API.");
         return;
       }
-  
-      const trip = result.data[0]; // Assuming first trip is relevant
-      setTripId(trip.tripId);
-      
-      console.log("Fetched tripId:", trip.tripId);
-  
-      let seatsLayout = generateSeatsLayout(trip.totalSeats, trip.availableSeats);
-      setSeats(seatsLayout);
+
+      const result = JSON.parse(responseText);
+      if (result.data && result.data.length > 0) {
+        const trip = result.data.find((t) => t.tripId === tripId);
+        if (trip) {
+          setSeats(generateSeatsLayout(trip.totalSeats, trip.availableSeats));
+        } else {
+          console.warn("No matching trip found for the given tripId.");
+        }
+      } else {
+        console.warn("No seat data available for the selected package.");
+      }
     } catch (error) {
       console.error("Error fetching seat data:", error);
     }
   };
+
+
+
+  useEffect(() => {
+    if (route.params?.bookedSeats) {
+      setSeats((prevSeats) =>
+        prevSeats.map((seat) =>
+          route.params.bookedSeats.includes(seat.seatNumber)
+            ? { ...seat, status: "booked" }
+            : seat
+        )
+      );
+    }
+  }, [route.params?.bookedSeats]);
   
   const generateSeatsLayout = (totalSeats, availableSeats) => {
     let layout = [];
     let availableSeatsSet = new Set();
-  
+
     while (availableSeatsSet.size < availableSeats) {
       let randomSeat = Math.floor(Math.random() * totalSeats);
       availableSeatsSet.add(randomSeat);
     }
-  
+
     for (let i = 0; i < totalSeats; i++) {
       layout.push({
         seatNumber: `S${i + 1}`,
         status: availableSeatsSet.has(i) ? "available" : "booked"
       });
     }
-  
+
     return layout;
   };
 
+
+
   const toggleSeat = (index) => {
     const seat = seats[index];
-    if (seat.status === "booked") return;
-
+    if (seat.status === "booked") return; // Prevent booked seat selection
+  
     const seatKey = seat.seatNumber;
     if (selectedSeats.includes(seatKey)) {
       setSelectedSeats(selectedSeats.filter((seat) => seat !== seatKey));
@@ -68,10 +114,10 @@ const SelectSeats = () => {
       setSelectedSeats([...selectedSeats, seatKey]);
     }
   };
+  
 
   const handleNextPress = () => {
     if (selectedSeats.length > 0) {
-      console.log("Navigating with the following data:", selectedSeats);
       navigation.navigate("Book", {
         ...params,
         selectedSeats: selectedSeats,
@@ -127,7 +173,7 @@ const SelectSeats = () => {
         data={seats}
         renderItem={renderSeat}
         keyExtractor={(item, index) => index.toString()}
-        numColumns={5}  // Set 5 columns for seat layout
+        numColumns={5}
         contentContainerStyle={styles.seatMap}
       />
 
@@ -175,10 +221,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   seat: {
-    width: 50,  // Increased seat width
-    height: 50, // Increased seat height
-    borderRadius: 25, // Adjusted for circular shape
-    margin: 8, // Increased spacing for better visibility
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    margin: 8,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -208,4 +254,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SelectSeats;
+export default SelectSeats;
+

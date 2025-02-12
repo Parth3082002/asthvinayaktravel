@@ -16,17 +16,29 @@ const SelectDateScreen = () => {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
   const route = useRoute(); // Access navigation params
-  // const { selectedPickupPointId } = route.params || {};
-  // Fetch dates from the API
+
+  const { packageId } = route.params || {}; // Extract packageId
+
   useEffect(() => {
     const fetchDates = async () => {
+      if (!packageId) {
+        console.error("Package ID is missing");
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch(
-          "http://ashtavinayak.somee.com/api/Trip"
+          `http://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
         );
         const result = await response.json();
+        
         if (result.data) {
-          const formattedDates = result.data.map((trip) => trip.tripDate);
+          const formattedDates = result.data.map((trip) => ({
+            tripId: trip.tripId,
+            tripDate: trip.tripDate,
+            tourName: trip.tourName, // Additional data if needed
+          }));
           setDates(formattedDates);
         }
       } catch (error) {
@@ -37,59 +49,31 @@ const SelectDateScreen = () => {
     };
 
     fetchDates();
-  }, []);
+  }, [packageId]);
 
   useEffect(() => {
     const backAction = () => {
-      // Reset navigation stack and navigate back to Home
       navigation.reset({
         index: 0,
         routes: [{ name: "Home" }],
       });
-      return true; // Prevent default back action
+      return true;
     };
 
-    // Add event listener for physical back button
     const backHandler = BackHandler.addEventListener(
       "hardwareBackPress",
       backAction
     );
 
-    // Clean up the event listener on component unmount
     return () => backHandler.remove();
   }, [navigation]);
 
   const handleNextPress = () => {
     if (selectedDate) {
-      // Log all the received data along with the selected date
-      console.log("Navigating with the following data:");
-      console.log("City Name:", route.params.cityName);
-      console.log("City ID:", route.params.cityId);
-      console.log("Package Name:", route.params.packageName);
-      console.log("Package ID:", route.params.packageId);
-      console.log("Category Name:", route.params.categoryName);
-      console.log("Category ID:", route.params.categoryId);
-      console.log("Selected Pickup Point:", route.params.selectedPickupPoint);
-      console.log("Price:", route.params.price);
-      console.log("Selected Vehicle Type:", route.params.vehicleType);
-      console.log("Selected Date:", selectedDate);
-      console.log("Received Pickup Point ID:", route.params.selectedPickupPointId);
-
-
-
-      // Pass the selected date and all other parameters to the "SelectSeatsj" page
       navigation.navigate("SelectSeats", {
-        cityName: route.params.cityName,
-        cityId: route.params.cityId,
-        packageName: route.params.packageName,
-        packageId: route.params.packageId,
-        categoryName: route.params.categoryName,
-        categoryId: route.params.categoryId,
-        selectedPickupPoint: route.params.selectedPickupPoint,
-        price: route.params.price,
-        vehicleType: route.params.vehicleType,
-        selectedDate: selectedDate, // Pass selected date here
-        selectedPickupPointId:route.params.selectedPickupPointId,
+        ...route.params, // Pass all previous data
+        selectedDate: selectedDate.tripDate,
+        tripId: selectedDate.tripId, // Pass tripId for future use
       });
     } else {
       alert("Please select a date");
@@ -101,14 +85,14 @@ const SelectDateScreen = () => {
       style={styles.dateRow}
       onPress={() => setSelectedDate(item)}
     >
-      <Text style={styles.dateText}>{item}</Text>
+      <Text style={styles.dateText}>{item.tripDate}</Text>
       <View
         style={[
           styles.radioCircle,
-          selectedDate === item && styles.radioCircleSelected,
+          selectedDate?.tripDate === item.tripDate && styles.radioCircleSelected,
         ]}
       >
-        {selectedDate === item && <View style={styles.radioInner} />}
+        {selectedDate?.tripDate === item.tripDate && <View style={styles.radioInner} />}
       </View>
     </TouchableOpacity>
   );
@@ -116,11 +100,11 @@ const SelectDateScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-       <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
-                       <View style={styles.backButtonCircle}>
-                           <Text style={styles.backButton}>{'<'}</Text>
-                       </View>
-                   </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
+          <View style={styles.backButtonCircle}>
+            <Text style={styles.backButton}>{'<'}</Text>
+          </View>
+        </TouchableOpacity>
 
         <Text style={styles.headerText}>Select Dates</Text>
       </View>
@@ -130,7 +114,7 @@ const SelectDateScreen = () => {
       ) : (
         <FlatList
           data={dates}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(item) => item.tripId.toString()}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
         />
@@ -149,8 +133,6 @@ const SelectDateScreen = () => {
     </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {
