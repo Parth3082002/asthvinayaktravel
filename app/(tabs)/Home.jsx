@@ -81,7 +81,7 @@ const Home = () => {
 
         await storeCityData(cityId, cityName);
 
-        navigation.navigate("SelectTour", {
+        navigation.navigate("SelectTour1", {
             selectedCityId: cityId,
             selectedCityName: cityName,
             vehicleType: vehicleType,
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F5F5F5",
-        marginTop: Platform.OS === "ios" ? height * 0.05 : height * 0.03,
+        marginTop: Platform.OS === "ios" ? height * 0.05 : height * 0.04,
     },
     header: {
         padding: width * 0.05,

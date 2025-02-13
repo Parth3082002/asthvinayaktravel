@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   BackHandler,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 
 const SelectDateScreen = () => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -68,6 +68,13 @@ const SelectDateScreen = () => {
     return () => backHandler.remove();
   }, [navigation]);
 
+  // Reset selectedDate when the screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      setSelectedDate(null);
+    }, [])
+  );
+
   const handleNextPress = () => {
     if (selectedDate) {
       navigation.navigate("SelectSeats", {
@@ -81,22 +88,21 @@ const SelectDateScreen = () => {
   };
 
   const renderItem = ({ item }) => (
-  <TouchableOpacity
-    style={styles.dateRow}
-    onPress={() => setSelectedDate(item)}
-  >
-    <Text style={styles.dateText}>{item.tripDate}</Text>
-    <View
-      style={[
-        styles.radioCircle,
-        selectedDate?.tripId === item.tripId && styles.radioCircleSelected, // Compare by tripId
-      ]}
+    <TouchableOpacity
+      style={styles.dateRow}
+      onPress={() => setSelectedDate(item)}
     >
-      {selectedDate?.tripId === item.tripId && <View style={styles.radioInner} />}
-    </View>
-  </TouchableOpacity>
-);
-
+      <Text style={styles.dateText}>{item.tripDate}</Text>
+      <View
+        style={[
+          styles.radioCircle,
+          selectedDate?.tripId === item.tripId && styles.radioCircleSelected, // Compare by tripId
+        ]}
+      >
+        {selectedDate?.tripId === item.tripId && <View style={styles.radioInner} />}
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -124,7 +130,7 @@ const SelectDateScreen = () => {
       <TouchableOpacity
         style={[
           styles.nextButton,
-          { backgroundColor: selectedDate ? "#FF5722" : "#e0e0e0" },
+          { backgroundColor: selectedDate ? "#FF5722" : "#FF5722" },
         ]}
         onPress={handleNextPress}
         disabled={!selectedDate}
@@ -134,6 +140,8 @@ const SelectDateScreen = () => {
     </View>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -214,13 +222,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   nextButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginBottom: 20,
-    width: "80%",
-    alignItems: "center",
-    marginLeft: 40,
+    position: 'absolute',
+        bottom: 20,
+        left: 20,
+        right: 20,
+        backgroundColor: '#FF5722',
+        borderRadius: 5,
+        paddingVertical: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+    
   },
   nextButtonText: {
     color: "#fff",

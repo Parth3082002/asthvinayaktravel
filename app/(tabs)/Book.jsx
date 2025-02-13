@@ -609,12 +609,16 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   payNowButton: {
-    backgroundColor: "#FF6F00",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 20,
-    marginBottom: 10,
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: '#FF5722',
+    borderRadius: 5,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+
   },
     buttonText1: {
       color: "#fff",

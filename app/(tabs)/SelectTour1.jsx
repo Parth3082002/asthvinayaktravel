@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, BackHandler, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, BackHandler, ScrollView, FlatList } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 
 const SelectTour = () => {
@@ -131,8 +131,21 @@ const SelectTour = () => {
         }
     };
 
+    const renderPackageItem = ({ item }) => (
+        <TouchableOpacity
+            style={[
+                styles.packageItemContainer,
+                selectedPackage === item.packageId && styles.selectedPackageItemContainer
+            ]}
+            onPress={() => setSelectedPackage(item.packageId)}
+        >
+            <Text style={styles.packageItemText}>{item.packageName}</Text>
+        </TouchableOpacity>
+    );
+
     return (
         <View style={styles.container}>
+            <View style={styles.header}></View>
             <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
                 <View style={styles.backButtonCircle}>
                     <Text style={styles.backButton}>{'<'}</Text>
@@ -147,64 +160,61 @@ const SelectTour = () => {
                 <View style={styles.leftAlignedOptionsContainer}>
                     {categories.map((category) => (
                         <TouchableOpacity
-                            key={category.categoryId}
-                            style={styles.option}
-                            onPress={() => setSelectedCategory(category.categoryId)}
-                        >
-                            <View style={styles.optionContent}>
-                                <View style={[styles.checkbox, selectedCategory === category.categoryId && styles.checkboxSelected]}>
-                                    {selectedCategory === category.categoryId && <Text style={styles.tick}>✔</Text>}
-                                </View>
-                                <View>
-                                    <Text style={styles.optionLabel}>{category.categoryName}</Text>
-                                    <Text style={styles.optionDescription}>
-                                        {`${category.busType} Bus & Stay in ${category.stayType}`}
-                                    </Text>
-                                </View>
-                            </View>
-                        </TouchableOpacity>
+                        key={category.categoryId}
+                        style={[
+                          styles.packageContainer,
+                          selectedCategory === category.categoryId && styles.selectedPackage,
+                        ]}
+                        onPress={() => setSelectedCategory(category.categoryId)}
+                      >
+                        <View style={styles.row}>
+                          <View
+                            style={[
+                              styles.checkbox,
+                              selectedCategory === category.categoryId && styles.checkboxSelected,
+                            ]}
+                          >
+                            {selectedCategory === category.categoryId && (
+                              <Text style={styles.tick}>✔</Text>
+                            )}
+                          </View>
+                          <Text style={styles.packageTitle}>{category.categoryName}</Text>
+                        </View>
+                        <View style={styles.separator} />
+                        <View>
+                          {category.busType.split(',').map((item, index) => (
+                            <Text key={`bus-${index}`} style={styles.packageDetail}>
+                              • {item.trim()}
+                            </Text>
+                          ))}
+                          {category.stayType.split(',').map((item, index) => (
+                            <Text key={`stay-${index}`} style={styles.packageDetail}>
+                              • Stay in {item.trim()}
+                            </Text>
+                          ))}
+                        </View>
+                      </TouchableOpacity>
+                      
                     ))}
                 </View>
             )}
 
             <Text style={styles.sectionTitle1}>Select Package</Text>
-            <View style={styles.container}>
-  {/* <Text style={styles.headerText}>Select Package</Text> */}
-
-  {/* Scrollable package list */}
-  <ScrollView contentContainerStyle={styles.scrollViewContent}>
-    {packageLoading ? (
-      <ActivityIndicator size="large" color="#FF5722" />
-    ) : packages.length > 0 ? (
-      <View style={styles.optionsContainer}>
-        {packages.map((pkg) => (
-          <TouchableOpacity
-            key={pkg.packageId}
-            style={styles.option1}
-            onPress={() => setSelectedPackage(pkg.packageId)}
-          >
-            <View style={styles.optionContent}>
-              <View style={[styles.radioCircle, selectedPackage === pkg.packageId && styles.radioCircleSelected]}>
-                {selectedPackage === pkg.packageId && <View style={styles.radioInner} />}
-              </View>
-              <Text style={styles.optionLabel}>{pkg.packageName}</Text>
-              <Text style={styles.optionDescription}>
-                {pkg.description}
-              </Text>
+            <View style={styles.durationContainer}>
+                {packageLoading ? (
+                    <ActivityIndicator size="large" color="#FF5722" />
+                ) : packages.length > 0 ? (
+                    <FlatList
+                        data={packages}
+                        renderItem={renderPackageItem}
+                        keyExtractor={(item) => item.packageId.toString()}
+                        numColumns={3}
+                        contentContainerStyle={styles.packageListContainer}
+                    />
+                ) : (
+                    <Text style={styles.noPackagesText}>No packages available for this city.</Text>
+                )}
             </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    ) : (
-      <Text style={styles.noPackagesText}>No packages available for this city.</Text>
-    )}
-  </ScrollView>
-
-  {/* Fixed Footer Button */}
-  {/* <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
-    <Text style={styles.nextButtonText}>Next</Text>
-  </TouchableOpacity> */}
-</View>
 
             <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
                 <Text style={styles.nextButtonText}>Next</Text>
@@ -214,204 +224,210 @@ const SelectTour = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    // flex: 1,
-    // backgroundColor: '#FFFFFF',
-    // paddingHorizontal: 16,
-    // paddingTop: 20,
-    flex: 1, // Ensures the entire screen is used properly
-      backgroundColor: '#FFFFFF',
-      padding: 20,
-
-    //   paddingLeft:20,
-  },
-  backButtonContainer: {
-    position: 'absolute',
-    top: 40,
-    left: 16,
-    zIndex: 1,
-  },
-  backButtonCircle: {
-    backgroundColor: '#FFFFFF',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-  },
-  backButton: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    marginVertical: 15,
-    marginTop:80,
-  },
-
-  sectionTitle1: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    marginVertical: 0,
-    marginTop:0,
-  },
-
-  leftAlignedOptionsContainer: {
-    marginBottom: 20,
-    alignItems: 'flex-start', // Align to left
-  },
-  rightAlignedOptionsContainer: {
-    marginBottom: 20,
-    alignItems: 'flex-end', // Align to right
-  },
-
-  optionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom:10,
-  },
-  optionLabel: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: 'bold',
-  },
-  optionDescription: {
-    fontSize: 14,
-    color: '#888',
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 2,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  checkboxSelected: {
-    borderColor: '#FF5722',
-    backgroundColor: '#FF5722',
-  },
-  tick: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,  // Adjust margin to ensure they are in one row
-  },
-  radioCircleSelected: {
-    borderColor: '#FF5722',
-  },
-  radioInner: {
-    width: 10,
-    height: 10,
-    backgroundColor: '#FF5722',
-    borderRadius: 5,
-  },
-
-
-  option1: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start', // Ensure all options are left aligned
-    alignItems: 'center',  // Align the radio button and text in a row
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-
-
- 
-    // container: {
-    //   flex: 1, // Ensures the entire screen is used properly
-    //   backgroundColor: '#FFFFFF',
-    //   padding: 20,
-    // },
-  
-    scrollViewContent: {
-      flexGrow: 1, // Ensures content inside scroll view takes available space
-      paddingBottom: 20, // Prevents content from overlapping with the footer button
+    container: {
+        flex: 1,
+        backgroundColor: "#F9F9F9",
     },
-    optionsContainer: {
-      flex: 1, // Allows ScrollView to take available space
+
+
+      packageContainer: {
+        backgroundColor: '#FFF',
+        borderRadius: 10,
+        padding: 15,
+        marginBottom: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        marginHorizontal: 15,
+        borderWidth: 1,
+        borderColor: 'transparent',
+      },
+      selectedPackage: {
+        borderColor: '#007AFF', // Blue border for selected category
+      },
+      row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+      },
+      checkbox: {
+        width: 20,
+        height: 20,
+        borderRadius: 2,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 10,
+      },
+      checkboxSelected: {
+        borderColor: '#FF5722',
+        backgroundColor: '#FF5722',
+      },
+      tick: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: 'bold',
+      },
+      packageTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+      },
+      separator: {
+        height: 1,
+        backgroundColor: '#E0E0E0',
+        marginVertical: 10,
+      },
+      packageDetail: {
+        fontSize: 14,
+        color: '#555',
+      },
+        
+    header: {
+        height: 50,
+        backgroundColor: "#E65100",
+        justifyContent: "center",
+        paddingHorizontal: 15,
     },
-    // option1: {
-    //   backgroundColor: '#F5F5F5',
-    //   padding: 15,
-    //   borderRadius: 10,
-    //   marginBottom: 10,
-    // },
-    // optionContent: {
-    //   flexDirection: 'column',
-    //   alignItems: 'flex-start',
-    // },
-    // radioCircle: {
-    //   width: 20,
-    //   height: 20,
-    //   borderRadius: 10,
-    //   borderWidth: 2,
-    //   borderColor: '#FF5722',
-    //   alignItems: 'center',
-    //   justifyContent: 'center',
-    //   marginBottom: 5,
-    // },
-    // radioCircleSelected: {
-    //   backgroundColor: '#FF5722',
-    // },
-    // radioInner: {
-    //   width: 10,
-    //   height: 10,
-    //   borderRadius: 5,
-    //   backgroundColor: '#FFFFFF',
-    // },
-    // optionLabel: {
-    //   fontSize: 16,
-    //   fontWeight: 'bold',
-    //   marginBottom: 5,
-    // },
-    // optionDescription: {
-    //   fontSize: 14,
-    //   color: '#666',
-    // },
-    // noPackagesText: {
-    //   textAlign: 'center',
-    //   fontSize: 16,
-    //   color: 'gray',
-    //   marginTop: 20,
-    // },
+    backButtonContainer: {
+        position: 'absolute',
+        top: 60,
+        left: 16,
+        zIndex: 1,
+    },
+    backButtonCircle: {
+        backgroundColor: '#FFFFFF',
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 4,
+    },
+    backButton: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#000',
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        marginBottom: 10,
+        marginTop: 60,
+        marginLeft: 15,
+    },
+    sectionTitle1: {
+        fontSize: 16,
+        fontWeight: "bold",
+        marginBottom: 10,
+        marginTop: 20,
+        marginLeft: 15,
+    },
+    packageContainer: {
+        backgroundColor: "#FFF",
+        borderRadius: 10,
+        padding: 15,
+        marginBottom: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        marginHorizontal: 15,
+    },
+    selectedPackage: {
+        borderColor: "white",
+        borderWidth: 1,
+    },
+    packageHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 5,
+    },
+    packageTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        marginLeft: 10,
+    },
+    packageDetail: {
+        fontSize: 14,
+        color: "#555",
+    },
+    durationContainer: {
+        flex: 1,
+        paddingHorizontal: 15,
+    },
+    packageListContainer: {
+        justifyContent: 'space-between',
+    },
+    packageItemContainer: {
+        width: '30%',
+        backgroundColor: "#FFF",
+        borderRadius: 10,
+        padding: 15,
+        marginBottom: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginHorizontal: '1.5%',
+    },
+    selectedPackageItemContainer: {
+        borderColor: "#007AFF",
+        borderWidth: 2,
+    },
+    packageItemText: {
+        fontSize: 14,
+        fontWeight: "bold",
+        textAlign: 'center',
+    },
     nextButton: {
-      position: 'absolute', // Fix button at the bottom
-      bottom: 0,
-      left: 20,
-      right: 20,
-      backgroundColor: '#FF5722',
-      borderRadius: 5,
-      paddingVertical: 15,
-      alignItems: 'center',
-      justifyContent: 'center',
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        right: 20,
+        backgroundColor: '#FF5722',
+        borderRadius: 5,
+        paddingVertical: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     nextButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    noPackagesText: {
+        textAlign: 'center',
+        marginTop: 20,
+        fontSize: 16,
+        color: '#555',
+    },
+
+    checkbox: {
+      width: 20,
+      height: 20,
+      borderRadius: 2,
+      borderWidth: 1,
+      borderColor: '#E0E0E0',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 10,
+    },
+    checkboxSelected: {
+      borderColor: '#FF5722',
+      backgroundColor: '#FF5722',
+    },
+    tick: {
       color: '#FFFFFF',
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: 'bold',
     },
-  
+   
 });
 
 export default SelectTour;
-
-

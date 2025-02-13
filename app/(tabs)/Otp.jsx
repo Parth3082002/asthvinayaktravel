@@ -118,7 +118,7 @@ const Otp = () => {
           Alert.alert("Success", "OTP verified successfully!", [
             {
               text: "OK",
-              onPress: () => navigation.navigate("Dashboard"),
+              onPress: () => navigation.navigate("SelectVehicle1"),
             },
           ]);
         } else {
