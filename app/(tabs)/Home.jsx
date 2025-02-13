@@ -9,6 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window"); // Get screen width and height
 
+
 const Home = () => {
     const navigation = useNavigation();
     const route = useRoute(); 

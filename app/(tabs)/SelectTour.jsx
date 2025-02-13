@@ -1,355 +1,183 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, BackHandler, ScrollView } from 'react-native';
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
-const SelectTour = () => {
-    const [categories, setCategories] = useState([]);
-    const [packages, setPackages] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState(null);
-    const [selectedPackage, setSelectedPackage] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [packageLoading, setPackageLoading] = useState(false);
-    const [cityId, setCityId] = useState(null);
-    const [cityName, setCityName] = useState('');
+const PackageSelectionScreen = () => {
+  const [selectedPackage, setSelectedPackage] = useState("Standard");
+  const [selectedDuration, setSelectedDuration] = useState("1 Night 2 Days");
 
-    const navigation = useNavigation();
-    const route = useRoute();
-    const { selectedCityId } = route.params || {}; // Get the cityId from the route params
-    const { vehicleType } = route.params || {};
+  const packages = [
+    {
+      name: "Standard Package",
+      details: [
+        "Non-AC Bus Transportation",
+        "Bhakt Niwas Accommodation",
+        "Basic Meal Plan",
+      ],
+    },
+    {
+      name: "Deluxe Package",
+      details: [
+        "AC Bus Transportation",
+        "Deluxe Hotel Stay",
+        "Full Board Meals",
+      ],
+    },
+    {
+      name: "Premium Package",
+      details: [
+        "AC Bus Transportation",
+        "3 Star Hotel Stay",
+        "Gourmet Meals",
+      ],
+    },
+  ];
 
-    useFocusEffect(
-        React.useCallback(() => {
-            // Reset category and package states when the screen is focused again
-            setSelectedCategory(null);
-            setSelectedPackage(null);
+  const durations = ["1 Night 2 Days", "2 Night 3 Days", "Shastrotk"];
 
-            return () => {
-                // Cleanup if needed
-            };
-        }, [])
-    );
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity>
+          <Icon name="arrow-left" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
 
-    useEffect(() => {
-        const backAction = () => {
-            // Reset navigation stack and navigate back to Home
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'Home' }],
-            });
-            return true;  // Prevent default back action
-        };
+      <ScrollView style={styles.content}>
+        <Text style={styles.sectionTitle}>Package Details</Text>
 
-        // Add event listener for physical back button
-        const backHandler = BackHandler.addEventListener(
-            'hardwareBackPress',
-            backAction
-        );
-
-        // Clean up the event listener on component unmount
-        return () => backHandler.remove();
-    }, [navigation]);
-
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-
-    useEffect(() => {
-        if (selectedCityId) {
-            fetchCityDetails(selectedCityId); // Use the cityId passed from the Home screen
-        }
-    }, [selectedCityId]);
-
-    const fetchCategories = async () => {
-        try {
-            const response = await fetch('http://ashtavinayak.somee.com/api/categorys');
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const result = await response.json();
-            setCategories(result.data || []);
-        } catch (error) {
-            console.error('Error fetching categories:', error);
-            setCategories([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchCityDetails = async (cityId) => {
-        setPackageLoading(true);
-        try {
-            const response = await fetch('http://ashtavinayak.somee.com/api/City');
-            const cities = await response.json();
-            const selectedCityData = cities.find(city => city.cityId === cityId); // Use cityId for selection
-
-            if (selectedCityData) {
-                setCityId(selectedCityData.cityId);
-                setCityName(selectedCityData.cityName);  // Store city name
-                fetchPackages(selectedCityData.cityId);
-            } else {
-                console.log('City not found');
-                setPackageLoading(false);
-                setPackages([]);
-            }
-        } catch (error) {
-            console.error('Error fetching city details:', error);
-            setPackageLoading(false);
-            setPackages([]);
-        }
-    };
-
-    const fetchPackages = async (cityId) => {
-        try {
-            const response = await fetch(`http://ashtavinayak.somee.com/api/Package/GetPackages/${cityId}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const result = await response.json();
-            setPackages(result || []);
-        } catch (error) {
-            // console.error('Error fetching Spackages:', error);
-            setPackages([]);
-        } finally {
-            setPackageLoading(false);
-        }
-    };
-
-    const handleNextPress = () => {
-        if (selectedCategory && selectedPackage && cityId) {
-            console.log("Selected Vehicle Type:", vehicleType); 
-            console.log("cityid",cityId);
-            navigation.navigate('Standardpu12', {
-                selectedCategory,
-                selectedPackage,
-                cityId,
-                cityName,  // Send cityName along with cityId to the next screen
-                vehicleType: vehicleType,
-                
-            });
-        } else {
-            console.log('Please select both category and package!');
-        }
-    };
-
-    return (
-        <View style={styles.container}>
-            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
-                <View style={styles.backButtonCircle}>
-                    <Text style={styles.backButton}>{'<'}</Text>
-                </View>
-            </TouchableOpacity>
-
-            <Text style={styles.sectionTitle}>Select Category</Text>
-
-            {loading ? (
-                <ActivityIndicator size="large" color="#FF5722" />
-            ) : (
-                <View style={styles.leftAlignedOptionsContainer}>
-                    {categories.map((category) => (
-                        <TouchableOpacity
-                            key={category.categoryId}
-                            style={styles.option}
-                            onPress={() => setSelectedCategory(category.categoryId)}
-                        >
-                            <View style={styles.optionContent}>
-                                <View style={[styles.checkbox, selectedCategory === category.categoryId && styles.checkboxSelected]}>
-                                    {selectedCategory === category.categoryId && <Text style={styles.tick}>✔</Text>}
-                                </View>
-                                <View>
-                                    <Text style={styles.optionLabel}>{category.categoryName}</Text>
-                                    <Text style={styles.optionDescription}>
-                                        {`${category.busType} Bus & Stay in ${category.stayType}`}
-                                    </Text>
-                                </View>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            )}
-
-            <Text style={styles.sectionTitle1}>Select Package</Text>
-            <View style={styles.container}>
-  {/* <Text style={styles.headerText}>Select Package</Text> */}
-
-  {/* Scrollable package list */}
-  <ScrollView contentContainerStyle={styles.scrollViewContent}>
-    {packageLoading ? (
-      <ActivityIndicator size="large" color="#FF5722" />
-    ) : packages.length > 0 ? (
-      <View style={styles.optionsContainer}>
-        {packages.map((pkg) => (
+        {packages.map((pkg, index) => (
           <TouchableOpacity
-            key={pkg.packageId}
-            style={styles.option1}
-            onPress={() => setSelectedPackage(pkg.packageId)}
+            key={index}
+            style={[
+              styles.packageContainer,
+              selectedPackage === pkg.name && styles.selectedPackage,
+            ]}
+            onPress={() => setSelectedPackage(pkg.name)}
           >
-            <View style={styles.optionContent}>
-              <View style={[styles.radioCircle, selectedPackage === pkg.packageId && styles.radioCircleSelected]}>
-                {selectedPackage === pkg.packageId && <View style={styles.radioInner} />}
-              </View>
-              <Text style={styles.optionLabel}>{pkg.packageName}</Text>
-              <Text style={styles.optionDescription}>
-                {pkg.description}
-              </Text>
+            <View style={styles.packageHeader}>
+              <Icon
+                name={selectedPackage === pkg.name ? "checkbox-marked" : "checkbox-blank-outline"}
+                size={22}
+                color={selectedPackage === pkg.name ? "#007AFF" : "black"}
+              />
+              <Text style={styles.packageTitle}>{pkg.name}</Text>
             </View>
+            {pkg.details.map((detail, i) => (
+              <Text key={i} style={styles.packageDetail}>• {detail}</Text>
+            ))}
           </TouchableOpacity>
         ))}
-      </View>
-    ) : (
-      <Text style={styles.noPackagesText}>No packages available for this city.</Text>
-    )}
-  </ScrollView>
-</View>
 
-            <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
-                <Text style={styles.nextButtonText}>Next</Text>
+        <Text style={styles.sectionTitle}>Duration Option</Text>
+
+        <View style={styles.durationContainer}>
+          {durations.map((duration, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.durationButton,
+                selectedDuration === duration && styles.selectedDurationButton,
+              ]}
+              onPress={() => setSelectedDuration(duration)}
+            >
+              <Text style={styles.durationText}>{duration}</Text>
             </TouchableOpacity>
+          ))}
         </View>
-    );
+      </ScrollView>
+
+      <TouchableOpacity style={styles.nextButton}>
+        <Text style={styles.nextButtonText}>Next</Text>
+      </TouchableOpacity>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
   container: {
-
-    flex: 1, 
-      backgroundColor: '#FFFFFF',
-      padding: 20,
+    flex: 1,
+    backgroundColor: "#F9F9F9",
   },
-  backButtonContainer: {
-    position: 'absolute',
-    top: 40,
-    left: 16,
-    zIndex: 1,
+  header: {
+    height: 50,
+    backgroundColor: "#E65100",
+    justifyContent: "center",
+    paddingHorizontal: 15,
   },
-  backButtonCircle: {
-    backgroundColor: '#FFFFFF',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-  },
-  backButton: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+  content: {
+    padding: 15,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    marginVertical: 15,
-    marginTop:80,
+    fontWeight: "bold",
+    marginBottom: 10,
   },
-
-  sectionTitle1: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    marginVertical: 0,
-    marginTop:0,
+  packageContainer: {
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-
-  leftAlignedOptionsContainer: {
-    marginBottom: 20,
-    alignItems: 'flex-start', // Align to left
-  },
-  rightAlignedOptionsContainer: {
-    marginBottom: 20,
-    alignItems: 'flex-end', // Align to right
-  },
-
-  optionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom:10,
-  },
-  optionLabel: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: 'bold',
-  },
-  optionDescription: {
-    fontSize: 14,
-    color: '#888',
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 2,
+  selectedPackage: {
+    borderColor: "#007AFF",
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
   },
-  checkboxSelected: {
-    borderColor: '#FF5722',
-    backgroundColor: '#FF5722',
+  packageHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
   },
-  tick: {
-    color: '#FFFFFF',
+  packageTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 10,
+  },
+  packageDetail: {
     fontSize: 14,
-    fontWeight: 'bold',
+    color: "#555",
   },
-  radioCircle: {
-    width: 20,
-    height: 20,
+  durationContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  durationButton: {
+    flex: 1,
+    paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,  // Adjust margin to ensure they are in one row
+    borderColor: "#CCC",
+    alignItems: "center",
+    marginHorizontal: 5,
+    backgroundColor: "#FFF",
   },
-  radioCircleSelected: {
-    borderColor: '#FF5722',
+  selectedDurationButton: {
+    borderColor: "#007AFF",
+    backgroundColor: "#E3F2FD",
   },
-  radioInner: {
-    width: 10,
-    height: 10,
-    backgroundColor: '#FF5722',
-    borderRadius: 5,
+  durationText: {
+    fontSize: 14,
+    fontWeight: "bold",
   },
-
-
-  option1: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start', // Ensure all options are left aligned
-    alignItems: 'center',  // Align the radio button and text in a row
+  nextButton: {
+    backgroundColor: "#E65100",
     paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+    margin: 15,
   },
-  
-    scrollViewContent: {
-      flexGrow: 1, // Ensures content inside scroll view takes available space
-      paddingBottom: 20, // Prevents content from overlapping with the footer button
-    },
-    optionsContainer: {
-      flex: 1, // Allows ScrollView to take available space
-    },
-    nextButton: {
-      position: 'absolute', // Fix button at the bottom
-      bottom: 0,
-      left: 20,
-      right: 20,
-      backgroundColor: '#FF5722',
-      borderRadius: 5,
-      paddingVertical: 15,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    nextButtonText: {
-      color: '#FFFFFF',
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-  
+  nextButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
 
-export default SelectTour;
-
-
+export default PackageSelectionScreen;
