@@ -216,7 +216,7 @@ const handleDropdownClick = (point) => {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#007bff" />
-        <Text>Loading package details...</Text>
+        {/* <Text>Loading package details...</Text> */}
       </View>
     );
   }
@@ -247,7 +247,7 @@ const handleDropdownClick = (point) => {
               </View>
             </View>
           ) : (
-            <Text style={styles.errorText}>No package details available.</Text>
+            <Text style={styles.errorText}>No trip available for this package!</Text>
           )}
         </ImageBackground>
 

@@ -13,32 +13,23 @@ import { useNavigation } from '@react-navigation/native';
 
 const History = () => {
   const [historyData, setHistoryData] = useState([]);
-  const [filteredHistory, setFilteredHistory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState(null);
   const navigation = useNavigation();
 
   useEffect(() => {
     fetchUserAndHistory();
   }, []);
 
-
-
-
   useEffect(() => {
-    // Handler for the back button press to reset the stack
     const backAction = () => {
       navigation.reset({
-        index: 0, // Set the index to 0 to go to the first screen
-        routes: [{ name: 'SelectVehicle1' }], // Replace the entire stack with the Dashboard screen
+        index: 0,
+        routes: [{ name: 'SelectVehicle1' }],
       });
-      return true; // Prevent default back button behavior
+      return true;
     };
 
-    // Add event listener for back button
     BackHandler.addEventListener('hardwareBackPress', backAction);
-
-    // Clean up the event listener on unmount
     return () => {
       BackHandler.removeEventListener('hardwareBackPress', backAction);
     };
@@ -48,43 +39,39 @@ const History = () => {
     try {
       const storedUser = await AsyncStorage.getItem("user");
       const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-      if (parsedUser && parsedUser.userName) {
-        setUserName(parsedUser.userName);
+
+      if (parsedUser && parsedUser.userId) {
+        const userId = parsedUser.userId;
+        const response = await fetch(`http://ashtavinayak.somee.com/api/Booking/HistoryByUser/${userId}`);
+        const jsonData = await response.json();
+
+        if (jsonData.data && Array.isArray(jsonData.data)) {
+          setHistoryData(jsonData.data);
+        } else {
+          setHistoryData([]);
+          Alert.alert("No Data", "No booking history found for this user.");
+        }
       } else {
         Alert.alert("Error", "User data not found. Please log in again.");
-        return;
-      }
-
-      const response = await fetch("http://ashtavinayak.somee.com/api/History");
-      const jsonData = await response.json();
-
-      if (jsonData.data) {
-        setHistoryData(jsonData.data);
-
-        // Filter history only for the logged-in user
-        const userHistory = jsonData.data.filter(
-          (item) => item.userName === parsedUser.userName
-        );
-
-        setFilteredHistory(userHistory);
       }
     } catch (error) {
       console.error("Error fetching history:", error);
+      Alert.alert("Error", "Failed to fetch booking history.");
     } finally {
       setLoading(false);
     }
   };
 
-  const renderItem = ({ item }) => (
+  const renderItem = ({ item, index }) => (
     <View style={styles.card}>
-      <Text style={styles.title}>Tour: {item.tourName}</Text>
-      <Text style={styles.info}>City: {item.cityName}</Text>
-      <Text style={styles.info}>Category: {item.categoryName}</Text>
-      <Text style={styles.info}>Package: {item.packageName}</Text>
-      <Text style={styles.info}>Drop Point: {item.dropPoint}</Text>
-      <Text style={styles.price}>Total: ₹{item.total}</Text>
-      <Text style={styles.advance}>Advance: ₹{item.advance}</Text>
-      <Text style={styles.status(item.status)}>{item.status}</Text>
+      <Text style={styles.title}>Tour: {item.tourName || "N/A"}</Text>
+      <Text style={styles.info}>City: {item.cityName || "N/A"}</Text>
+      <Text style={styles.info}>Category: {item.categoryName || "N/A"}</Text>
+      <Text style={styles.info}>Package: {item.packageName || "N/A"}</Text>
+      <Text style={styles.info}>Drop Point: {item.dropPoint || "N/A"}</Text>
+      <Text style={styles.price}>Total: ₹{item.total || "0"}</Text>
+      <Text style={styles.advance}>Advance: ₹{item.advance || "0"}</Text>
+      <Text style={styles.status(item.status)}>{item.status || "Unknown"}</Text>
     </View>
   );
 
@@ -93,10 +80,10 @@ const History = () => {
       <Text style={styles.header}>My Booking History</Text>
       {loading ? (
         <ActivityIndicator size="large" color="#ff6600" />
-      ) : filteredHistory.length > 0 ? (
+      ) : historyData.length > 0 ? (
         <FlatList
-          data={filteredHistory}
-          keyExtractor={(item) => item.historyId.toString()}
+          data={historyData}
+          keyExtractor={(item, index) => (item.historyId ? item.historyId.toString() : index.toString())}
           renderItem={renderItem}
         />
       ) : (
@@ -111,7 +98,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8f8f8",
     padding: 15,
-    marginTop:20,
+    marginTop: 20,
   },
   header: {
     fontSize: 22,

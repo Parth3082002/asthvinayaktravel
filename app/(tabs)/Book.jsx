@@ -29,7 +29,7 @@ const Book = () => {
   const [totalAmount, setTotalAmount] = useState(route.params.price || ""); // Ensure route.params.price is correct
   const [mobileNo, setMobileNo] = useState(null);
   const [droppoint, setDroppoint] = useState('');
-
+  const [isEditable, setIsEditable] = useState(false); // Default to false
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   const [advanceAmount, setAdvanceAmount] = useState(totalAmount / 2); // Dynamic initial value
@@ -214,35 +214,35 @@ const Book = () => {
           <View style={styles.inputFieldContainer}>
             <Text style={styles.label}>Name</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Your Name"
-              placeholderTextColor="#aaa"
-              value={user?.userName || ""} // Ensuring it doesn't break if user is null
-              editable={false} // Making it non-editable if necessary
-            />
+  style={[styles.input, !isEditable && styles.nonEditableInput]} // Apply gray style if not editable
+  placeholder="Your Name"
+  placeholderTextColor="#aaa"
+  value={user?.userName || ""}
+  editable={isEditable} // Use the state
+/>
           </View>
 
           <View style={styles.inputFieldContainer}>
             <Text style={styles.label}>Contact Number</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Your Contact"
-              keyboardType="numeric"
-              placeholderTextColor="#aaa"
-              value={user?.phoneNumber || ""}
-              editable={false} // Prevent user modification if required
-            />
+  style={[styles.input, !isEditable&& styles.nonEditableInput]}
+  placeholder="Your Contact"
+  keyboardType="numeric"
+  placeholderTextColor="#aaa"
+  value={user?.phoneNumber || ""}
+  editable={false} // Explicitly set to false
+/>
           </View>
 
           <View style={styles.row}>
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Seat No</Text>
               <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={selectedSeats.map(seat => seat.seatNumber || seat).join(", ")} // Extract actual seat numbers
-                editable={false} // Making it read-only
-              />
+  style={[styles.input, !isEditable && styles.nonEditableInput]}
+  keyboardType="numeric"
+  value={selectedSeats.map(seat => seat.seatNumber || seat).join(", ")}
+  editable={false} // Explicitly set to false
+/>
             </View>
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Adult</Text>
@@ -332,17 +332,14 @@ const Book = () => {
           </View>
 
           {/* Total Amount */}
-          <View style={styles.inputFieldContainer}>
-            <Text style={styles.label}>Total Amount</Text>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              value={totalAmount ? totalAmount.toString() : ''}  // Ensure totalAmount is a string for display
-              placeholder="Total Amount"
-              placeholderTextColor="#aaa"
-              editable={false} // If you do not want it to be editable, set editable to false
-            />
-          </View>
+          <TextInput
+  style={[styles.input, !isEditable && styles.nonEditableInput]}
+  keyboardType="numeric"
+  value={totalAmount ? totalAmount.toString() : ''}
+  placeholder="Total Amount"
+  placeholderTextColor="#aaa"
+  editable={false} // Explicitly set to false
+/>
 
           <TouchableOpacity style={[styles.button, styles.payFullButton]}>
             <Text style={styles.buttonText}>Pay Full</Text>
