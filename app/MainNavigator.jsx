@@ -4,7 +4,7 @@ import Index from './(tabs)/index';
 import Otp from './(tabs)/Otp'; 
 import Login from './(tabs)/Login';
 import SelectVehicle1 from './(tabs)/SelectVehicle1'; 
-import SelectTour from './(tabs)/SelectTour'; 
+import SelectTour1 from './(tabs)/SelectTour1'; 
 import Home from './(tabs)/Home';
 import Registration from './(tabs)/Registration';
 import Book from './(tabs)/Book';
@@ -38,7 +38,7 @@ export default function MainNavigator() {
       <Stack.Screen name="SelectVehicle1" component={SelectVehicle1} />
 
       <Stack.Screen name="Home" component={Home} />
-      <Stack.Screen name="SelectTour" component={SelectTour} />
+      <Stack.Screen name="SelectTour1" component={SelectTour1} />
       <Stack.Screen name="Standardpu12" component={Standardpu12} />
       <Stack.Screen name="SelectDate" component={SelectDate} /> {/* ✅ Fixed */}
       <Stack.Screen name="Book" component={Book} />

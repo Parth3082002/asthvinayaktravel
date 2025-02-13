@@ -68,7 +68,7 @@ const SelectTour = () => {
             const result = await response.json();
             setCategories(result.data || []);
         } catch (error) {
-            console.error('Error fetching categories:', error);
+            // console.error('Error fetching categories:', error);
             setCategories([]);
         } finally {
             setLoading(false);
@@ -144,83 +144,84 @@ const SelectTour = () => {
     );
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}></View>
-            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
-                <View style={styles.backButtonCircle}>
-                    <Text style={styles.backButton}>{'<'}</Text>
-                </View>
-            </TouchableOpacity>
-
-            <Text style={styles.sectionTitle}>Select Category</Text>
-
-            {loading ? (
-                <ActivityIndicator size="large" color="#FF5722" />
-            ) : (
-                <View style={styles.leftAlignedOptionsContainer}>
-                    {categories.map((category) => (
-                        <TouchableOpacity
-                        key={category.categoryId}
-                        style={[
-                          styles.packageContainer,
-                          selectedCategory === category.categoryId && styles.selectedPackage,
-                        ]}
-                        onPress={() => setSelectedCategory(category.categoryId)}
-                      >
-                        <View style={styles.row}>
-                          <View
-                            style={[
-                              styles.checkbox,
-                              selectedCategory === category.categoryId && styles.checkboxSelected,
-                            ]}
-                          >
-                            {selectedCategory === category.categoryId && (
-                              <Text style={styles.tick}>✔</Text>
-                            )}
-                          </View>
-                          <Text style={styles.packageTitle}>{category.categoryName}</Text>
+       
+            <View style={styles.container}>
+                <View style={styles.header}></View>
+                  <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
+                    <View style={styles.backButtonCircle}>
+                        <Text style={styles.backButton}>{'<'}</Text>
+                    </View>
+                  </TouchableOpacity>
+        
+                {/* Scrollable Content */}
+                <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={true}>                    <Text style={styles.sectionTitle}>Select Category</Text>
+        
+                    {loading ? (
+                        <ActivityIndicator size="large" color="#FF5722" />
+                    ) : (
+                        <View style={styles.leftAlignedOptionsContainer}>
+                            {categories.map((category) => (
+                                <TouchableOpacity
+                                    key={category.categoryId}
+                                    style={[
+                                        styles.packageContainer,
+                                        selectedCategory === category.categoryId && styles.selectedPackage,
+                                    ]}
+                                    onPress={() => setSelectedCategory(category.categoryId)}
+                                >
+                                    <View style={styles.row}>
+                                        <View
+                                            style={[
+                                                styles.checkbox,
+                                                selectedCategory === category.categoryId && styles.checkboxSelected,
+                                            ]}
+                                        >
+                                            {selectedCategory === category.categoryId && (
+                                                <Text style={styles.tick}>✔</Text>
+                                            )}
+                                        </View>
+                                        <Text style={styles.packageTitle}>{category.categoryName}</Text>
+                                    </View>
+                                    <View style={styles.separator} />
+                                    <View>
+                                        {category.busType.split(',').map((item, index) => (
+                                            <Text key={`bus-${index}`} style={styles.packageDetail}>
+                                                • {item.trim()}
+                                            </Text>
+                                        ))}
+                                        {category.stayType.split(',').map((item, index) => (
+                                            <Text key={`stay-${index}`} style={styles.packageDetail}>
+                                                • Stay in {item.trim()}
+                                            </Text>
+                                        ))}
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
                         </View>
-                        <View style={styles.separator} />
-                        <View>
-                          {category.busType.split(',').map((item, index) => (
-                            <Text key={`bus-${index}`} style={styles.packageDetail}>
-                              • {item.trim()}
-                            </Text>
-                          ))}
-                          {category.stayType.split(',').map((item, index) => (
-                            <Text key={`stay-${index}`} style={styles.packageDetail}>
-                              • Stay in {item.trim()}
-                            </Text>
-                          ))}
-                        </View>
-                      </TouchableOpacity>
-                      
-                    ))}
-                </View>
-            )}
-
-            <Text style={styles.sectionTitle1}>Select Package</Text>
-            <View style={styles.durationContainer}>
-                {packageLoading ? (
-                    <ActivityIndicator size="large" color="#FF5722" />
-                ) : packages.length > 0 ? (
-                    <FlatList
-                        data={packages}
-                        renderItem={renderPackageItem}
-                        keyExtractor={(item) => item.packageId.toString()}
-                        numColumns={3}
-                        contentContainerStyle={styles.packageListContainer}
-                    />
-                ) : (
-                    <Text style={styles.noPackagesText}>No packages available for this city.</Text>
-                )}
+                    )}
+        
+                    <Text style={styles.sectionTitle1}>Select Package</Text>
+                      <View style={styles.durationContainer}>
+                        {packageLoading ? (
+                            <ActivityIndicator size="large" color="#FF5722" />
+                        ) : packages.length > 0 ? (
+                            <FlatList
+                                data={packages}
+                                renderItem={renderPackageItem}
+                                keyExtractor={(item) => item.packageId.toString()}
+                                numColumns={3}
+                                contentContainerStyle={styles.packageListContainer}
+                            />
+                        ) : (
+                            <Text style={styles.noPackagesText}>No packages available for this city.</Text>
+                        )}
+                      </View>
+                    </ScrollView>
+                    <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
+                      <Text style={styles.nextButtonText}>Next</Text>
+              </TouchableOpacity>
             </View>
-
-            <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
-                <Text style={styles.nextButtonText}>Next</Text>
-            </TouchableOpacity>
-        </View>
-    );
+        );
 };
 
 const styles = StyleSheet.create({
@@ -356,7 +357,7 @@ const styles = StyleSheet.create({
     },
     durationContainer: {
         flex: 1,
-        paddingHorizontal: 15,
+        paddingHorizontal: 15
     },
     packageListContainer: {
         justifyContent: 'space-between',
@@ -387,7 +388,7 @@ const styles = StyleSheet.create({
     },
     nextButton: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 0,
         left: 20,
         right: 20,
         backgroundColor: '#FF5722',
@@ -426,6 +427,11 @@ const styles = StyleSheet.create({
       color: '#FFFFFF',
       fontSize: 14,
       fontWeight: 'bold',
+    },
+    scrollContainer: {
+        flexGrow: 1,
+      //  height:10,
+        paddingBottom: 80, // Ensures scrolling space at the bottom
     },
    
 });

@@ -28,6 +28,8 @@ const Book = () => {
   const [pickupLocation, setPickupLocation] = useState(route.params.selectedPickupPoint || "");
   const [totalAmount, setTotalAmount] = useState(route.params.price || ""); // Ensure route.params.price is correct
   const [mobileNo, setMobileNo] = useState(null);
+  const [droppoint, setDroppoint] = useState('');
+
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   const [advanceAmount, setAdvanceAmount] = useState(totalAmount / 2); // Dynamic initial value
@@ -59,6 +61,8 @@ const Book = () => {
     console.log("Selected Date:", route.params.selectedDate);
     console.log("Received Pickup Point ID:", route.params.selectedPickupPointId);
     console.log("Trip ID:", route.params.tripId);
+    // console.log("Droppoint:", droppoint);
+// console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
 
     // Fetch user data from AsyncStorage
     const fetchUserData = async () => {
@@ -136,7 +140,7 @@ const Book = () => {
       UserId: user.userId,
       TripId: route.params.tripId,
       PickupPointId: route.params.selectedPickupPointId,
-      DroppointId: route.params.selectedDropPointId || 1,
+      Droppoint: droppoint, 
       BookingDate: new Date(route.params.selectedDate).toISOString(),
       Status: "Confirmed",
       TotalPayment: totalAmount,
@@ -146,6 +150,9 @@ const Book = () => {
       Childwithseat: parseInt(childWithSeat) || 0,
       Childwithoutseat: parseInt(childWithoutSeat) || 0,
     };
+
+    console.log("Droppoint:", droppoint);
+// console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
 
     console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
 
@@ -174,7 +181,7 @@ const Book = () => {
               navigation.dispatch(
                 CommonActions.reset({
                   index: 0,
-                  routes: [{ name: "Home" }],
+                  routes: [{ name: "SelectVehicle1" }],
                 })
               );
             },
@@ -309,16 +316,19 @@ const Book = () => {
               {errors.pickupLocation && <Text style={styles.errorText}>{errors.pickupLocation}</Text>}
             </View>
             <View style={styles.halfInputContainer}>
-              <Text style={styles.label}>Drop Location</Text>
-              <View style={styles.inputWithIcon}>
-                <Icon name="location-sharp" size={20} color="#555" />
-                <TextInput
-                  style={styles.inputWithoutPadding}
-                  placeholder="Drop Location"
-                  placeholderTextColor="#aaa"
-                />
-              </View>
-            </View>
+  <Text style={styles.label}>Drop Location</Text>
+  <View style={styles.inputWithIcon}>
+    <Icon name="location-sharp" size={20} color="#555" />
+    <TextInput
+      style={styles.inputWithoutPadding}
+      placeholder="Drop Location"
+      placeholderTextColor="#aaa"
+      value={droppoint}
+      onChangeText={(text) => setDroppoint(text)}
+    />
+  </View>
+</View>
+
           </View>
 
           {/* Total Amount */}

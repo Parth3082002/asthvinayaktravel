@@ -10,103 +10,75 @@ const SelectSeats = () => {
   const selectedDate = params?.selectedDate;
   const tripId = params?.tripId;
   const packageId = params?.packageId;
-  const route = useRoute(); 
 
   useEffect(() => {
-    fetchSeatData();
-  }, [packageId]);
-
-
-  
-  useEffect(() => {
-    if (route.params?.bookedSeats) {
-      setSeats((prevSeats) =>
-        prevSeats.map((seat) =>
-          route.params.bookedSeats.includes(seat.seatNumber)
-            ? { ...seat, status: "booked" }
-            : seat
-        )
-      );
+    if (packageId && tripId) {
+      fetchSeatData();
     }
-  }, [route.params?.bookedSeats]);
+  }, [packageId, tripId]);
 
-  
   const fetchSeatData = async () => {
-    if (!packageId) {
-      console.error("packageId is missing");
-      return;
-    }
-    
     try {
-      const response = await fetch(
+      // Fetch trip details to get total seats
+      const tripResponse = await fetch(
         `http://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP Error! Status: ${response.status}`);
+      if (!tripResponse.ok) {
+        throw new Error(`HTTP Error! Status: ${tripResponse.status}`);
       }
 
-      const responseText = await response.text();
-      if (!responseText) {
-        console.error("Empty response received from API.");
-        return;
-      }
+      const tripData = await tripResponse.json();
+      const trip = tripData.data.find((t) => t.tripId === tripId);
 
-      const result = JSON.parse(responseText);
-      if (result.data && result.data.length > 0) {
-        const trip = result.data.find((t) => t.tripId === tripId);
-        if (trip) {
-          setSeats(generateSeatsLayout(trip.totalSeats, trip.availableSeats));
+      if (trip) {
+        const totalSeats = trip.totalSeats;
+
+        // Fetch booked seats
+        const bookedSeatsResponse = await fetch(
+          `https://www.ashtavinayak.somee.com/api/BookingSeat/ByTrip/${tripId}`
+        );
+
+        let bookedSeats = [];
+        if (bookedSeatsResponse.ok) {
+          const bookedSeatsData = await bookedSeatsResponse.json();
+          bookedSeats = bookedSeatsData.data || [];
+        } else if (bookedSeatsResponse.status === 404) {
+          // If no booked seats are found, initialize bookedSeats as an empty array
+          bookedSeats = [];
         } else {
-          console.warn("No matching trip found for the given tripId.");
+          throw new Error(`HTTP Error! Status: ${bookedSeatsResponse.status}`);
         }
+
+        // Generate seat layout and mark booked seats
+        const seatLayout = generateSeatsLayout(totalSeats, bookedSeats);
+        setSeats(seatLayout);
       } else {
-        console.warn("No seat data available for the selected package.");
+        console.warn("No matching trip found for the given tripId.");
       }
     } catch (error) {
       console.error("Error fetching seat data:", error);
     }
   };
 
-
-
-  useEffect(() => {
-    if (route.params?.bookedSeats) {
-      setSeats((prevSeats) =>
-        prevSeats.map((seat) =>
-          route.params.bookedSeats.includes(seat.seatNumber)
-            ? { ...seat, status: "booked" }
-            : seat
-        )
-      );
-    }
-  }, [route.params?.bookedSeats]);
-  
-  const generateSeatsLayout = (totalSeats, availableSeats) => {
+  const generateSeatsLayout = (totalSeats, bookedSeats) => {
     let layout = [];
-    let availableSeatsSet = new Set();
-
-    while (availableSeatsSet.size < availableSeats) {
-      let randomSeat = Math.floor(Math.random() * totalSeats);
-      availableSeatsSet.add(randomSeat);
-    }
 
     for (let i = 0; i < totalSeats; i++) {
+      const seatNumber = `S${i + 1}`;
       layout.push({
-        seatNumber: `S${i + 1}`,
-        status: availableSeatsSet.has(i) ? "available" : "booked"
+        seatNumber,
+        status: bookedSeats.includes(seatNumber) ? "booked" : "available",
       });
     }
 
     return layout;
   };
 
-
-
   const toggleSeat = (index) => {
     const seat = seats[index];
     if (seat.status === "booked") return; // Prevent booked seat selection
-  
+
     const seatKey = seat.seatNumber;
     if (selectedSeats.includes(seatKey)) {
       setSelectedSeats(selectedSeats.filter((seat) => seat !== seatKey));
@@ -114,7 +86,6 @@ const SelectSeats = () => {
       setSelectedSeats([...selectedSeats, seatKey]);
     }
   };
-  
 
   const handleNextPress = () => {
     if (selectedSeats.length > 0) {
@@ -137,7 +108,7 @@ const SelectSeats = () => {
     } else if (item.status === "booked") {
       seatStyle = styles.bookedSeat;
     }
-    
+
     return (
       <TouchableOpacity
         key={index}
@@ -178,7 +149,10 @@ const SelectSeats = () => {
       />
 
       <TouchableOpacity
-        style={[styles.nextButton, { backgroundColor: selectedSeats.length > 0 ? "#FF5722" : "#e0e0e0" }]}
+        style={[
+          styles.nextButton,
+          { backgroundColor: selectedSeats.length > 0 ? "#FF5722" : "#e0e0e0" },
+        ]}
         onPress={handleNextPress}
         disabled={selectedSeats.length === 0}
       >
@@ -187,6 +161,7 @@ const SelectSeats = () => {
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
