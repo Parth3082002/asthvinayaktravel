@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from "react-native";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
 const SelectSeats = () => {
   const [seats, setSeats] = useState([]);
@@ -17,16 +17,9 @@ const SelectSeats = () => {
     }
   }, [packageId, tripId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      // Reset selected seats when the screen is focused again
-      setSelectedSeats([]);
-      fetchSeatData(); // Refresh seat data
-    }, [])
-  );
-
   const fetchSeatData = async () => {
     try {
+      // Fetch trip details to get total seats
       const tripResponse = await fetch(
         `http://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
       );
@@ -41,6 +34,7 @@ const SelectSeats = () => {
       if (trip) {
         const totalSeats = trip.totalSeats;
 
+        // Fetch booked seats
         const bookedSeatsResponse = await fetch(
           `https://www.ashtavinayak.somee.com/api/BookingSeat/ByTrip/${tripId}`
         );
@@ -50,11 +44,13 @@ const SelectSeats = () => {
           const bookedSeatsData = await bookedSeatsResponse.json();
           bookedSeats = bookedSeatsData.data || [];
         } else if (bookedSeatsResponse.status === 404) {
+          // If no booked seats are found, initialize bookedSeats as an empty array
           bookedSeats = [];
         } else {
           throw new Error(`HTTP Error! Status: ${bookedSeatsResponse.status}`);
         }
 
+        // Generate seat layout and mark booked seats
         const seatLayout = generateSeatsLayout(totalSeats, bookedSeats);
         setSeats(seatLayout);
       } else {
@@ -81,7 +77,7 @@ const SelectSeats = () => {
 
   const toggleSeat = (index) => {
     const seat = seats[index];
-    if (seat.status === "booked") return;
+    if (seat.status === "booked") return; // Prevent booked seat selection
 
     const seatKey = seat.seatNumber;
     if (selectedSeats.includes(seatKey)) {
@@ -148,7 +144,7 @@ const SelectSeats = () => {
         data={seats}
         renderItem={renderSeat}
         keyExtractor={(item, index) => index.toString()}
-        numColumns={4}
+        numColumns={5}
         contentContainerStyle={styles.seatMap}
       />
 
@@ -166,6 +162,7 @@ const SelectSeats = () => {
   );
 };
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -177,7 +174,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
-    marginTop: 20,
+    marginTop:20,
   },
   legendContainer: {
     flexDirection: "row",
@@ -200,10 +197,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   seat: {
-    marginTop: 15,
     width: 50,
     height: 50,
-    borderRadius: 5,
+    borderRadius: 25,
     margin: 8,
     justifyContent: "center",
     alignItems: "center",
@@ -235,3 +231,4 @@ const styles = StyleSheet.create({
 });
 
 export default SelectSeats;
+

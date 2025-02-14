@@ -111,20 +111,31 @@ const Book = () => {
   const validateFields = () => {
     const newErrors = {};
 
-    if (!adults) newErrors.adults = "field is required";
-    if (!childWithSeat) newErrors.childWithSeat = "field is required";
-    if (!childWithoutSeat) newErrors.childWithoutSeat = " field is required";
-    // if (!pickupLocation) newErrors.pickupLocation = "Pickup location is required";
+    // Validate required fields
+    if (!adults) newErrors.adults = "Field is required";
+    if (!childWithSeat) newErrors.childWithSeat = "Field is required";
+    if (!childWithoutSeat) newErrors.childWithoutSeat = "Field is required";
+
+    // Convert values to integers for calculations
+    const adultsCount = parseInt(adults) || 0;
+    const childWithSeatCount = parseInt(childWithSeat) || 0;
+    const childWithoutSeatCount = parseInt(childWithoutSeat) || 0;
 
     // Validate seat count
-    const totalSeats = parseInt(adults) + parseInt(childWithSeat) + parseInt(childWithoutSeat);
+    const totalSeats = adultsCount + childWithSeatCount + childWithoutSeatCount;
     if (totalSeats !== selectedSeats.length) {
       newErrors.seatCount = `Total seats (${selectedSeats.length}) do not match the sum of adults, children with seats, and children without seats.`;
     }
 
+    // Validate child without seat count (max 2)
+    if (childWithoutSeatCount > 2) {
+      newErrors.childWithoutSeat = "Maximum 2 children without seats are allowed.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+};
+
 
   const handleBooking = async () => {
     if (!validateFields()) {
@@ -279,42 +290,55 @@ const Book = () => {
             </View>
           </View>
 
-          {/* Room Type and Journey Date in one row */}
           <View style={styles.row}>
-            <View style={styles.halfWidth}>
-              <Text style={styles.label}>Journey Date</Text>
-              <TouchableOpacity
-                onPress={() => setDatePickerVisibility(false)}
-                style={[styles.datePicker, styles.inputWithIcon]}
-              >
-                <Text style={{ color: date !== "dd-MM-yyyy" ? "#333" : "#aaa" }}>
-                  {date}
-                </Text>
-              </TouchableOpacity>
-              <DateTimePickerModal
-                isVisible={isDatePickerVisible}
-                mode="date"
-                onConfirm={handleConfirm}
-                onCancel={() => setDatePickerVisibility(false)}
-              />
-            </View>
-          </View>
+  <View style={styles.halfWidth}>
+    <Text style={styles.label}>Journey Date</Text>
+    <TouchableOpacity
+      onPress={() => isEditable && setDatePickerVisibility(true)} // Allow clicking only if editable
+      style={[
+        styles.datePicker,
+        styles.inputWithIcon,
+        !isEditable && styles.nonEditableInput, // Apply gray background when not editable
+      ]}
+      disabled={!isEditable} // Disable touch if not editable
+    >
+      <Text style={{ color: date !== "dd-MM-yyyy" ? "#333" : "#aaa" }}>
+        {date}
+      </Text>
+    </TouchableOpacity>
+    <DateTimePickerModal
+      isVisible={isDatePickerVisible}
+      mode="date"
+      onConfirm={handleConfirm}
+      onCancel={() => setDatePickerVisibility(false)}
+    />
+  </View>
+</View>
+
+
 
           <View style={styles.row}>
-            <View style={styles.halfInputContainer}>
-              <Text style={styles.label}>Pickup Location</Text>
-              <View style={styles.inputWithIcon}>
-                <Icon name="location-outline" size={20} color="#555" />
-                <TextInput
-                  style={styles.inputWithoutPadding}
-                  value={pickupLocation}
-                  placeholder="Pickup Location"
-                  placeholderTextColor="#aaa"
-                  onChangeText={(text) => setPickupLocation(text)}
-                />
-              </View>
-              {errors.pickupLocation && <Text style={styles.errorText}>{errors.pickupLocation}</Text>}
-            </View>
+          <View style={styles.halfInputContainer}>
+  <Text style={styles.label}>Pickup Location</Text>
+  <View
+    style={[
+      styles.inputWithIcon,
+      !isEditable && styles.nonEditableInput, // Apply gray background when not editable
+    ]}
+  >
+    <Icon name="location-outline" size={20} color="#555" />
+    <TextInput
+      style={styles.inputWithoutPadding}
+      value={pickupLocation}
+      placeholder="Pickup Location"
+      placeholderTextColor="#aaa"
+      onChangeText={(text) => setPickupLocation(text)}
+      editable={isEditable} // Make non-editable when needed
+    />
+  </View>
+  {errors.pickupLocation && <Text style={styles.errorText}>{errors.pickupLocation}</Text>}
+</View>
+
             <View style={styles.halfInputContainer}>
   <Text style={styles.label}>Drop Location</Text>
   <View style={styles.inputWithIcon}>
@@ -554,7 +578,10 @@ const styles = StyleSheet.create({
     
   },
   
- 
+   nonEditableInput: {
+    backgroundColor: "#e0e0e0", // Gray background when not editable
+    color: "#888", // Lighter text color to indicate it's disabled
+  },
   
   inputWithIcon: {
     flexDirection: "row",
@@ -586,6 +613,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFCA63",
     width: 100,
     height:45,
+    marginTop:20,
     padding: 10,
   },
   payAdvanceButton: {
@@ -632,6 +660,8 @@ const styles = StyleSheet.create({
       fontSize: 14,
       fontWeight: "bold",
     },
+
+    
   
 });
 

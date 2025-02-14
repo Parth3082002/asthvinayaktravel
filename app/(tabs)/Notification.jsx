@@ -6,10 +6,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  BackHandler
+  BackHandler,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from "@react-navigation/native";
 
 const NotificationScreen = () => {
   const [notifications, setNotifications] = useState([]);
@@ -24,32 +24,47 @@ const NotificationScreen = () => {
     const backAction = () => {
       navigation.reset({
         index: 0,
-        routes: [{ name: 'SelectVehicle1' }],
+        routes: [{ name: "SelectVehicle1" }],
       });
       return true;
     };
 
-    BackHandler.addEventListener('hardwareBackPress', backAction);
+    BackHandler.addEventListener("hardwareBackPress", backAction);
 
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress', backAction);
+      BackHandler.removeEventListener("hardwareBackPress", backAction);
     };
   }, [navigation]);
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch("http://ashtavinayak.somee.com/api/Notification/1");
+      const storedTrip = await AsyncStorage.getItem("tripId");
+      const tripId = storedTrip ? JSON.parse(storedTrip) : null;
+
+      if (!tripId) {
+        Alert.alert("Error", "Trip ID not found.");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(
+        `http://ashtavinayak.somee.com/api/Notification/GetNotificationsByTrip/${tripId}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch notifications. Status: ${response.status}`);
+      }
+
       const jsonData = await response.json();
 
-      if (jsonData.data) {
-        setNotifications([jsonData.data]); // Ensure it's in an array format for FlatList
+      if (jsonData.data && Array.isArray(jsonData.data)) {
+        setNotifications(jsonData.data);
       } else {
-        Alert.alert("Error", "No notifications found.");
+        setNotifications([]);
       }
-      
-
     } catch (error) {
       console.error("Error fetching notifications:", error);
+      Alert.alert("Error", "Failed to fetch notifications.");
     } finally {
       setLoading(false);
     }
@@ -57,10 +72,11 @@ const NotificationScreen = () => {
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Text style={styles.title}>Trip: {item.tripId}</Text>
-      <Text style={styles.info}>Vehicle: {item.vehicleName}</Text>
-      <Text style={styles.message}>Message: {item.message}</Text>
-      <Text style={styles.date}>Date: {new Date(item.date).toDateString()}</Text>
+      <Text style={styles.title}>Trip: {item.tripName}</Text>
+      <Text style={styles.message}>Message: {item.notificationMessage}</Text>
+      <Text style={styles.date}>
+        Date: {new Date(item.notificationDate).toDateString()}
+      </Text>
     </View>
   );
 
@@ -107,11 +123,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
-  },
-  info: {
-    fontSize: 14,
-    color: "#666",
-    marginVertical: 2,
   },
   message: {
     fontSize: 14,

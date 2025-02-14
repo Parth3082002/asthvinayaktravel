@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, BackHandler, ScrollView, FlatList } from 'react-native';
+import { 
+    View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, 
+    BackHandler, ScrollView, FlatList 
+} from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 
 const SelectTour = () => {
@@ -14,38 +17,29 @@ const SelectTour = () => {
 
     const navigation = useNavigation();
     const route = useRoute();
-    const { selectedCityId } = route.params || {}; // Get the cityId from the route params
-    const { vehicleType } = route.params || {};
+    const { selectedCityId, vehicleType } = route.params || {}; 
 
     useFocusEffect(
         React.useCallback(() => {
-            // Reset category and package states when the screen is focused again
             setSelectedCategory(null);
             setSelectedPackage(null);
-
-            return () => {
-                // Cleanup if needed
-            };
         }, [])
     );
 
     useEffect(() => {
         const backAction = () => {
-            // Reset navigation stack and navigate back to Home
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'Home' }],
             });
-            return true;  // Prevent default back action
+            return true;
         };
 
-        // Add event listener for physical back button
         const backHandler = BackHandler.addEventListener(
             'hardwareBackPress',
             backAction
         );
 
-        // Clean up the event listener on component unmount
         return () => backHandler.remove();
     }, [navigation]);
 
@@ -55,20 +49,18 @@ const SelectTour = () => {
 
     useEffect(() => {
         if (selectedCityId) {
-            fetchCityDetails(selectedCityId); // Use the cityId passed from the Home screen
+            fetchCityDetails(selectedCityId);
         }
     }, [selectedCityId]);
 
     const fetchCategories = async () => {
         try {
             const response = await fetch('http://ashtavinayak.somee.com/api/categorys');
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             const result = await response.json();
             setCategories(result.data || []);
         } catch (error) {
-            // console.error('Error fetching categories:', error);
+            console.error('Error fetching categories:', error);
             setCategories([]);
         } finally {
             setLoading(false);
@@ -80,34 +72,32 @@ const SelectTour = () => {
         try {
             const response = await fetch('http://ashtavinayak.somee.com/api/City');
             const cities = await response.json();
-            const selectedCityData = cities.find(city => city.cityId === cityId); // Use cityId for selection
+            const selectedCityData = cities.find(city => city.cityId === cityId);
 
             if (selectedCityData) {
                 setCityId(selectedCityData.cityId);
-                setCityName(selectedCityData.cityName);  // Store city name
+                setCityName(selectedCityData.cityName);
                 fetchPackages(selectedCityData.cityId);
             } else {
                 console.log('City not found');
-                setPackageLoading(false);
                 setPackages([]);
             }
         } catch (error) {
             console.error('Error fetching city details:', error);
-            setPackageLoading(false);
             setPackages([]);
+        } finally {
+            setPackageLoading(false);
         }
     };
 
     const fetchPackages = async (cityId) => {
         try {
             const response = await fetch(`http://ashtavinayak.somee.com/api/Package/GetPackages/${cityId}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             const result = await response.json();
             setPackages(result || []);
         } catch (error) {
-            // console.error('Error fetching Spackages:', error);
+            console.error('Error fetching packages:', error);
             setPackages([]);
         } finally {
             setPackageLoading(false);
@@ -116,18 +106,17 @@ const SelectTour = () => {
 
     const handleNextPress = () => {
         if (selectedCategory && selectedPackage && cityId) {
-            console.log("Selected Vehicle Type:", vehicleType); 
-            console.log("cityid",cityId);
             navigation.navigate('Standardpu12', {
                 selectedCategory,
                 selectedPackage,
                 cityId,
-                cityName,  // Send cityName along with cityId to the next screen
-                vehicleType: vehicleType,
-                
+                cityName,
+                vehicleType,
             });
         } else {
             console.log('Please select both category and package!');
+            alert('Please select both category and package!');
+
         }
     };
 
@@ -144,84 +133,75 @@ const SelectTour = () => {
     );
 
     return (
-       
-            <View style={styles.container}>
-                <View style={styles.header}></View>
-                  <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
-                    <View style={styles.backButtonCircle}>
-                        <Text style={styles.backButton}>{'<'}</Text>
-                    </View>
-                  </TouchableOpacity>
-        
-                {/* Scrollable Content */}
-                <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={true}>                    <Text style={styles.sectionTitle}>Select Category</Text>
-        
-                    {loading ? (
-                        <ActivityIndicator size="large" color="#FF5722" />
-                    ) : (
-                        <View style={styles.leftAlignedOptionsContainer}>
-                            {categories.map((category) => (
-                                <TouchableOpacity
-                                    key={category.categoryId}
-                                    style={[
-                                        styles.packageContainer,
-                                        selectedCategory === category.categoryId && styles.selectedPackage,
-                                    ]}
-                                    onPress={() => setSelectedCategory(category.categoryId)}
-                                >
-                                    <View style={styles.row}>
-                                        <View
-                                            style={[
-                                                styles.checkbox,
-                                                selectedCategory === category.categoryId && styles.checkboxSelected,
-                                            ]}
-                                        >
-                                            {selectedCategory === category.categoryId && (
-                                                <Text style={styles.tick}>✔</Text>
-                                            )}
-                                        </View>
-                                        <Text style={styles.packageTitle}>{category.categoryName}</Text>
-                                    </View>
-                                    <View style={styles.separator} />
-                                    <View>
-                                        {category.busType.split(',').map((item, index) => (
-                                            <Text key={`bus-${index}`} style={styles.packageDetail}>
-                                                • {item.trim()}
-                                            </Text>
-                                        ))}
-                                        {category.stayType.split(',').map((item, index) => (
-                                            <Text key={`stay-${index}`} style={styles.packageDetail}>
-                                                • Stay in {item.trim()}
-                                            </Text>
-                                        ))}
-                                    </View>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    )}
-        
-                    <Text style={styles.sectionTitle1}>Select Package</Text>
-                      <View style={styles.durationContainer}>
-                        {packageLoading ? (
-                            <ActivityIndicator size="large" color="#FF5722" />
-                        ) : packages.length > 0 ? (
-                            <FlatList
-                                data={packages}
-                                renderItem={renderPackageItem}
-                                keyExtractor={(item) => item.packageId.toString()}
-                                numColumns={3}
-                                contentContainerStyle={styles.packageListContainer}
-                            />
-                        ) : (
-                            <Text style={styles.noPackagesText}>No packages available for this city.</Text>
-                        )}
-                      </View>
-                    </ScrollView>
-                    <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
-                      <Text style={styles.nextButtonText}>Next</Text>
-              </TouchableOpacity>
-            </View>
-        );
+        <View style={styles.container}>
+            <View style={styles.header} />
+            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
+                <View style={styles.backButtonCircle}>
+                    <Text style={styles.backButton}>{'<'}</Text>
+                </View>
+            </TouchableOpacity>
+
+            <FlatList
+    ListHeaderComponent={
+        <>
+            <Text style={styles.sectionTitle}>Select Category</Text>
+            {loading ? (
+                <ActivityIndicator size="large" color="#FF5722" />
+            ) : (
+                <View style={styles.leftAlignedOptionsContainer}>
+                    {categories.map((category) => (
+                        <TouchableOpacity
+                            key={category.categoryId}
+                            style={[
+                                styles.packageContainer,
+                                selectedCategory === category.categoryId && styles.selectedPackage,
+                            ]}
+                            onPress={() => setSelectedCategory(category.categoryId)}
+                        >
+                            <View style={styles.row}>
+                                <View style={[
+                                    styles.checkbox,
+                                    selectedCategory === category.categoryId && styles.checkboxSelected,
+                                ]}>
+                                    {selectedCategory === category.categoryId && (
+                                        <Text style={styles.tick}>✔</Text>
+                                    )}
+                                </View>
+                                <Text style={styles.packageTitle}>{category.categoryName}</Text>
+                            </View>
+                            <View style={styles.separator} />
+                            <View>
+                                {category.busType.split(',').map((item, index) => (
+                                    <Text key={`bus-${index}`} style={styles.packageDetail}>
+                                        • {item.trim()}
+                                    </Text>
+                                ))}
+                                {category.stayType.split(',').map((item, index) => (
+                                    <Text key={`stay-${index}`} style={styles.packageDetail}>
+                                        • Stay in {item.trim()}
+                                    </Text>
+                                ))}
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            )}
+            <Text style={styles.sectionTitle1}>Select Package</Text>
+        </>
+    }
+    data={packages}
+    renderItem={renderPackageItem}
+    keyExtractor={(item) => item.packageId.toString()}
+    numColumns={3}
+    contentContainerStyle={styles.packageListContainer}
+/>
+
+
+            <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
+                <Text style={styles.nextButtonText}>Next</Text>
+            </TouchableOpacity>
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
@@ -387,10 +367,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     nextButton: {
-        position: 'absolute',
+        // position: 'absolute',
         bottom: 0,
         left: 20,
         right: 20,
+        marginLeft:-5,
+        marginRight:35,
         backgroundColor: '#FF5722',
         borderRadius: 5,
         paddingVertical: 15,

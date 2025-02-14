@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
     marginTop: 5,
-    marginLeft: -100,
+    marginLeft: -120,
   },
   backButton: {
     fontSize: 24,

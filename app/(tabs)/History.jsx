@@ -6,10 +6,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-  BackHandler
+  BackHandler,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from "@react-navigation/native";
 
 const History = () => {
   const [historyData, setHistoryData] = useState([]);
@@ -24,14 +24,14 @@ const History = () => {
     const backAction = () => {
       navigation.reset({
         index: 0,
-        routes: [{ name: 'SelectVehicle1' }],
+        routes: [{ name: "SelectVehicle1" }],
       });
       return true;
     };
 
-    BackHandler.addEventListener('hardwareBackPress', backAction);
+    BackHandler.addEventListener("hardwareBackPress", backAction);
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress', backAction);
+      BackHandler.removeEventListener("hardwareBackPress", backAction);
     };
   }, [navigation]);
 
@@ -40,19 +40,32 @@ const History = () => {
       const storedUser = await AsyncStorage.getItem("user");
       const parsedUser = storedUser ? JSON.parse(storedUser) : null;
 
-      if (parsedUser && parsedUser.userId) {
-        const userId = parsedUser.userId;
-        const response = await fetch(`http://ashtavinayak.somee.com/api/Booking/HistoryByUser/${userId}`);
-        const jsonData = await response.json();
-
-        if (jsonData.data && Array.isArray(jsonData.data)) {
-          setHistoryData(jsonData.data);
-        } else {
-          setHistoryData([]);
-          Alert.alert("No Data", "No booking history found for this user.");
-        }
-      } else {
+      if (!parsedUser || !parsedUser.userId) {
         Alert.alert("Error", "User data not found. Please log in again.");
+        setLoading(false);
+        return;
+      }
+
+      const userId = parsedUser.userId;
+      console.log("Fetching history for userId:", userId);
+
+      const historyResponse = await fetch(
+        `http://ashtavinayak.somee.com/api/Booking/HistoryByUser/${userId}`
+      );
+
+      if (!historyResponse.ok) {
+        throw new Error(
+          `Failed to fetch booking history. Status: ${historyResponse.status}`
+        );
+      }
+
+      const historyData = await historyResponse.json();
+      console.log("Fetched history data:", historyData);
+
+      if (historyData.data && Array.isArray(historyData.data)) {
+        setHistoryData(historyData.data);
+      } else {
+        setHistoryData([]);
       }
     } catch (error) {
       console.error("Error fetching history:", error);
@@ -62,16 +75,24 @@ const History = () => {
     }
   };
 
-  const renderItem = ({ item, index }) => (
+  const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Text style={styles.title}>Tour: {item.tourName || "N/A"}</Text>
-      <Text style={styles.info}>City: {item.cityName || "N/A"}</Text>
-      <Text style={styles.info}>Category: {item.categoryName || "N/A"}</Text>
-      <Text style={styles.info}>Package: {item.packageName || "N/A"}</Text>
-      <Text style={styles.info}>Drop Point: {item.dropPoint || "N/A"}</Text>
-      <Text style={styles.price}>Total: ₹{item.total || "0"}</Text>
+      <Text style={styles.title}>{item.tourName || "N/A"}</Text>
+      <Text style={styles.info}>Pickup Point: {item.pickupPointName || "N/A"}</Text>
+      <Text style={styles.info}>Drop Point: {item.droppoint || "N/A"}</Text>
+      <Text style={styles.info}>Booking Date: {item.bookingDate || "N/A"}</Text>
+      <Text style={styles.status(item.status)}>Status: {item.status || "Unknown"}</Text>
+      <Text style={styles.price}>Total Payment: ₹{item.totalPayment || "0"}</Text>
       <Text style={styles.advance}>Advance: ₹{item.advance || "0"}</Text>
-      <Text style={styles.status(item.status)}>{item.status || "Unknown"}</Text>
+
+      <Text style={styles.seatHeader}>Seat Numbers:</Text>
+      {item.seatNumbers && item.seatNumbers.length > 0 ? (
+        <Text style={styles.seatText}>
+          {item.seatNumbers.map((seat) => `S${seat.seatNumber}`).join(", ")}
+        </Text>
+      ) : (
+        <Text style={styles.info}>No Seat Information</Text>
+      )}
     </View>
   );
 
@@ -83,7 +104,9 @@ const History = () => {
       ) : historyData.length > 0 ? (
         <FlatList
           data={historyData}
-          keyExtractor={(item, index) => (item.historyId ? item.historyId.toString() : index.toString())}
+          keyExtractor={(item, index) =>
+            item.historyId ? item.historyId.toString() : index.toString()
+          }
           renderItem={renderItem}
         />
       ) : (
@@ -124,6 +147,16 @@ const styles = StyleSheet.create({
     color: "#666",
     marginVertical: 2,
   },
+  seatHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#ff6600",
+    marginTop: 10,
+  },
+  seatText: {
+    fontSize: 14,
+    color: "#333",
+  },
   price: {
     fontSize: 16,
     fontWeight: "bold",
@@ -141,7 +174,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: status === "Confirmed" ? "green" : "red",
     marginTop: 5,
-    textAlign: "right",
   }),
   noHistoryText: {
     textAlign: "center",
@@ -152,3 +184,4 @@ const styles = StyleSheet.create({
 });
 
 export default History;
+
