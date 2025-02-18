@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, 
-    BackHandler, ScrollView, FlatList 
+    BackHandler, FlatList 
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 
@@ -14,6 +14,8 @@ const SelectTour = () => {
     const [packageLoading, setPackageLoading] = useState(false);
     const [cityId, setCityId] = useState(null);
     const [cityName, setCityName] = useState('');
+    const [childWithSeatP, setChildWithSeatP] = useState(0);
+    const [childWithoutSeatP, setChildWithoutSeatP] = useState(0);
 
     const navigation = useNavigation();
     const route = useRoute();
@@ -77,7 +79,7 @@ const SelectTour = () => {
             if (selectedCityData) {
                 setCityId(selectedCityData.cityId);
                 setCityName(selectedCityData.cityName);
-                fetchPackages(selectedCityData.cityId);
+                fetchPackages(selectedCityData.cityId, selectedCategory);
             } else {
                 console.log('City not found');
                 setPackages([]);
@@ -90,9 +92,9 @@ const SelectTour = () => {
         }
     };
 
-    const fetchPackages = async (cityId) => {
+    const fetchPackages = async (cityId, categoryId) => {
         try {
-            const response = await fetch(`http://ashtavinayak.somee.com/api/Package/GetPackages/${cityId}`);
+            const response = await fetch(`http://ashtavinayak.somee.com/api/Package/GetPackages/${cityId}/${categoryId}`);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             const result = await response.json();
             setPackages(result || []);
@@ -106,96 +108,62 @@ const SelectTour = () => {
 
     const handleNextPress = () => {
         if (selectedCategory && selectedPackage && cityId) {
+            console.log('Navigating with:', { selectedCategory, selectedPackage, cityId, cityName, vehicleType, childWithSeatP, childWithoutSeatP });
             navigation.navigate('Standardpu12', {
                 selectedCategory,
                 selectedPackage,
                 cityId,
                 cityName,
                 vehicleType,
+                childWithSeatP,
+                childWithoutSeatP,
             });
         } else {
             console.log('Please select both category and package!');
             alert('Please select both category and package!');
-
         }
     };
 
-    const renderPackageItem = ({ item }) => (
-        <TouchableOpacity
-            style={[
-                styles.packageItemContainer,
-                selectedPackage === item.packageId && styles.selectedPackageItemContainer
-            ]}
-            onPress={() => setSelectedPackage(item.packageId)}
-        >
-            <Text style={styles.packageItemText}>{item.packageName}</Text>
-        </TouchableOpacity>
-    );
-
     return (
         <View style={styles.container}>
-            <View style={styles.header} />
-            <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
-                <View style={styles.backButtonCircle}>
-                    <Text style={styles.backButton}>{'<'}</Text>
-                </View>
-            </TouchableOpacity>
-
-            <FlatList
-    ListHeaderComponent={
-        <>
             <Text style={styles.sectionTitle}>Select Category</Text>
             {loading ? (
                 <ActivityIndicator size="large" color="#FF5722" />
             ) : (
-                <View style={styles.leftAlignedOptionsContainer}>
-                    {categories.map((category) => (
-                        <TouchableOpacity
-                            key={category.categoryId}
-                            style={[
-                                styles.packageContainer,
-                                selectedCategory === category.categoryId && styles.selectedPackage,
-                            ]}
-                            onPress={() => setSelectedCategory(category.categoryId)}
-                        >
-                            <View style={styles.row}>
-                                <View style={[
-                                    styles.checkbox,
-                                    selectedCategory === category.categoryId && styles.checkboxSelected,
-                                ]}>
-                                    {selectedCategory === category.categoryId && (
-                                        <Text style={styles.tick}>✔</Text>
-                                    )}
-                                </View>
-                                <Text style={styles.packageTitle}>{category.categoryName}</Text>
-                            </View>
-                            <View style={styles.separator} />
-                            <View>
-                                {category.busType.split(',').map((item, index) => (
-                                    <Text key={`bus-${index}`} style={styles.packageDetail}>
-                                        • {item.trim()}
-                                    </Text>
-                                ))}
-                                {category.stayType.split(',').map((item, index) => (
-                                    <Text key={`stay-${index}`} style={styles.packageDetail}>
-                                        • Stay in {item.trim()}
-                                    </Text>
-                                ))}
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                categories.map((category) => (
+                    <TouchableOpacity
+                        key={category.categoryId}
+                        style={selectedCategory === category.categoryId ? styles.selectedCategory : styles.categoryContainer}
+                        onPress={() => {
+                            setSelectedCategory(category.categoryId);
+                            setChildWithSeatP(category.childwithseatP);
+                            setChildWithoutSeatP(category.childwithoutseatP);
+                            fetchPackages(cityId, category.categoryId);
+                        }}
+                    >
+                        <Text style={styles.categoryTitle}>{category.categoryName}</Text>
+                        <Text style={styles.packageDetail}>Bus Type: {category.busType}</Text>
+                        <Text style={styles.packageDetail}>Stay Type: {category.stayType}</Text>
+                        <Text style={styles.packageDetail}>Child with Seat Price: {category.childwithseatP}</Text>
+                        <Text style={styles.packageDetail}>Child without Seat Price: {category.childwithoutseatP}</Text>
+                    </TouchableOpacity>
+                ))
             )}
-            <Text style={styles.sectionTitle1}>Select Package</Text>
-        </>
-    }
-    data={packages}
-    renderItem={renderPackageItem}
-    keyExtractor={(item) => item.packageId.toString()}
-    numColumns={3}
-    contentContainerStyle={styles.packageListContainer}
-/>
 
+            <Text style={styles.sectionTitle}>Select Package</Text>
+            <FlatList
+                data={packages}
+                renderItem={({ item }) => (
+                    <TouchableOpacity
+                        style={selectedPackage === item.packageId ? styles.selectedPackage : styles.packageItemContainer}
+                        onPress={() => setSelectedPackage(item.packageId)}
+                    >
+                        <Text style={styles.packageItemText}>{item.packageName}</Text>
+                    </TouchableOpacity>
+                )}
+                keyExtractor={(item) => item.packageId.toString()}
+                numColumns={3}
+            />
 
             <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
                 <Text style={styles.nextButtonText}>Next</Text>
@@ -203,6 +171,8 @@ const SelectTour = () => {
         </View>
     );
 };
+
+
 
 const styles = StyleSheet.create({
     container: {

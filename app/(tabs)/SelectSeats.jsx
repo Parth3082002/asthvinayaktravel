@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
-
+import Icon from 'react-native-vector-icons/MaterialIcons';
 const SelectSeats = () => {
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -65,20 +65,51 @@ const SelectSeats = () => {
     }
   };
 
-  const generateSeatsLayout = (totalSeats, bookedSeats) => {
-    let layout = [];
+  // const generateSeatsLayout = (totalSeats, bookedSeats) => {
+  //   let layout = [];
 
-    for (let i = 0; i < totalSeats; i++) {
-      const seatNumber = `S${i + 1}`;
+  //   for (let i = 0; i < totalSeats; i++) {
+  //     const seatNumber = `S${i + 1}`;
+  //     layout.push({
+  //       seatNumber,
+  //       status: bookedSeats.includes(seatNumber) ? "booked" : "available",
+  //     });
+  //   }
+
+  //   return layout;
+  // };
+
+  // Generating the layout with 5 seats in the last row
+const generateSeatsLayout = (totalSeats, bookedSeats) => {
+  let layout = [];
+  let seatCount = 1;
+
+  // First 10 rows with 4 seats each
+  for (let i = 0; i < 10; i++) {
+    for (let j = 0; j < 4; j++) {
+      const seatNumber = `S${seatCount++}`;
       layout.push({
         seatNumber,
         status: bookedSeats.includes(seatNumber) ? "booked" : "available",
       });
     }
+  }
 
-    return layout;
-  };
+  // Last row with 5 seats
+  for (let i = 0; i < 5; i++) {
+    const seatNumber = `S${seatCount++}`;
+    layout.push({
+      seatNumber,
+      status: bookedSeats.includes(seatNumber) ? "booked" : "available",
+    });
+  }
 
+  return layout;
+};
+
+  
+  
+  
   const toggleSeat = (index) => {
     const seat = seats[index];
     if (seat.status === "booked") return;
@@ -103,27 +134,41 @@ const SelectSeats = () => {
     }
   };
 
+
   const renderSeat = ({ item, index }) => {
     const isSelected = selectedSeats.includes(item.seatNumber);
     let seatStyle = styles.availableSeat;
-
+  
     if (isSelected) {
       seatStyle = styles.selectedSeat;
     } else if (item.status === "booked") {
       seatStyle = styles.bookedSeat;
     }
-
-    return (
+  
+    const isLastRow = index >= 44; // Last 5 seats (41-45) start from index 40
+  
+    // Apply different styles for the last row
+    const marginStyle = isLastRow
+      ? styles.lastRowSeat // Apply the reduced size and specific margin style for the last row
+      : index % 4 === 0 || index % 4 === 1
+      ? { marginRight: 25 } // First 2 seats in a row
+      : index % 4 === 2 || index % 4 === 3
+      ? { marginLeft: 30 } // Last 2 seats in a row
+      : {};
+    
+  
+  
+  return (
       <TouchableOpacity
-        key={index}
-        style={[styles.seat, seatStyle]}
-        disabled={item.status === "booked"}
-        onPress={() => toggleSeat(index)}
+      key={index}
+      style={[styles.seat, seatStyle, marginStyle]}
+      disabled={item.status === "booked"}
+      onPress={() => toggleSeat(index)}
       >
-        <Text style={styles.seatText}>{item.seatNumber}</Text>
+      <Text style={styles.seatText}>{item.seatNumber}</Text>
       </TouchableOpacity>
-    );
-  };
+      );
+    };
 
   return (
     <View style={styles.container}>
@@ -143,15 +188,14 @@ const SelectSeats = () => {
           <Text>Selected</Text>
         </View>
       </View>
-
-      <FlatList
+     
+       <FlatList
         data={seats}
         renderItem={renderSeat}
         keyExtractor={(item, index) => index.toString()}
-        numColumns={4}
+        numColumns={4} // Rendering 4 columns for most rows
         contentContainerStyle={styles.seatMap}
-      />
-
+       />
       <TouchableOpacity
         style={[
           styles.nextButton,
@@ -196,17 +240,26 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   seatMap: {
+    flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
   },
+  lastRowSeat: {
+    height: 40, // Reduced size for last row
+    width: 45,
+    // marginHorizontal: -20, // Spacing between the 5 seats
+    // marginLeft:0,
+    marginRight:10,
+    marginVertical:-45,
+  },
   seat: {
-    marginTop: 15,
+    height: 40,
     width: 50,
-    height: 50,
     borderRadius: 5,
-    margin: 8,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
+    margin: 5,
+  
   },
   availableSeat: {
     backgroundColor: "#FF5722",

@@ -9,7 +9,7 @@ import Home from './(tabs)/Home';
 import Registration from './(tabs)/Registration';
 import Book from './(tabs)/Book';
 import Standardpu12 from './(tabs)/Standardpu12';
-import SelectSeats from './(tabs)/SelectSeats';
+import SelectSeats from './(tabs)/SelectSeats11';
 import SelectDate from './(tabs)/SelectDate'; // ✅ Add missing import
 import Dashboard from './(tabs)/Dashboard';
 import Bappa1 from './(tabs)/Bappa1';

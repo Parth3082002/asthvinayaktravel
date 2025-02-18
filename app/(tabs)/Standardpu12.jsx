@@ -20,9 +20,13 @@ const PackageDetails = ({ route: propRoute }) => {
   const [error, setError] = useState(null);
   
   const routeParams = route.params || {};
-  const { selectedCategory, selectedPackage, cityId, cityName } = route.params || {};
+  const { selectedCategory, selectedPackage, cityId, cityName,childWithSeatP, 
+    childWithoutSeatP  } = route.params || {};
   const categoryId = propRoute?.categoryId || routeParams.categoryId;
   const packageId = propRoute?.packageId || routeParams.packageId;
+  const childWithSeatPrice = propRoute?.childWithSeatP || routeParams.childWithSeatP;
+const childWithoutSeatPrice = propRoute?.childWithoutSeatP || routeParams.childWithoutSeatP;
+
 
   const [packageData, setPackageData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -116,8 +120,11 @@ const PackageDetails = ({ route: propRoute }) => {
     console.log("Selected Pickup Point:", selectedPickupPoint);
     console.log("Selected Pickup ID:", selectedPickupPointId);
 
+    
     console.log("Price:", packageData.price);
     console.log("Selected Vehicle Type:", vehicleType); 
+    console.log("Child With Seat Price:", childWithSeatPrice);
+console.log("Child Without Seat Price:", childWithoutSeatPrice);
   
     // Navigate to the "Select Date" page, passing all required parameters
     navigation.navigate("SelectDate", {
@@ -131,6 +138,9 @@ const PackageDetails = ({ route: propRoute }) => {
       selectedPickupPointId: selectedPickupPointId,  // Pass the pickup ID
       price: packageData.price,
       vehicleType: vehicleType,
+      childWithSeatP: packageData.childWithSeatP, // Pass child with seat price
+    childWithoutSeatP: packageData.childWithoutSeatP
+      
       
     });
   };
