@@ -17,7 +17,7 @@ const SelectDateScreen = () => {
   const navigation = useNavigation();
   const route = useRoute(); // Access navigation params
 
-  const { packageId } = route.params || {}; // Extract packageId
+  const { packageId, cityName, cityId, packageData, categoryName, selectedPickupPoint, selectedPickupPointId, vehicleType, childWithSeatP, childWithoutSeatP } = route.params || {}; // Extract all parameters
 
   useEffect(() => {
     const fetchDates = async () => {
@@ -77,10 +77,39 @@ const SelectDateScreen = () => {
 
   const handleNextPress = () => {
     if (selectedDate) {
-      navigation.navigate("SelectSeats", {
-        ...route.params, // Pass all previous data
+      console.log("City Name:", packageData.city);
+      console.log("City ID:", cityId);
+      console.log("Package Name:", packageData.packageName);
+      console.log("Package ID:", packageData.packageId);
+      console.log("Category Name:", categoryName);
+      console.log("Category ID:", packageData.categoryId);
+      console.log("Selected Pickup Point:", selectedPickupPoint);
+      console.log("Selected Pickup Point ID:", selectedPickupPointId);
+      console.log("Price:", packageData.price);
+      console.log("Vehicle Type:", vehicleType);
+      console.log("Child With Seat Price:", childWithSeatP);
+      console.log("Child Without Seat Price:", childWithoutSeatP);
+      console.log("Selected Date:", selectedDate.tripDate);
+      console.log("Selected Trip ID:", selectedDate.tripId);
+      console.log("Tour Name:", selectedDate.tourName);
+
+      navigation.navigate("Book", {
+        packageData: packageData,
+        cityName: packageData.city,
+        cityId: cityId,
+        packageName: packageData.packageName,
+        packageId: packageData.packageId,
+        categoryName: categoryName,
+        categoryId: packageData.categoryId,
+        selectedPickupPoint: selectedPickupPoint,
+        selectedPickupPointId: selectedPickupPointId,
+        price: packageData.price,
+        vehicleType: vehicleType,
+        childWithSeatP: childWithSeatP,
+        childWithoutSeatP: childWithoutSeatP,
         selectedDate: selectedDate.tripDate,
-        tripId: selectedDate.tripId, // Pass tripId for future use
+        tripId: selectedDate.tripId,
+        tourName: selectedDate.tourName,
       });
     } else {
       alert("Please select a date");
@@ -140,8 +169,6 @@ const SelectDateScreen = () => {
     </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {
@@ -223,15 +250,14 @@ const styles = StyleSheet.create({
   },
   nextButton: {
     position: 'absolute',
-        bottom: 20,
-        left: 20,
-        right: 20,
-        backgroundColor: '#FF5722',
-        borderRadius: 5,
-        paddingVertical: 15,
-        alignItems: 'center',
-        justifyContent: 'center',
-    
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: '#FF5722',
+    borderRadius: 5,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nextButtonText: {
     color: "#fff",

@@ -21,6 +21,8 @@ import Bappa6 from './(tabs)/Bappa6';
 import Bappa7 from './(tabs)/Bappa7';
 import Bappa8 from './(tabs)/Bappa8';
 import History from './(tabs)/History';
+import CarType from './(tabs)/CarType';
+import CarBook from './(tabs)/CarBook';
 
 const Stack = createStackNavigator(); // ✅ Correct stack creation
 
@@ -53,6 +55,8 @@ export default function MainNavigator() {
       <Stack.Screen name="Bappa7" component={Bappa7} />
       <Stack.Screen name="Bappa8" component={Bappa8} />
       <Stack.Screen name="History" component={History} />
+      <Stack.Screen name="CarType" component={CarType} />
+      <Stack.Screen name="CarBook" component={CarBook} />
     </Stack.Navigator>
   );
 }
