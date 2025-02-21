@@ -1,312 +1,377 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ImageBackground,
-  StyleSheet,
-  TextInput,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
+import React, { useEffect, useState } from "react";
+import { 
+  View, Text, FlatList, ActivityIndicator, StyleSheet, 
+  ScrollView, Image, ImageBackground, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, BackHandler,
+} from "react-native";
+import { useRoute } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-const Premiumpu12 = () => {
-  return (
-    <ScrollView style={styles.container}>
-      {/* Background Image */}
-      <ImageBackground
-        source={require('../../assets/images/back.png')}
-        style={styles.headerImage}
-      >
-        <View style={styles.headerContent}>
-  <View style={styles.inclusionRow}>
-    <Text style={styles.inclusionText}>Inclusion:</Text>
-    <Text style={styles.cityText}>Pune</Text>
-  </View>
-  <Text style={styles.inclusionDetails}>
-  •  Non-AC Deluxe Bus{'\n'}
-  •  1 Night Stay at Bhakt-Niwas                            {'\t'} at Lenyadri/Ozar{'\n'}
-    {'\n'}
-    •  Meals{'\n'}
-         {'\t\t'}- 2 Breakfast{'\n'}
-         {'\t\t'}- 2 Lunch{'\n'}
-         {'\t\t'}- 1 Dinner
-  </Text>
-</View>
+import Svg, { Line, Circle } from 'react-native-svg';
 
-      </ImageBackground>
+import Day1 from '../../assets/images/Day1.png';
+import Day2 from '../../assets/images/Day2.png';
+import Day3 from '../../assets/images/Day3.png';
+import Day4 from '../../assets/images/Day4.png';
+import Day5 from '../../assets/images/Day5.png';
 
-      {/* Title */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>1 Night 2 Days (Standard)</Text>
-        <View style={styles.searchBox}>
-          <Ionicons name="location" size={23} color="#ff5722" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search Pickup Location"
-            placeholderTextColor="#888"
-          />
+const PackageDetails = ({ route: propRoute }) => {
+  const route = useRoute();
+  const [error, setError] = useState(null);
+  
+  const routeParams = route.params || {};
+  const { selectedCategory, selectedPackage, cityId, cityName } = route.params || {};
+  const categoryId = propRoute?.categoryId || routeParams.categoryId;
+  const packageId = propRoute?.packageId || routeParams.packageId;
+
+  const [packageData, setPackageData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [pickupPoints, setPickupPoints] = useState([]);
+  const [selectedPickupPoint, setSelectedPickupPoint] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false); 
+  const [filteredPickupPoints, setFilteredPickupPoints] = useState([]); // For filtered locations
+  const [selectedPickupPointId, setSelectedPickupPointId] = useState(null);
+  const navigation = useNavigation();
+
+  const { vehicleType, categoryName, packageName, childWithSeatP, childWithoutSeatP } = route.params || {}; 
+
+  useEffect(() => {
+    const backAction = () => {
+        // Reset navigation stack and navigate back to Home
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'Home' }],
+        });
+        return true;  // Prevent default back action
+    };
+
+    // Add event listener for physical back button
+    const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backAction
+    );
+
+    // Clean up the event listener on component unmount
+    return () => backHandler.remove();
+  }, [navigation]);
+
+  useEffect(() => {
+    if (cityId && selectedCategory && selectedPackage && cityName) {
+      fetchPackageDetails(cityId, selectedCategory, selectedPackage);
+      fetchPickupPoints(cityId);  // Fetch pickup points
+    } else {
+      setLoading(false);
+      setError("Invalid parameters received");
+    }
+  }, [cityId, selectedCategory, selectedPackage, cityName]);
+
+  const images = [Day1, Day2, Day3, Day4, Day5]; // Array of images
+
+  const fetchPackageDetails = async (cityId, categoryId, packageId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const encodedPackageId = encodeURIComponent(packageId);
+      const apiUrl = `http://ashtavinayak.somee.com/api/Package/GetPackagePrice/${cityId}/${categoryId}/${encodedPackageId}`;
+  
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data. Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+  
+      // Check if categoryId is available in the response data
+      const fetchedCategoryId = data?.categoryId || categoryId; // Fallback to the original categoryId if not in response
+      setPackageData({ ...data, categoryId: fetchedCategoryId });
+    } catch (error) {
+      setError('Something went wrong. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPickupPoints = async (cityId) => {
+    try {
+      const apiUrl = `http://ashtavinayak.somee.com/api/Pickup/City/${cityId}`;
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch pickup points');
+      }
+
+      const data = await response.json();
+      if (data.data) {
+        // Ensure all items follow a consistent naming convention
+        const formattedData = data.data.map(point => ({
+          ...point,
+          pickupPointId: point.pickupPointID, // Normalize key name
+        }));
+        setPickupPoints(formattedData);
+        setFilteredPickupPoints(formattedData);
+      } else {
+        setPickupPoints([]);
+        setFilteredPickupPoints([]);
+      }
+    } catch (error) {
+      setError("Failed to fetch pickup points");
+    }
+  };
+
+  const handleBookNow = () => {
+    if (!selectedPickupPoint.trim()) {
+      alert("Please select a pickup location first");
+      return; 
+    }
+
+
+    console.log("City Name:", packageData.city);
+console.log("City ID:", cityId);
+console.log("Package Name:", packageData.packageName);
+console.log("Package ID:", packageData.packageId);
+console.log("Category Name:", packageData.categoryName);
+console.log("Category ID:", packageData.categoryId);
+console.log("Selected Pickup Point:", selectedPickupPoint);
+console.log("Selected Pickup Point ID:", selectedPickupPointId);
+console.log("Price:", packageData.price);
+console.log("Vehicle Type:", vehicleType);
+console.log("Child With Seat Price:", childWithSeatP);
+console.log("Child Without Seat Price:", childWithoutSeatP);
+
+
+    console.log("Category Name:", categoryName);
+    console.log("Package Name:", packageName);
+    console.log("Child with Seat Price:", childWithSeatP);
+    console.log("Child without Seat Price:", childWithoutSeatP);
+
+    if (vehicleType === "BUS") {
+      navigation.navigate("SelectDate", {
+        cityName: packageData.city,
+        cityId: cityId,
+        packageName: packageData.packageName,
+        packageId: packageData.packageId,
+        categoryName: categoryName,
+        categoryId: packageData.categoryId, 
+        selectedPickupPoint: selectedPickupPoint,
+        selectedPickupPointId: selectedPickupPointId,  
+        price: packageData.price,
+        vehicleType: vehicleType,
+        childWithSeatP: childWithSeatP,
+        childWithoutSeatP: childWithoutSeatP,
+      });
+    } else if (vehicleType === "CAR") {
+      navigation.navigate("CarType", {
+        cityName: packageData.city,
+        cityId: cityId,
+        packageName: packageData.packageName,
+        packageId: packageData.packageId,
+        categoryName: categoryName,
+        categoryId: packageData.categoryId, 
+        selectedPickupPoint: selectedPickupPoint,
+        selectedPickupPointId: selectedPickupPointId,  
+        price: packageData.price,
+        vehicleType: vehicleType,
+        childWithSeatP: childWithSeatP,
+        childWithoutSeatP: childWithoutSeatP,
+      });
+    }
+  };
+
+  const handleSearch = (text) => {
+    setSelectedPickupPoint(text);
+    if (text.trim() === "") {
+      setFilteredPickupPoints(pickupPoints);
+    } else {
+      const filtered = pickupPoints.filter(point =>
+        point.pickupPointName.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredPickupPoints(filtered);
+    }
+  };
+
+  // New logic to display routes based on the array structure
+  const formatRouteText = (points) => {
+    return points.map((point, index) => {
+      const splitPoints = point.split(/[\|,]/).map((part, i) => (
+        <Text key={i} style={styles.route}>
+          {part.trim()}
+        </Text>
+      ));
+      return (
+        <View key={index}>
+          {splitPoints}
         </View>
+      );
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#007bff" />
       </View>
+    );
+  }
 
-      {/* Itinerary */}
-      <View style={styles.dayContainer}>
-        {/* Day 1 */}
-        <Text style={styles.dayText}>DAY 1 -</Text>
-        <View style={styles.itineraryRow}>
-          {/* Image */}
-          <Image
-            source={require('../../assets/images/Day1.png')} // Replace with Day 1 image URL
-            style={styles.dayImage}
-          />
+  return (
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      <ScrollView style={styles.container}>
+        <ImageBackground
+          source={require('../../assets/images/back.png')}
+          style={styles.headerImage}
+        >
+          {packageData ? (
+            <View style={styles.headerContent}>
+              <View style={styles.inclusionRow}>
+                <Text style={styles.inclusionText}>Inclusion:</Text>
+                <Text style={styles.cityText}>{packageData.city}</Text>
+              </View>
 
-          {/* Timeline */}
-          <View style={styles.timelineContainer}>
-  {/* Vertical Line with Dots and Lines */}
-  <View style={styles.verticalLine}>
-    {['Pune', 'Morgaon', 'Siddhatek', 'Theur', 'Ranjangaon'].map((location, index) => (
-      <React.Fragment key={index}>
-        {/* If it's the first location, show the vertical line first */}
-        {index === 0 && (
-          <View style={{ height: 28, width: 2, backgroundColor: '#ccc',marginTop:-20 }} />
+              <View style={styles.inclusionDetailsContainer}>
+                {packageData.inclusions.split(',').map((item, index) => (
+                  <Text key={index} style={styles.inclusionDetails}>
+                    • {item.trim()}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          ) : (
+            <Text style={styles.errorText}>No trip available for this package!</Text>
+          )}
+        </ImageBackground>
+
+        {packageData && (
+          <>
+            <View style={{ flex: 1 }}>
+              <View style={styles.titleContainer}>
+                <Text style={styles.title}>
+                  {packageData.packageName} ({packageData.category})
+                </Text>
+
+                <TouchableWithoutFeedback onPress={() => setShowDropdown(true)}>
+                  <View style={styles.searchBox}>
+                    <Ionicons name="location" size={23} color="#ff5722" />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Select Pickup Location"
+                      placeholderTextColor="#888"
+                      value={selectedPickupPoint}
+                      editable={false}
+                    />
+                  </View>
+                </TouchableWithoutFeedback>
+
+                {showDropdown && (
+                  <View style={styles.dropdown}>
+                    {filteredPickupPoints.length > 0 ? (
+                      filteredPickupPoints.map((point, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setSelectedPickupPoint(point.pickupPointName);
+                            setSelectedPickupPointId(point.pickupPointID);
+                            setShowDropdown(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownText}>{point.pickupPointName}</Text>
+                        </TouchableOpacity>
+                      ))
+                    ) : (
+                      <Text style={styles.noLocationText}>No location available</Text>
+                    )}
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.dayContainer}>
+                {packageData.routes?.map((route, dayIndex) => (
+                  <View key={dayIndex} style={styles.container1}>
+                    <Text style={styles.dayText}>{route.day}</Text>
+                    <View style={styles.itineraryRow}>
+                      <Image
+                        source={images[parseInt(route.day.replace("Day", ""), 10) - 1]}
+                        style={styles.dayImage}
+                      />
+                      <View style={styles.routeContainer}>
+                        <ScrollView
+                          style={{ maxHeight: 220 }}
+                          contentContainerStyle={{ flexGrow: 1 }}
+                          showsVerticalScrollIndicator={true}
+                          nestedScrollEnabled={true}
+                        >
+                          {formatRouteText(route.points || [])} {/* Check for points */}
+                        </ScrollView>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.footer}>
+                <View>
+                  <Text style={styles.costText}>Tour Cost</Text>
+                  <Text style={styles.priceText}>₹{packageData.price}</Text>
+                </View>
+                <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
+                  <Text style={styles.bookButtonText}>Book Now</Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={20}
+                    color="#fff"
+                    style={{ marginLeft: 10 }}
+                  />
+                </TouchableOpacity>
+            </View>
+          </>
         )}
-        <View style={styles.dot} />
-        {/* Line before dot (except for the last one) */}
-        {index < 5 && (
-          <View style={{ height: 0,  backgroundColor: '#ccc',  }} />
-        )}
-      </React.Fragment>
-    ))}
-  </View>
-
-  {/* Locations */}
-  <View style={styles.timeline}>
-    {['Pune', 'Morgaon', 'Siddhatek', 'Theur', 'Ranjangaon'].map((location, index) => (
-      <Text key={index} style={styles.timelineText}>{location}</Text>
-    ))}
-  </View>
-</View>
-
-
-        </View>
-        <Text style={styles.nightText}>Night Halt at Lenyadri Or Ozar</Text>
-
-        {/* Day 2 */}
-        <Text style={styles.dayText}>DAY 2 -</Text>
-<View style={styles.itineraryRow}>
-  {/* Image */}
-  <Image
-     source={require('../../assets/images/Day2.png')} // Replace with Day 2 image URL
-    style={styles.dayImage}
-  />
-
-  {/* Timeline */}
-  <View style={styles.timelineContainer}>
-  {/* Vertical Line with Dots and Lines */}
-  <View style={styles.verticalLine}>
-    {['Lenyadri', 'Ozar', 'Pali', 'Mahad', 'Pune'].map((location, index) => (
-      <React.Fragment key={index}>
-        {/* If it's the first location, show the vertical line first */}
-        {index === 0 && (
-          <View style={{ height: 28, width: 2, backgroundColor: '#ccc', marginTop:-20 }} />
-        )}
-        <View style={styles.dot} />
-        {/* Line before dot (except for the last one) */}
-        {index < 4 && (
-          <View style={{ height: 0, backgroundColor: '#ccc',}} />
-        )}
-      </React.Fragment>
-    ))}
-  </View>
-
-  {/* Locations */}
-  <View style={styles.timeline}>
-    {['Lenyadri', 'Ozar', 'Pali', 'Mahad', 'Pune'].map((location, index) => (
-      <Text key={index} style={styles.timelineText}>{location}</Text>
-    ))}
-  </View>
-</View>
-
-</View>
-</View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-  <View>
-    <Text style={styles.costText}>Tour Cost</Text>
-    <Text style={styles.priceText}>₹ 2500</Text>
-  </View>
-  <View style={styles.bookButton}>
-  <Text style={styles.bookButtonText}>Book Now</Text>
-  <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 10 }} />
-</View>
-
-</View>
-
-
-    </ScrollView>
+      </ScrollView>
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  headerImage: {
-    width: '100%',
-    height: 230,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop:40,
-  },
-  headerContent: {
-    padding: 38,
-  },
-  inclusionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  inclusionText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  cityText: {
-    fontSize: 22,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  inclusionDetails: {
-    fontSize: 15,
-    color: '#fff',
-    marginTop: 10,
-    textAlign: 'left',
-    fontWeight:'bold',
-  },
- 
-  titleContainer: {
-    padding: 15,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  container: { flex: 1, padding: 10 },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  headerImage: { height: 200, justifyContent: 'flex-end', paddingLeft: 15 },
+  headerContent: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  inclusionRow: { flexDirection: 'row' },
+  inclusionText: { fontSize: 18, fontWeight: 'bold' },
+  cityText: { fontSize: 18, fontWeight: 'bold', color: '#ff5722' },
+  inclusionDetailsContainer: { marginVertical: 10 },
+  inclusionDetails: { fontSize: 16 },
+  errorText: { fontSize: 16, color: 'red' },
+  titleContainer: { marginVertical: 15 },
+  title: { fontSize: 20, fontWeight: 'bold', textAlign: 'center' },
+  searchBox: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+  searchInput: { flex: 1, fontSize: 16, paddingVertical: 10, paddingLeft: 10 },
+  dropdown: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    maxHeight: 200,
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 5,
-    padding: 2,
+    zIndex: 1,
   },
-  searchInput: {
-    marginLeft: 8,
-    fontSize: 16,
-    flex: 1,
-  },
-  dayContainer: {
-    padding: 20,
-    marginTop:-20,
-  },
-  dayText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 10,
-    color:'rgba(0, 122, 211, 1)',
-  },
-  itineraryRow: {
-    flexDirection: 'row',
-    marginVertical: 30,
-  },
-  dayImage: {
-    width: 135,
-    height: 215,
-    // borderRadius: 10?,
-    marginRight: 20,
-    borderTopLeftRadius: 10,
-  borderTopRightRadius: 10,
-  marginVertical:-15,
-  },
-  timelineContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    // marginVertical: 20,
-  },
-  verticalLine: {
-    position: 'relative',
-    width: 2,
-    backgroundColor: '#ccc', // Vertical line color
-    marginRight: 20,
-    alignItems: 'center',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(0, 122, 211, 1)', // Dot color
-    marginBottom: 30, // Space between dots
-  },
-  timeline: {
-    justifyContent: 'flex-start',
-  },
-  timelineText: {
-    fontSize: 16,
-    color: '#555', // Text color
-    marginBottom: 20, // Space between text and dots
-    // marginTop:20,
-    
-  },
-  nightText: {
-    fontSize: 16,
-    // fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: -5,
-
-    color: '#555',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    marginTop:-40,
-    // borderTopWidth: 1,
-    // borderColor: '#ddd',
-  },
-  costText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft:5,
-  },
-  priceText: {
-    fontSize: 18,
-    color: 'rgba(0, 227, 9, 1)',
-    fontWeight: 'bold',
-    marginLeft:5,
-  },
-  bookButton: {
+  dropdownItem: { padding: 10 },
+  dropdownText: { fontSize: 16 },
+  noLocationText: { padding: 10, color: '#888' },
+  dayContainer: { flex: 1, marginVertical: 15 },
+  dayText: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  itineraryRow: { flexDirection: 'row', marginBottom: 15 },
+  dayImage: { width: 60, height: 60, marginRight: 10 },
+  routeContainer: { flex: 1 },
+  route: { fontSize: 16, marginBottom: 5 },
+  bookNowButton: {
     backgroundColor: '#ff5722',
-    padding: 10,
+    paddingVertical: 15,
+    marginBottom: 15,
     borderRadius: 5,
-    flexDirection: 'row', // This makes the text and icon align horizontally
-    alignItems: 'center',  // Vertically centers the text and the icon
-    justifyContent: 'center', // Centers the content
-  },  
-  bookButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    marginRight: 0,  // Adds space between text and the arrow
-    marginLeft:10,
-    
   },
-  
+  bookNowText: { color: 'white', textAlign: 'center', fontSize: 18 },
 });
 
-export default Premiumpu12;
+export default PackageDetails;

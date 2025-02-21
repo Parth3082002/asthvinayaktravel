@@ -24,7 +24,7 @@ import History from './(tabs)/History';
 import CarType from './(tabs)/CarType';
 import CarBook from './(tabs)/CarBook';
 
-const Stack = createStackNavigator(); // ✅ Correct stack creation
+const Stack = createStackNavigator(); 
 
 export default function MainNavigator() {
   return (

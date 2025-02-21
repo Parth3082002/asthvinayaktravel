@@ -1,173 +1,241 @@
 import React, { useState, useEffect } from "react";
-import { Alert } from "react-native"; // Import Alert
-import { CommonActions } from '@react-navigation/native';
-
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Image,
-} from "react-native";
+import { Alert, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Picker } from "@react-native-picker/picker";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
 import { Ionicons } from "@expo/vector-icons"; // For the date icon
 import Icon from "react-native-vector-icons/Ionicons"; // For icons
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute } from "@react-navigation/native";
 
 const Book = () => {
-  const [roomType, setRoomType] = useState("");
-  const navigation = useNavigation(); // Navigation hook
-  const route = useRoute(); // To access route params
-  const [date, setDate] = useState(route.params.selectedDate || "dd-MM-yyyy");
+  const navigation = useNavigation();
+  const route = useRoute();
+
+  // Extracting all params from route
+  const {
+    cityName,
+    cityId,
+    packageName,
+    packageId,
+    categoryName,
+    categoryId,
+    selectedPickupPoint,
+    selectedPickupPointId,
+    price,
+    vehicleType,
+    childWithSeatP,
+    childWithoutSeatP,
+    tripDate,
+    tripId,
+    tourName,
+    selectedSeats = [],
+    selectedDate
+  } = route.params || {};
+
+  // State hooks
+  const [date, setDate] = useState(selectedDate || "dd-MM-yyyy");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [pickupLocation, setPickupLocation] = useState(route.params.selectedPickupPoint || "");
-  const [totalAmount, setTotalAmount] = useState(route.params.price || ""); // Ensure route.params.price is correct
+  const [pickupLocation, setPickupLocation] = useState(selectedPickupPoint || "");
+  const [totalAmount, setTotalAmount] = useState(price || "");
+  const [advanceAmount, setAdvanceAmount] = useState(price ? price / 2 : "");
+  const [seatNumber, setSeatNumber] = useState("");
   const [mobileNo, setMobileNo] = useState(null);
   const [droppoint, setDroppoint] = useState('');
-  const [isEditable, setIsEditable] = useState(false); // Default to false
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
-  const [advanceAmount, setAdvanceAmount] = useState(totalAmount / 2); // Dynamic initial value
-  const [errorMessage, setErrorMessage] = useState("");
-  const selectedSeats = route.params.selectedSeats.map(seat => seat.seatNumber || seat);
-  const [seatNumber, setSeatNumber] = useState("");
-  const [adults, setAdults] = useState(""); // Manual input
+  const [adults, setAdults] = useState("");
   const [childWithSeat, setChildWithSeat] = useState("");
   const [childWithoutSeat, setChildWithoutSeat] = useState("");
-  const [errors, setErrors] = useState({}); // To store error messages for each field
+  const [errors, setErrors] = useState({});
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
+   const [isEditable, setIsEditable] = useState(false);
+  const [totalSeats, setTotalSeats] = useState(0); // ✅ New State for Total Seats
+  const [totalPersons, setTotalPersons] = useState(0); // For total persons calculation
+  const [availableRoomTypes, setAvailableRoomTypes] = useState(["shared"]);
+  const [roomType, setRoomType] = useState("shared");
+  const [errorMessage, setErrorMessage] = useState("");
 
+  // Log all the received parameters on component mount
   useEffect(() => {
-    if (route?.params?.seatNumber) {
-      setSeatNumber(route.params.seatNumber.toString()); // Ensuring it's a string
-    }
-  }, [route?.params?.seatNumber]); // Runs when seatNumber updates
-
-  useEffect(() => {
-    // Log passed parameters from SelectSeats
     console.log("Passed Data from SelectSeats:");
-    console.log("City Name:", route.params.cityName);
-    console.log("City ID:", route.params.cityId);
-    console.log("Package Name:", route.params.packageName);
-    console.log("Package ID:", route.params.packageId);
-    console.log("Category Name:", route.params.categoryName);
-    console.log("Category ID:", route.params.categoryId);
-    console.log("Selected Pickup Point:", route.params.selectedPickupPoint);
-    console.log("Price:", route.params.price);
-    console.log("Selected Date:", route.params.selectedDate);
-    console.log("Received Pickup Point ID:", route.params.selectedPickupPointId);
-    console.log("Trip ID:", route.params.tripId);
-    // console.log("Droppoint:", droppoint);
-// console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
+    console.log("City Name:", cityName);
+    console.log("City ID:", cityId);
+    console.log("Package Name:", packageName);
+    console.log("Package ID:", packageId);
+    console.log("Category Name:", categoryName);
+    console.log("Category ID:", categoryId);
+    console.log("Selected Pickup Point:", selectedPickupPoint);
+    console.log("Selected Pickup Point ID:", selectedPickupPointId);
+    console.log("Price:", price);
+    console.log("Vehicle Type:", vehicleType);
+    console.log("Child With Seat Price:", childWithSeatP);
+    console.log("Child Without Seat Price:", childWithoutSeatP);
+    console.log("Trip Date:", tripDate);
+    console.log("Trip ID:", tripId);
+    console.log("Tour Name:", tourName);
+    console.log("Selected Seats:", selectedSeats);
+    console.log("Selected Date:", selectedDate);
 
-    // Fetch user data from AsyncStorage
+    // ✅ Calculate Total Seats from selectedSeats array
+    if (Array.isArray(selectedSeats)) {
+      setTotalSeats(selectedSeats.length);
+      console.log("Total Seats Selected:", selectedSeats.length);
+    }
+  }, [selectedSeats]);
+
+  // Fetch user data from AsyncStorage
+  useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const mobileNo = await AsyncStorage.getItem('mobileNo');
-        const token = await AsyncStorage.getItem('token');
-        const user = await AsyncStorage.getItem('user');
+        const storedMobileNo = await AsyncStorage.getItem("mobileNo");
+        const storedToken = await AsyncStorage.getItem("token");
+        const storedUser = await AsyncStorage.getItem("user");
 
-        if (mobileNo && token && user) {
-          const userObj = JSON.parse(user);
-          setMobileNo(mobileNo);
-          setToken(token);
+        if (storedMobileNo && storedToken && storedUser) {
+          const userObj = JSON.parse(storedUser);
+          setMobileNo(storedMobileNo);
+          setToken(storedToken);
           setUser(userObj);
-
-          // Print userId in console
-          console.log("User ID:", userObj.userId);
         } else {
-          Alert.alert('Error', 'No data found in AsyncStorage');
+          Alert.alert("Error", "No data found in AsyncStorage");
         }
       } catch (error) {
-        console.error('Error retrieving data from AsyncStorage:', error);
-        Alert.alert('Error', 'Failed to load user data');
+        console.error("Error retrieving data:", error);
       }
     };
-
     fetchUserData();
-  }, [route.params]);
+  }, []);
 
+
+
+  useEffect(() => {
+      const totalBookedPersons = (parseInt(adults) || 0) + (parseInt(childWithSeat) || 0);
+    
+      if (totalBookedPersons > totalSeats) {
+        Alert.alert("Warning", "Total persons exceed booked seats.", [
+          {
+            text: "OK",
+            onPress: () => {
+              if (parseInt(adults) > totalSeats) {
+                setAdults(""); // Clear only 'adults' field if it's the cause
+              } else {
+                setChildWithSeat(""); // Clear only 'childWithSeat' field if it's the cause
+              }
+            },
+          },
+        ]);
+      }
+    
+      setTotalPersons(totalBookedPersons + (parseInt(childWithoutSeat) || 0));
+    }, [adults, childWithSeat]);
+    
+
+
+    const handleConfirm = (date) => {
+      const formattedDate = date.toLocaleDateString();  // Format the date
+      setDate(formattedDate); // Update the date state
+      setDatePickerVisibility(false);
+    };
+
+  // Calculate total price based on selections
+  const calculatePrice = () => {
+    let finalPrice = totalSeats * price; // ✅ (Seats * Price)
+    const childWithSeatCost = (parseInt(childWithSeat) || 0) * childWithSeatP;
+    const childWithoutSeatCost = (parseInt(childWithoutSeat) || 0) * childWithoutSeatP;
+
+    finalPrice = finalPrice - childWithSeatCost + childWithoutSeatCost;
+
+    const totalPersonsCount = (parseInt(adults) || 0) + (parseInt(childWithSeat) || 0) + (parseInt(childWithoutSeat) || 0);
+    setTotalPersons(totalPersonsCount);
+
+    // Dynamically set room type options
+    if (totalPersonsCount >= 4) {
+      setAvailableRoomTypes(["shared", "family"]); // Show both options
+    } else {
+      setAvailableRoomTypes(["shared"]); // Only shared room
+      setRoomType("shared"); // Reset to shared if less than 4 persons
+    }
+
+    if (totalPersonsCount >= 4 && roomType === "family") {
+      finalPrice += totalPersonsCount * 500; // (Total Persons * 500)
+    }
+
+    setTotalAmount(finalPrice);
+    setAdvanceAmount(finalPrice / 2);
+  };
+
+  // Trigger price calculation when relevant fields change
+  useEffect(() => {
+    calculatePrice();
+  }, [adults, childWithSeat, childWithoutSeat, roomType, totalSeats]);
+
+  // Validate advance amount input
   const handleAdvanceInputChange = (value) => {
-    const numericValue = parseFloat(value);
+    const numericValue = parseFloat(value) || 0;
     setAdvanceAmount(numericValue);
 
     if (numericValue < totalAmount / 2) {
-      setErrorMessage(`Advance amount should be greater than ${totalAmount / 2}`);
+      setErrorMessage(`Advance amount should be at least ${totalAmount / 2}`);
     } else {
       setErrorMessage("");
     }
   };
 
-  const handleConfirm = (date) => {
-    const formattedDate = date.toLocaleDateString();  // Format the date
-    setDate(formattedDate); // Update the date state
-    setDatePickerVisibility(false);
-  };
 
-  const validateFields = () => {
-    const newErrors = {};
-
-    // Validate required fields
-    if (!adults) newErrors.adults = "Field is required";
-    if (!childWithSeat) newErrors.childWithSeat = "Field is required";
-    if (!childWithoutSeat) newErrors.childWithoutSeat = "Field is required";
-
-    // Convert values to integers for calculations
-    const adultsCount = parseInt(adults) || 0;
-    const childWithSeatCount = parseInt(childWithSeat) || 0;
-    const childWithoutSeatCount = parseInt(childWithoutSeat) || 0;
-
-    // Validate seat count
-    const totalSeats = adultsCount + childWithSeatCount + childWithoutSeatCount;
-    if (totalSeats !== selectedSeats.length) {
-      newErrors.seatCount = `Total seats (${selectedSeats.length}) do not match the sum of adults, children with seats, and children without seats.`;
-    }
-
-    // Validate child without seat count (max 2)
-    if (childWithoutSeatCount > 2) {
-      newErrors.childWithoutSeat = "Maximum 2 children without seats are allowed.";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-};
-
+ 
+    
 
   const handleBooking = async () => {
+
+    // Validation function to check required fields
+    const validateFields = () => {
+      if (
+        !route?.params?.tripId ||
+        !route?.params?.selectedPickupPointId ||
+        !droppoint ||
+        !totalAmount ||
+        selectedSeats.length === 0
+      ) {
+        Alert.alert("Validation Error", "Please fill in all required fields.");
+        return false;
+      }
+      return true;
+    };
+  
+    console.log("Pay Now button clicked"); // To verify button press
+  
+    // Validate fields
     if (!validateFields()) {
+      console.log("Validation failed");
       return;
     }
-
+  
+    // Check if user and token exist
     if (!user || !user.userId || !token) {
       Alert.alert("Error", "User not found. Please log in again.");
       return;
     }
-
+  
+    // Prepare booking data
     const bookingData = {
-      UserId: user.userId,
-      TripId: route.params.tripId,
-      PickupPointId: route.params.selectedPickupPointId,
-      Droppoint: droppoint, 
-      BookingDate: new Date(route.params.selectedDate).toISOString(),
+      UserId: parseInt(user.userId), // Ensure it's an integer
+      TripId: parseInt(route.params.tripId),
+      PickupPointId: parseInt(route.params.selectedPickupPointId),
+      Droppoint: droppoint.trim(), // Trim to avoid extra spaces
+      BookingDate: new Date(route.params.selectedDate).toISOString(), // Correct format
       Status: "Confirmed",
-      TotalPayment: totalAmount,
-      Advance: advanceAmount,
-      SeatNumbers: selectedSeats.map(seat => seat.seatNumber || seat).map(String),
+      TotalPayment: parseFloat(totalAmount), // Ensure float
+      Advance: parseFloat(advanceAmount),    // Ensure float
+      SeatNumbers: selectedSeats.map(seat => (seat.seatNumber || seat).toString()), // Ensure strings
       Adults: parseInt(adults) || 0,
+      roomType: roomType || "", // RoomType field as per API
       Childwithseat: parseInt(childWithSeat) || 0,
       Childwithoutseat: parseInt(childWithoutSeat) || 0,
     };
-
-    console.log("Droppoint:", droppoint);
-// console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
-
-    console.log("Booking Data:", JSON.stringify(bookingData, null, 2));
-
+  
+    console.log("Prepared Booking Data:", JSON.stringify(bookingData, null, 2)); // Log booking data
+  
     try {
+      // API call
       const response = await fetch(
         "http://ashtavinayak.somee.com/api/Booking/CreateBookingWithSeats",
         {
@@ -179,16 +247,17 @@ const Book = () => {
           body: JSON.stringify(bookingData),
         }
       );
-
+  
       const result = await response.json();
-      console.log("API Response:", result);
-
+      console.log("API Response:", result); // Log API response
+  
       if (response.ok) {
+        // Success Alert
         Alert.alert("Success", "Booking successful!", [
           {
             text: "OK",
             onPress: async () => {
-              // Reset navigation stack and navigate to Home
+              // Navigate back to SelectVehicle1 after success
               navigation.dispatch(
                 CommonActions.reset({
                   index: 0,
@@ -199,15 +268,16 @@ const Book = () => {
           },
         ]);
       } else {
+        // Handle API errors
         const errorMessage = result.message || "Booking failed. Please try again.";
         Alert.alert("Booking Failed", errorMessage);
       }
     } catch (error) {
-      console.error("API Error:", error);
+      console.error("API Error:", error); // Log any errors
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
-
+  
   return (
     <View style={styles.container}>
       {/* Header with Back Arrow */}
@@ -269,7 +339,7 @@ const Book = () => {
 
           <View style={styles.row}>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Child (3 to 8 Yrs) (With Seat)</Text>
+              <Text style={styles.label}>Child (With Seat)</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
@@ -279,7 +349,7 @@ const Book = () => {
               {errors.childWithSeat && <Text style={styles.errorText}>{errors.childWithSeat}</Text>}
             </View>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Child (3 to 8 Yrs) (Without Seat)</Text>
+              <Text style={styles.label}>Without Booking </Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
@@ -289,6 +359,24 @@ const Book = () => {
               {errors.childWithoutSeat && <Text style={styles.errorText}>{errors.childWithoutSeat}</Text>}
             </View>
           </View>
+
+
+
+
+<View style={styles.inputFieldContainer}>
+  <Text style={styles.label}>Room Type:</Text>
+  <View style={styles.inputWithIcon}>
+    <Picker
+      selectedValue={roomType}
+      onValueChange={(itemValue) => setRoomType(itemValue)}
+      style={{ flex: 1 }}
+    >
+      {availableRoomTypes.map((type) => (
+        <Picker.Item key={type} label={type} value={type} />
+      ))}
+    </Picker>
+  </View>
+</View>
 
           <View style={styles.row}>
   <View style={styles.halfWidth}>
@@ -402,12 +490,14 @@ const Book = () => {
             />
           </View>
 
-          <TouchableOpacity style={styles.payButton} onPress={handleBooking}>
-            <Text style={styles.payButtonText}>Pay Now</Text>
-          </TouchableOpacity>
+         <TouchableOpacity style={styles.payButton} onPress={handleBooking}>
+                   <Text style={styles.payButtonText}>Pay Now</Text>
+                 </TouchableOpacity>
+
+
         </View>
       </ScrollView>
-    </View>
+   </View>
   );
 };
 

@@ -1,43 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-const CarPage = () => {
+const CarType = () => {
     const route = useRoute();
     const navigation = useNavigation();
-    const { userId, tripId, pickupPointId, dropPoint } = route.params || {};
+    const { selectedPickupPointId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, cityId, cityName } = route.params || {};
 
-    const [carType, setCarType] = useState('');
-    const [acType, setAcType] = useState('');
+    const [carType, setCarType] = useState(null); // Changed to store integer
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [time, setTime] = useState('');
     const [showTimePicker, setShowTimePicker] = useState(false);
 
+    useEffect(() => {
+        console.log("Received Params:", { selectedPickupPointId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, cityId, cityName });
+    }, [selectedPickupPointId, cityId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, cityName]);
+
     const handleBooking = () => {
-        if (carType === '17 Seater' && !acType) {
-            alert('Please select AC type for 17 Seater');
+        if (!carType) {
+            alert('Please select a car type');
             return;
         }
-
+    
+        // If time is not selected, use the current time
+        let bookingTime = time;
+        if (!time) {
+            const currentDate = new Date();
+            const currentHours = currentDate.getHours();
+            const currentMinutes = currentDate.getMinutes();
+            bookingTime = `${currentHours}:${currentMinutes < 10 ? '0' + currentMinutes : currentMinutes}`;
+        }
+    
+        // Prepare booking data
         const bookingData = {
-            carType: carType === '17 Seater' ? `${carType} (${acType})` : carType,
+            carType, // Now passing integer
             date: date.toISOString().split('T')[0],
-            time,
-            userId,
-            tripId,
-            pickupPointId,
-            droppoint: dropPoint,
+            time: bookingTime, // Pass either selected time or current time
+            selectedPickupPointId,
+            selectedPickupPoint,
+            price,
+            vehicleType,
+            childWithSeatP,
+            childWithoutSeatP,
+            cityId,
+            cityName,
             status: 'Confirmed',
-            acType,  // Pass acType to the next page
         };
-
-        // Redirect to CarBook page with booking data
-        navigation.navigate('CarBook', { bookingData });
+    
+        console.log("Booking Data:", bookingData);
+    
+        // Navigate to the next screen with booking data
+        navigation.navigate('CarBook', {
+            ...route.params,
+            bookingData,
+        });
     };
-
+    
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.container}>
@@ -46,48 +67,24 @@ const CarPage = () => {
                 {/* Car Type Selection */}
                 <Text style={styles.label}>Select Car Type:</Text>
                 <View style={styles.buttonGroup}>
-                    {['4 Seater', '6 Seater', '17 Seater'].map((type) => (
+                    {[3, 6, 17].map((type) => (
                         <TouchableOpacity
                             key={type}
                             style={[styles.button, carType === type && styles.selectedButton]}
-                            onPress={() => {
-                                setCarType(type);
-                                if (type !== '17 Seater') {
-                                    setAcType('');  // Reset AC type when car type is changed
-                                }
-                            }}
+                            onPress={() => setCarType(type)}
                         >
                             <Text style={[styles.buttonText, carType === type && styles.selectedText]}>{type}</Text>
                         </TouchableOpacity>
                     ))}
                 </View>
 
-                {/* AC/Non-AC Selection (Only for 17 Seater) */}
-                {carType === '17 Seater' && (
-                    <View>
-                        <Text style={styles.label}>Select AC Type:</Text>
-                        <View style={styles.buttonGroup}>
-                            {['AC', 'Non-AC'].map((type) => (
-                                <TouchableOpacity
-                                    key={type}
-                                    style={[styles.button, acType === type && styles.selectedButton]}
-                                    onPress={() => setAcType(type)}
-                                >
-                                    <Text style={[styles.buttonText, acType === type && styles.selectedText]}>{type}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    </View>
-                )}
-
-                {/* Date Selection with Icon */}
+                {/* Date Selection */}
                 <Text style={styles.label}>Select Date:</Text>
                 <View style={styles.inputContainer}>
                     <TextInput
-                        style={[styles.input, { paddingRight: 40 }]} // Adjusting padding for the icon
+                        style={[styles.input, { paddingRight: 40 }]}
                         value={date.toDateString()}
                         editable={false}
-                        placeholder="Select Date"
                     />
                     <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.iconButton}>
                         <MaterialIcons name="calendar-today" size={24} color="black" />
@@ -105,11 +102,11 @@ const CarPage = () => {
                     />
                 )}
 
-                {/* Time Input with Clock Icon */}
+                {/* Time Selection */}
                 <Text style={styles.label}>Enter Time (HH:MM):</Text>
                 <View style={styles.inputContainer}>
                     <TextInput
-                        style={[styles.input, { paddingRight: 40 }]} // Adjusting padding for the icon
+                        style={[styles.input, { paddingRight: 40 }]}
                         placeholder="HH:MM"
                         value={time}
                         onChangeText={setTime}
@@ -119,7 +116,6 @@ const CarPage = () => {
                         <MaterialIcons name="access-time" size={24} color="black" />
                     </TouchableOpacity>
                 </View>
-
                 {showTimePicker && (
                     <DateTimePicker
                         value={new Date(0, 0, 0, parseInt(time.split(':')[0] || 0), parseInt(time.split(':')[1] || 0))}
@@ -227,4 +223,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default CarPage;
+export default CarType;

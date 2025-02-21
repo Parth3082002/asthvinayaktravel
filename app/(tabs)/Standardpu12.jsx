@@ -158,7 +158,7 @@ console.log("Child Without Seat Price:", childWithoutSeatP);
         childWithSeatP: childWithSeatP,
         childWithoutSeatP: childWithoutSeatP,
       });
-    } else if (vehicleType === "car") {
+    } else if (vehicleType === "CAR") {
       navigation.navigate("CarType", {
         cityName: packageData.city,
         cityId: cityId,
@@ -215,29 +215,31 @@ console.log("Child Without Seat Price:", childWithoutSeatP);
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
       <ScrollView style={styles.container}>
-        <ImageBackground
-          source={require('../../assets/images/back.png')}
-          style={styles.headerImage}
-        >
-          {packageData ? (
-            <View style={styles.headerContent}>
-              <View style={styles.inclusionRow}>
-                <Text style={styles.inclusionText}>Inclusion:</Text>
-                <Text style={styles.cityText}>{packageData.city}</Text>
-              </View>
+      <ImageBackground
+  source={require('../../assets/images/back.png')}
+  style={styles.headerImage}
+>
+  {packageData ? (
+    <View style={styles.headerContent}>
+      {/* City Name Positioned at the Top Right Corner */}
+      <Text style={styles.cityText}>{packageData.city}</Text>
 
-              <View style={styles.inclusionDetailsContainer}>
-                {packageData.inclusions.split(',').map((item, index) => (
-                  <Text key={index} style={styles.inclusionDetails}>
-                    • {item.trim()}
-                  </Text>
-                ))}
-              </View>
-            </View>
-          ) : (
-            <Text style={styles.errorText}>No trip available for this package!</Text>
-          )}
-        </ImageBackground>
+      {/* Inclusion Section on the Left */}
+      <View style={styles.inclusionContent}>
+        <Text style={styles.inclusionText}>Inclusion:</Text>
+        <View style={styles.inclusionDetailsContainer}>
+          {packageData.inclusions.split(',').map((item, index) => (
+            <Text key={index} style={styles.inclusionDetails}>
+              • {item.trim()}
+            </Text>
+          ))}
+        </View>
+      </View>
+    </View>
+  ) : (
+    <Text style={styles.errorText}>No trip available for this package!</Text>
+  )}
+</ImageBackground>
 
         {packageData && (
           <>
@@ -284,29 +286,53 @@ console.log("Child Without Seat Price:", childWithoutSeatP);
               </View>
 
               <View style={styles.dayContainer}>
-                {packageData.routes?.map((route, dayIndex) => (
-                  <View key={dayIndex} style={styles.container1}>
-                    <Text style={styles.dayText}>{route.day}</Text>
-                    <View style={styles.itineraryRow}>
-                      <Image
-                        source={images[parseInt(route.day.replace("Day", ""), 10) - 1]}
-                        style={styles.dayImage}
-                      />
-                      <View style={styles.routeContainer}>
-                        <ScrollView
-                          style={{ maxHeight: 220 }}
-                          contentContainerStyle={{ flexGrow: 1 }}
-                          showsVerticalScrollIndicator={true}
-                          nestedScrollEnabled={true}
-                        >
-                          {formatRouteText(route.points || [])} {/* Check for points */}
-                        </ScrollView>
-                      </View>
+  {packageData.routes?.map((route, dayIndex) => (
+    <View key={dayIndex} style={styles.container1}>
+      <Text style={styles.dayText}>{route.day}</Text>
+      <View style={styles.itineraryRow}>
+        {/* Image */}
+        <Image
+          source={images[parseInt(route.day.replace("Day", ""), 10) - 1]}
+          style={styles.dayImage}
+        />
+
+        {/* Scrollable Timeline */}
+        <View style={styles.routeContainer}>
+          <ScrollView
+            style={styles.scrollContainer}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={true}
+          >
+            <View style={styles.timelineContainer}>
+              {route.points
+                ?.join(",") // Convert array to string
+                .split(/,|\|/) // Split on comma or pipe
+                .map((location, index, arr) => (
+                  <View key={index} style={styles.timelineRow}>
+                    {/* Vertical Line & Dot */}
+                    <View style={styles.verticalLineContainer}>
+                      {/* Line before dot (except for the first one) */}
+                      {index !== 0 && <View style={styles.line} />}
+                      <View style={styles.dot} />
+                      {/* Line after dot (ALWAYS present) */}
+                      <View style={styles.line} />
                     </View>
+                    {/* Location Text */}
+                    <Text style={styles.timelineText}>{location.trim()}</Text>
                   </View>
                 ))}
-              </View>
             </View>
+          </ScrollView>
+        </View>
+      </View>
+    </View>
+  ))}
+</View>
+
+
+
+</View>
+
 
             <View style={styles.footer}>
                 <View>
@@ -331,47 +357,243 @@ console.log("Child Without Seat Price:", childWithoutSeatP);
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10 },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  headerImage: { height: 200, justifyContent: 'flex-end', paddingLeft: 15 },
-  headerContent: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  inclusionRow: { flexDirection: 'row' },
-  inclusionText: { fontSize: 18, fontWeight: 'bold' },
-  cityText: { fontSize: 18, fontWeight: 'bold', color: '#ff5722' },
-  inclusionDetailsContainer: { marginVertical: 10 },
-  inclusionDetails: { fontSize: 16 },
-  errorText: { fontSize: 16, color: 'red' },
-  titleContainer: { marginVertical: 15 },
-  title: { fontSize: 20, fontWeight: 'bold', textAlign: 'center' },
-  searchBox: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  searchInput: { flex: 1, fontSize: 16, paddingVertical: 10, paddingLeft: 10 },
-  dropdown: {
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  headerImage: {
+    width: '100%',
+    height: 230,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  
+  headerContent: {
+    width: '100%',
+    paddingHorizontal: 20,  // Keep padding for better spacing
+    justifyContent: 'center',
+  },
+  
+  /* City name at the top-right corner */
+  cityText: {
+    fontSize: 22,
+    color: '#fff',
+    fontWeight: 'bold',
     position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
-    maxHeight: 200,
+    top: -40,
+    right: 20,
+  },
+  
+  /* Keep all inclusions on the left */
+  inclusionContent: {
+    alignSelf: 'flex-start',  // Align to the left
+    width: '80%',
+    top: -30,  // Limit width so it doesn’t take full space
+  },
+  
+  inclusionText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  
+  inclusionDetailsContainer: {
+    marginTop: 5,
+  },
+  
+  inclusionDetails: {
+    fontSize: 15,
+    color: '#fff',
+    textAlign: 'left',
+    fontWeight: 'bold',
+  },
+  
+  titleContainer: {
+    padding: 15,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+ 
+  dayContainer: {
+    padding: 20,
+    marginTop:-20,
+  },
+  dayText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 10,
+    color:'rgba(0, 122, 211, 1)',
+  },
+  itineraryRow: {
+    flexDirection: 'row',
+    marginVertical: 30,
+  },
+  dayImage: {
+    width: 135,
+    height: 215,
+    // borderRadius: 10?,
+    marginRight: 20,
+    borderTopLeftRadius: 10,
+  borderTopRightRadius: 10,
+  marginVertical:-15,
+  },
+  
+  verticalLine: {
+    position: 'relative',
+    width: 2,
+    backgroundColor: '#ccc', // Vertical line color
+    marginRight: 20,
+    alignItems: 'center',
+  },
+  
+  timeline: {
+    justifyContent: 'flex-start',
+  },
+  timelineText: {
+    fontSize: 16,
+    color: '#555', // Text color
+    marginBottom: 20, // Space between text and dots
+    // marginTop:20,
+    
+  },
+  nightText: {
+    fontSize: 16,
+    // fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: -5,
+
+    color: '#555',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    marginTop:-40,
+    // borderTopWidth: 1,
+    // borderColor: '#ddd',
+  },
+  costText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft:5,
+  },
+  priceText: {
+    fontSize: 18,
+    color: 'rgba(0, 227, 9, 1)',
+    fontWeight: 'bold',
+    marginLeft:5,
+  },
+  bookButton: {
+    backgroundColor: '#ff5722',
+    padding: 10,
+    borderRadius: 5,
+    flexDirection: 'row', // This makes the text and icon align horizontally
+    alignItems: 'center',  // Vertically centers the text and the icon
+    justifyContent: 'center', // Centers the content
+  },  
+  bookButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginRight: 0,  // Adds space between text and the arrow
+    marginLeft:10,
+    
+  },
+
+
+ 
+
+  scrollContainer: {
+    maxHeight: 200, // Enable scrolling when needed
+    paddingVertical: 5,
+    paddingRight: 10, // Creates space between content and scrollbar
+  },
+  timelineContainer: {
+    flexDirection: "column", // Stack locations vertically
+    marginLeft: 10,
+  },
+  timelineRow: {
+    flexDirection: "row", // Row for dot + line + text
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  verticalLineContainer: {
+    alignItems: "center",
+    marginRight: 15, // More gap between dots and text
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 5,
+    backgroundColor: "#007bff",
+  },
+  line: {
+    width: 2,
+    height: 10, // Adjust line height for spacing
+    backgroundColor: "#ccc",
+  },
+  timelineText: {
+    fontSize: 14,
+    marginLeft: 5, // More gap between dots/lines and text
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  noLocationText: {
+    padding: 10,
+    fontSize: 14,
+    textAlign: "center",
+    color: "#888",
+  },
+  dropdownContainer: {
+    position: "relative",
+    width: "100%",
+  },
+  dropdown: {
+    position: "absolute",
+    top: "115%",
+
+    left: 15,
+    right: 15,
+    backgroundColor: "#fff",
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    paddingVertical: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 8,
+    zIndex: 1000,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ddd',
-    zIndex: 1,
-  },
-  dropdownItem: { padding: 10 },
-  dropdownText: { fontSize: 16 },
-  noLocationText: { padding: 10, color: '#888' },
-  dayContainer: { flex: 1, marginVertical: 15 },
-  dayText: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  itineraryRow: { flexDirection: 'row', marginBottom: 15 },
-  dayImage: { width: 60, height: 60, marginRight: 10 },
-  routeContainer: { flex: 1 },
-  route: { fontSize: 16, marginBottom: 5 },
-  bookNowButton: {
-    backgroundColor: '#ff5722',
-    paddingVertical: 15,
-    marginBottom: 15,
     borderRadius: 5,
+    padding: 2,
   },
-  bookNowText: { color: 'white', textAlign: 'center', fontSize: 18 },
+  searchInput: {
+    marginLeft: 8,
+    fontSize: 16,
+    flex: 1,
+  },
 });
+
 
 export default PackageDetails;

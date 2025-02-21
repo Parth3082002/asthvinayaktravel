@@ -7,9 +7,27 @@ const SelectSeats = () => {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const navigation = useNavigation();
   const { params } = useRoute();
-  const selectedDate = params?.selectedDate;
-  const tripId = params?.tripId;
-  const packageId = params?.packageId;
+  const route = useRoute();
+
+  
+  const {
+    cityName,
+    cityId,
+    packageName,
+    packageId,
+    categoryName,
+    categoryId,
+    selectedPickupPoint,
+    selectedPickupPointId,
+    price,
+    vehicleType,
+    childWithSeatP,
+    childWithoutSeatP,
+    
+    tripId,
+    tourName,
+    selectedDate, // if required
+  } = route.params || {};
 
   useEffect(() => {
     if (packageId && tripId) {
@@ -65,19 +83,7 @@ const SelectSeats = () => {
     }
   };
 
-  // const generateSeatsLayout = (totalSeats, bookedSeats) => {
-  //   let layout = [];
 
-  //   for (let i = 0; i < totalSeats; i++) {
-  //     const seatNumber = `S${i + 1}`;
-  //     layout.push({
-  //       seatNumber,
-  //       status: bookedSeats.includes(seatNumber) ? "booked" : "available",
-  //     });
-  //   }
-
-  //   return layout;
-  // };
 
   // Generating the layout with 5 seats in the last row
 const generateSeatsLayout = (totalSeats, bookedSeats) => {
@@ -124,8 +130,27 @@ const generateSeatsLayout = (totalSeats, bookedSeats) => {
 
   const handleNextPress = () => {
     if (selectedSeats.length > 0) {
+      // Print each parameter separately
+      console.log("City Name:", cityName);
+      console.log("City ID:", cityId);
+      console.log("Package Name:", packageName);
+      console.log("Package ID:", packageId);
+      console.log("Category Name:", categoryName);
+      console.log("Category ID:", categoryId);
+      console.log("Selected Pickup Point:", selectedPickupPoint);
+      console.log("Selected Pickup Point ID:", selectedPickupPointId);
+      console.log("Price:", price);
+      console.log("Vehicle Type:", vehicleType);
+      console.log("Child With Seat Price:", childWithSeatP);
+      console.log("Child Without Seat Price:", childWithoutSeatP);
+      console.log("Trip Date:", selectedDate);
+      console.log("Trip ID:", tripId);
+      console.log("Tour Name:", tourName);
+      console.log("Selected Seats:", selectedSeats);
+  
+      // Navigate to the Book page with all params
       navigation.navigate("Book", {
-        ...params,
+        ...route.params,
         selectedSeats: selectedSeats,
         tripId: tripId,
       });
@@ -133,7 +158,7 @@ const generateSeatsLayout = (totalSeats, bookedSeats) => {
       alert("Please select at least one seat");
     }
   };
-
+  
 
   const renderSeat = ({ item, index }) => {
     const isSelected = selectedSeats.includes(item.seatNumber);

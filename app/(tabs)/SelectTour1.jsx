@@ -207,7 +207,7 @@ const SelectTour = () => {
                                             ))}
                                             {category.stayType && category.stayType.split(',').map((item, index) => (
                                                 <Text key={`stay-${index}`} style={styles.packageDetail}>
-                                                    • Stay in {item.trim()}
+                                                    • {item.trim()}
                                                 </Text>
                                             ))}
                                             <Text style={styles.packageDetail}>Child with Seat Price: {category.childwithseatP}</Text>

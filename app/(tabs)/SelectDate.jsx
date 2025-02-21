@@ -10,14 +10,30 @@ import {
 } from "react-native";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 
-const SelectDateScreen = () => {
+const SelectDateScreen = ({ route: propRoute }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [dates, setDates] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
-  const route = useRoute(); // Access navigation params
 
-  const { packageId, cityName, cityId, packageData, categoryName, selectedPickupPoint, selectedPickupPointId, vehicleType, childWithSeatP, childWithoutSeatP } = route.params || {}; // Extract all parameters
+  const route = useRoute();
+  const routeParams = route.params || {};
+
+  // Destructure all params into separate variables
+  const {
+    cityName,
+    cityId,
+    packageName,
+    packageId,
+    categoryName,
+    categoryId,
+    selectedPickupPoint,
+    selectedPickupPointId,
+    price,
+    vehicleType,
+    childWithSeatP,
+    childWithoutSeatP,
+  } = routeParams;
 
   useEffect(() => {
     const fetchDates = async () => {
@@ -32,12 +48,12 @@ const SelectDateScreen = () => {
           `http://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
         );
         const result = await response.json();
-        
+
         if (result.data) {
           const formattedDates = result.data.map((trip) => ({
             tripId: trip.tripId,
             tripDate: trip.tripDate,
-            tourName: trip.tourName, // Additional data if needed
+            tourName: trip.tourName,
           }));
           setDates(formattedDates);
         }
@@ -68,7 +84,6 @@ const SelectDateScreen = () => {
     return () => backHandler.remove();
   }, [navigation]);
 
-  // Reset selectedDate when the screen is focused
   useFocusEffect(
     React.useCallback(() => {
       setSelectedDate(null);
@@ -76,44 +91,44 @@ const SelectDateScreen = () => {
   );
 
   const handleNextPress = () => {
-    if (selectedDate) {
-      console.log("City Name:", packageData.city);
-      console.log("City ID:", cityId);
-      console.log("Package Name:", packageData.packageName);
-      console.log("Package ID:", packageData.packageId);
-      console.log("Category Name:", categoryName);
-      console.log("Category ID:", packageData.categoryId);
-      console.log("Selected Pickup Point:", selectedPickupPoint);
-      console.log("Selected Pickup Point ID:", selectedPickupPointId);
-      console.log("Price:", packageData.price);
-      console.log("Vehicle Type:", vehicleType);
-      console.log("Child With Seat Price:", childWithSeatP);
-      console.log("Child Without Seat Price:", childWithoutSeatP);
-      console.log("Selected Date:", selectedDate.tripDate);
-      console.log("Selected Trip ID:", selectedDate.tripId);
-      console.log("Tour Name:", selectedDate.tourName);
-
-      navigation.navigate("Book", {
-        packageData: packageData,
-        cityName: packageData.city,
-        cityId: cityId,
-        packageName: packageData.packageName,
-        packageId: packageData.packageId,
-        categoryName: categoryName,
-        categoryId: packageData.categoryId,
-        selectedPickupPoint: selectedPickupPoint,
-        selectedPickupPointId: selectedPickupPointId,
-        price: packageData.price,
-        vehicleType: vehicleType,
-        childWithSeatP: childWithSeatP,
-        childWithoutSeatP: childWithoutSeatP,
-        selectedDate: selectedDate.tripDate,
-        tripId: selectedDate.tripId,
-        tourName: selectedDate.tourName,
-      });
-    } else {
+    if (!selectedDate) {
       alert("Please select a date");
+      return;
     }
+
+    console.log("City Name:", cityName);
+    console.log("City ID:", cityId);
+    console.log("Package Name:", packageName);
+    console.log("Package ID:", packageId);
+    console.log("Category Name:", categoryName);
+    console.log("Category ID:", categoryId);
+    console.log("Selected Pickup Point:", selectedPickupPoint);
+    console.log("Selected Pickup Point ID:", selectedPickupPointId);
+    console.log("Price:", price);
+    console.log("Vehicle Type:", vehicleType);
+    console.log("Child With Seat Price:", childWithSeatP);
+    console.log("Child Without Seat Price:", childWithoutSeatP);
+    console.log("Selected Date:", selectedDate.tripDate);
+    console.log("Trip ID:", selectedDate.tripId);
+    console.log("Tour Name:", selectedDate.tourName);
+
+    navigation.navigate("SelectSeats", {
+      cityName,
+      cityId,
+      packageName,
+      packageId,
+      categoryName,
+      categoryId,
+      selectedPickupPoint,
+      selectedPickupPointId,
+      price,
+      vehicleType,
+      childWithSeatP,
+      childWithoutSeatP,
+      selectedDate: selectedDate.tripDate,
+      tripId: selectedDate.tripId,
+      tourName: selectedDate.tourName,
+    });
   };
 
   const renderItem = ({ item }) => (
@@ -125,7 +140,7 @@ const SelectDateScreen = () => {
       <View
         style={[
           styles.radioCircle,
-          selectedDate?.tripId === item.tripId && styles.radioCircleSelected, // Compare by tripId
+          selectedDate?.tripId === item.tripId && styles.radioCircleSelected,
         ]}
       >
         {selectedDate?.tripId === item.tripId && <View style={styles.radioInner} />}
