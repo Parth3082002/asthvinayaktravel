@@ -71,7 +71,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
     const backAction = () => {
       navigation.reset({
         index: 0,
-        routes: [{ name: "Home" }],
+        routes: [{ name: "SelectVehicle1" }],
       });
       return true;
     };
@@ -151,7 +151,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backButtonContainer}>
+        <TouchableOpacity onPress={() => navigation.navigate('SelectVehicle1')} style={styles.backButtonContainer}>
           <View style={styles.backButtonCircle}>
             <Text style={styles.backButton}>{'<'}</Text>
           </View>

@@ -7,7 +7,8 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  Image
+  Image,
+  BackHandler
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -32,6 +33,7 @@ const CarBook = () => {
 // Extract all values from bookingData
 const {
   carType = 0,
+  carTypeLabel,
   acType = "",
   childWithSeatP = 0,
   childWithoutSeatP = 0,
@@ -122,6 +124,25 @@ const {
   }, [adults, childWithSeat]);
   
 
+
+
+   useEffect(() => {
+          const backAction = () => {
+              navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'SelectVehicle1' }], 
+              });
+              return true;
+          };
+  
+          const backHandler = BackHandler.addEventListener(
+              'hardwareBackPress',
+              backAction
+          );
+  
+          return () => backHandler.remove();
+      }, [navigation]);
+  
   const calculatePrice = () => {
     let finalPrice = totalSeats * price; // (Seats * Price)
     const childWithSeatCost = (parseInt(childWithSeat) || 0) * childWithSeatP;
@@ -167,6 +188,11 @@ const {
   
 
   const handleBooking = async () => {
+
+    if (!carTypeLabel) {
+      alert('Please select a car type');
+      return;
+  }
     if (!user || !user.userId || !token) {
       Alert.alert("Error", "User not found. Please log in again.");
       return;
@@ -177,7 +203,7 @@ const {
   
     // Prepare only the required booking data
     const bookingData = {
-      carType: carType.toString(),            // Example: "SUV"
+      carType: carTypeLabel,         // Example: "SUV"
       date,                                   // Example: "2024-02-20"
       time: combinedDateTime.toISOString(),   // Example: "2024-02-20T10:00:00"
       userId: user.userId,                    // Example: 1
@@ -239,7 +265,7 @@ const {
     {/* Header with Back Arrow */}
     <View style={styles.header}>
       <TouchableOpacity
-        onPress={() => navigation.navigate("CarType")}
+        onPress={() => navigation.navigate("SelectVehicle1")}
         style={styles.backButtonContainer}
       >
         <View style={styles.backButtonCircle}>

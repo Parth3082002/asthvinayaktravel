@@ -40,7 +40,7 @@ const PackageDetails = ({ route: propRoute }) => {
         // Reset navigation stack and navigate back to Home
         navigation.reset({
             index: 0,
-            routes: [{ name: 'Home' }],
+            routes: [{ name: 'SelectVehicle1' }],
         });
         return true;  // Prevent default back action
     };

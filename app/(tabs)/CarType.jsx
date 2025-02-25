@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -9,22 +9,44 @@ const CarType = () => {
     const navigation = useNavigation();
     const { selectedPickupPointId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, cityId, cityName } = route.params || {};
 
-    const [carType, setCarType] = useState(null); // Changed to store integer
+    const [carType, setCarType] = useState(null); // Storing integer
+    const [carTypeLabel, setCarTypeLabel] = useState(''); // Storing label
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [time, setTime] = useState('');
     const [showTimePicker, setShowTimePicker] = useState(false);
 
+    // Handling back button
+    useEffect(() => {
+        const backAction = () => {
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'SelectVehicle1' }],
+            });
+            return true;
+        };
+
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+        return () => backHandler.remove();
+    }, [navigation]);
+
     useEffect(() => {
         console.log("Received Params:", { selectedPickupPointId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, cityId, cityName });
     }, [selectedPickupPointId, cityId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, cityName]);
+
+    // Handle car type selection
+    const handleCarTypeSelection = (type, label) => {
+        setCarType(type);
+        setCarTypeLabel(label);
+    };
 
     const handleBooking = () => {
         if (!carType) {
             alert('Please select a car type');
             return;
         }
-    
+
         // If time is not selected, use the current time
         let bookingTime = time;
         if (!time) {
@@ -33,12 +55,13 @@ const CarType = () => {
             const currentMinutes = currentDate.getMinutes();
             bookingTime = `${currentHours}:${currentMinutes < 10 ? '0' + currentMinutes : currentMinutes}`;
         }
-    
+
         // Prepare booking data
         const bookingData = {
-            carType, // Now passing integer
+            carType, // Integer value for calculation
+            carTypeLabel, // Descriptive label for DB
             date: date.toISOString().split('T')[0],
-            time: bookingTime, // Pass either selected time or current time
+            time: bookingTime,
             selectedPickupPointId,
             selectedPickupPoint,
             price,
@@ -49,16 +72,16 @@ const CarType = () => {
             cityName,
             status: 'Confirmed',
         };
-    
+
         console.log("Booking Data:", bookingData);
-    
-        // Navigate to the next screen with booking data
+
+        // Navigate to CarBook page with booking data
         navigation.navigate('CarBook', {
             ...route.params,
             bookingData,
         });
     };
-    
+
     return (
         <ScrollView contentContainerStyle={styles.scrollContainer}>
             <View style={styles.container}>
@@ -67,15 +90,33 @@ const CarType = () => {
                 {/* Car Type Selection */}
                 <Text style={styles.label}>Select Car Type:</Text>
                 <View style={styles.buttonGroup}>
-                    {[3, 6, 17].map((type) => (
-                        <TouchableOpacity
-                            key={type}
-                            style={[styles.button, carType === type && styles.selectedButton]}
-                            onPress={() => setCarType(type)}
-                        >
-                            <Text style={[styles.buttonText, carType === type && styles.selectedText]}>{type}</Text>
-                        </TouchableOpacity>
-                    ))}
+                    <TouchableOpacity
+                        style={[styles.button, carType === 4 && styles.selectedButton]}
+                        onPress={() => handleCarTypeSelection(4, '4')}
+                    >
+                        <Text style={[styles.buttonText, carType === 4 && styles.selectedText]}>4</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.button, carType === 6 && styles.selectedButton]}
+                        onPress={() => handleCarTypeSelection(6, '6')}
+                    >
+                        <Text style={[styles.buttonText, carType === 6 && styles.selectedText]}>6</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.button, carType === 17 && carTypeLabel === '17 Seater AC' && styles.selectedButton]}
+                        onPress={() => handleCarTypeSelection(17, '17 AC')}
+                    >
+                        <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 Seater AC' && styles.selectedText]}>17 AC</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.button, carType === 17 && carTypeLabel === '17 Seater Non AC' && styles.selectedButton]}
+                        onPress={() => handleCarTypeSelection(17, '17 Non AC')}
+                    >
+                        <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 Seater Non AC' && styles.selectedText]}>17 Non AC</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Date Selection */}
@@ -172,6 +213,7 @@ const styles = StyleSheet.create({
     },
     buttonGroup: {
         flexDirection: 'row',
+        flexWrap: 'wrap',
         justifyContent: 'space-around',
         marginBottom: 15,
     },
@@ -180,6 +222,7 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 15,
         borderRadius: 5,
+        marginVertical: 5,
     },
     selectedButton: {
         backgroundColor: '#007bff',
