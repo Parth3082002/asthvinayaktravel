@@ -105,18 +105,19 @@ const CarType = () => {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={[styles.button, carType === 17 && carTypeLabel === '17 Seater AC' && styles.selectedButton]}
-                        onPress={() => handleCarTypeSelection(17, '17 AC')}
-                    >
-                        <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 Seater AC' && styles.selectedText]}>17 AC</Text>
-                    </TouchableOpacity>
+    style={[styles.button, carType === 17 && carTypeLabel === '17 AC' && styles.selectedButton]}
+    onPress={() => handleCarTypeSelection(17, '17 AC')}
+>
+    <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 AC' && styles.selectedText]}>17 AC</Text>
+</TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={[styles.button, carType === 17 && carTypeLabel === '17 Seater Non AC' && styles.selectedButton]}
-                        onPress={() => handleCarTypeSelection(17, '17 Non AC')}
-                    >
-                        <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 Seater Non AC' && styles.selectedText]}>17 Non AC</Text>
-                    </TouchableOpacity>
+<TouchableOpacity
+    style={[styles.button, carType === 17 && carTypeLabel === '17 Non AC' && styles.selectedButton]}
+    onPress={() => handleCarTypeSelection(17, '17 Non AC')}
+>
+    <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 Non AC' && styles.selectedText]}>17 Non AC</Text>
+</TouchableOpacity>
+
                 </View>
 
                 {/* Date Selection */}
