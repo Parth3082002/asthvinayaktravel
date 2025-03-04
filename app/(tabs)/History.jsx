@@ -47,7 +47,7 @@ const History = () => {
           const userObj = JSON.parse(storedUser);
           setUserId(userObj.userId);
         } else {
-          Alert.alert("Error", "No user data found in AsyncStorage");
+          // Alert.alert("Error", "No user data found in AsyncStorage");
         }
       } catch (error) {
         console.error("Error retrieving data:", error);
@@ -59,7 +59,7 @@ const History = () => {
 
   const fetchUserAndHistory = async (type) => {
     if (!userId) {
-      Alert.alert("Error", "User not found. Please log in again.");
+      // Alert.alert("Error", "User not found. Please log in again.");
       return;
     }
 
@@ -99,7 +99,7 @@ const History = () => {
       return (
         <View style={styles.card}>
           <Text style={styles.title}>Trip: {item.tripName || "N/A"}</Text>
-          <Text style={styles.info}>Pickup Point: {item.pickupPoint?.pickupPoint1 || "N/A"}</Text>
+          <Text style={styles.info}>Pickup Point: {item.pickupPointName || "N/A"}</Text>
           <Text style={styles.info}>Drop Point: {item.droppoint || "N/A"}</Text>
           <Text style={styles.info}>Booking Date: {item.bookingDate || "N/A"}</Text>
           <Text style={styles.status(item.status)}>Status: {item.status || "Unknown"}</Text>
@@ -180,12 +180,15 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: "#f8f8f8",
+    marginTop: 20,
+    
   },
   header: {
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 20,
+    
   },
   buttonContainer: {
     flexDirection: "row",

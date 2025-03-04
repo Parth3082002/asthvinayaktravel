@@ -61,7 +61,8 @@ const {
     // const [date, setDate] = useState(bookingData.selectedDate || "dd-MM-yyyy");
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
-
+    // const [childWithoutSeat, setChildWithoutSeat] = useState("");
+    const [isAlertShown, setIsAlertShown] = useState(false); // Track alert visibility
   const [user, setUser] = useState(null);
   const [roomType, setRoomType] = useState("shared");
   const [adults, setAdults] = useState("");
@@ -74,6 +75,8 @@ const {
   const [errorMessage, setErrorMessage] = useState("");
   const [errors, setErrors] = useState({});
   // const [roomType, setRoomType] = useState("shared");
+  const [isChildWithoutSeatEditable, setIsChildWithoutSeatEditable] = useState(false);
+
   const [availableRoomTypes, setAvailableRoomTypes] = useState(["shared"]);
 
   useEffect(() => {
@@ -125,6 +128,8 @@ const {
   
 
 
+  
+  
 
    useEffect(() => {
           const backAction = () => {
@@ -257,6 +262,18 @@ const {
       Alert.alert("Error", "Network error. Please try again.");
     }
   };
+
+  
+    const handleTextChange = (text) => {
+      if (!isAlertShown) {
+        Alert.alert(
+          "Additional Charge",
+          `Child without seat cost: ₹${childWithoutSeatP} per person. This amount will be added to your total.`,
+          [{ text: "OK", onPress: () => setIsAlertShown(true) }] // Show alert only once
+        );
+      }
+      setChildWithoutSeat(text); // Update input field
+    };
   
   return (
 
@@ -330,7 +347,7 @@ const {
               onChangeText={setChildWithSeat}
             />
           </View>
-          <View style={styles.halfWidth}>
+          {/* <View style={styles.halfWidth}>
             <Text style={styles.label}>Without Booking</Text>
             <TextInput
               style={styles.input}
@@ -338,7 +355,17 @@ const {
               value={childWithoutSeat}
               onChangeText={setChildWithoutSeat}
             />
-          </View>
+          </View> */}
+          <View style={styles.halfWidth}>
+      <Text style={styles.label}>Child (Without Seat)</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={childWithoutSeat}
+        onChangeText={handleTextChange} // Show alert when user enters text for the first time
+      />
+    </View>
+
         </View>
 
         <View style={styles.inputFieldContainer}>
@@ -474,6 +501,11 @@ const styles = StyleSheet.create({
   payAdvanceButton: { backgroundColor: "#3B8FC8", flex: 1 },
   inputFieldContainer: { marginVertical: 10 },
   advanceInput: { width: "30%" },
+  nonEditableInput: {
+    backgroundColor: "#f0f0f0", // Light gray to indicate it's disabled
+    color: "#aaa",
+  },
+  
   paymentIconsContainer: { flexDirection: "row", justifyContent: "space-around", marginTop: 20 },
   icon: { width: 50, height: 50, resizeMode: "contain" },
   payButton: { backgroundColor: "#D44206", paddingVertical: 15, borderRadius: 8, alignItems: "center", marginTop: 20 },

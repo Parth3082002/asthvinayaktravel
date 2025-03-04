@@ -40,6 +40,7 @@ const Book = () => {
   const [advanceAmount, setAdvanceAmount] = useState(price ? price / 2 : "");
   const [seatNumber, setSeatNumber] = useState("");
   const [mobileNo, setMobileNo] = useState(null);
+  const [isAlertShown, setIsAlertShown] = useState(false);
   const [droppoint, setDroppoint] = useState('');
   const [adults, setAdults] = useState("");
   const [childWithSeat, setChildWithSeat] = useState("");
@@ -277,6 +278,20 @@ const Book = () => {
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
+
+
+
+  
+      const handleTextChange = (text) => {
+        if (!isAlertShown) {
+          Alert.alert(
+            "Additional Charge",
+            `Child without seat cost: ₹${childWithoutSeatP} per person. This amount will be added to your total.`,
+            [{ text: "OK", onPress: () => setIsAlertShown(true) }] // Show alert only once
+          );
+        }
+        setChildWithoutSeat(text); // Update input field
+      };
   
   return (
     <View style={styles.container}>
@@ -348,7 +363,7 @@ const Book = () => {
               />
               {errors.childWithSeat && <Text style={styles.errorText}>{errors.childWithSeat}</Text>}
             </View>
-            <View style={styles.halfWidth}>
+            {/* <View style={styles.halfWidth}>
               <Text style={styles.label}>Without Booking </Text>
               <TextInput
                 style={styles.input}
@@ -357,7 +372,17 @@ const Book = () => {
                 onChangeText={(text) => setChildWithoutSeat(text)}
               />
               {errors.childWithoutSeat && <Text style={styles.errorText}>{errors.childWithoutSeat}</Text>}
-            </View>
+            </View> */}
+
+<View style={styles.halfWidth}>
+      <Text style={styles.label}>Child (Without Seat)</Text>
+      <TextInput
+        style={styles.input}
+        keyboardType="numeric"
+        value={childWithoutSeat}
+        onChangeText={handleTextChange} // Show alert when user enters text for the first time
+      />
+    </View>
           </View>
 
 

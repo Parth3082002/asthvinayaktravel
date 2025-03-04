@@ -1,98 +1,75 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  BackHandler,
-} from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
 
-const NotificationScreen = () => {
+const NotificationsScreen = () => {
+  const [userId, setUserId] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();
 
   useEffect(() => {
-    fetchNotifications();
+    const fetchUserData = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem("user");
+        if (storedUser) {
+          const userObj = JSON.parse(storedUser);
+          setUserId(userObj.userId);
+        }
+      } catch (error) {
+        console.error("Error retrieving user data:", error);
+      }
+    };
+
+    fetchUserData();
   }, []);
 
   useEffect(() => {
-    const backAction = () => {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "SelectVehicle1" }],
-      });
-      return true;
-    };
+    const fetchNotifications = async () => {
+      if (!userId) return;
 
-    BackHandler.addEventListener("hardwareBackPress", backAction);
+      try {
+        const response = await fetch(`http://ashtavinayak.somee.com/api/Notification/GetUserNotifications/${userId}`);
+        const data = await response.json();
 
-    return () => {
-      BackHandler.removeEventListener("hardwareBackPress", backAction);
-    };
-  }, [navigation]);
-
-  const fetchNotifications = async () => {
-    try {
-      const storedTrip = await AsyncStorage.getItem("tripId");
-      const tripId = storedTrip ? JSON.parse(storedTrip) : null;
-
-      if (!tripId) {
-        Alert.alert("Error", "Trip ID not found.");
+        if (response.ok) {
+          setNotifications(data.notifications);
+        } else {
+          console.error("Error fetching notifications:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      const response = await fetch(
-        `http://ashtavinayak.somee.com/api/Notification/GetNotificationsByTrip/${tripId}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch notifications. Status: ${response.status}`);
-      }
-
-      const jsonData = await response.json();
-
-      if (jsonData.data && Array.isArray(jsonData.data)) {
-        setNotifications(jsonData.data);
-      } else {
-        setNotifications([]);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      Alert.alert("Error", "Failed to fetch notifications.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.title}>Trip: {item.tripName}</Text>
-      <Text style={styles.message}>Message: {item.notificationMessage}</Text>
-      <Text style={styles.date}>
-        Date: {new Date(item.notificationDate).toDateString()}
-      </Text>
-    </View>
-  );
+    fetchNotifications();
+  }, [userId]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Notifications</Text>
+      <Text style={styles.heading}>Notifications</Text>
       {loading ? (
-        <ActivityIndicator size="large" color="#ff6600" />
-      ) : notifications.length > 0 ? (
+        <ActivityIndicator size="large" color="#007bff" />
+      ) : notifications.length === 0 ? (
+        <Text style={styles.noDataText}>No notifications available.</Text>
+      ) : (
         <FlatList
           data={notifications}
           keyExtractor={(item) => item.notificationId.toString()}
-          renderItem={renderItem}
+          renderItem={({ item }) => (
+            <View style={styles.notificationCard}>
+              <Text style={styles.notificationMessage}>{item.notificationMessage}</Text>
+              <Text style={styles.dateText}>Date: {new Date(item.notificationDate).toLocaleString()}</Text>
+              <Text style={styles.sectionTitle}>Vehicle Details:</Text>
+              <Text>Vehicle Name: {item.vehicle.vehicleName}</Text>
+              <Text>Vehicle Number: {item.vehicle.vehicleNumber}</Text>
+              <Text>Vehicle Type: {item.vehicle.vehicleType}</Text>
+              <Text>Driver Name: {item.vehicle.driverName}</Text>
+              <Text>Driver Contact: {item.vehicle.driverContact}</Text>
+            </View>
+          )}
         />
-      ) : (
-        <Text style={styles.noNotificationText}>No notifications found.</Text>
       )}
     </View>
   );
@@ -101,46 +78,46 @@ const NotificationScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f8f8",
-    padding: 15,
-    marginTop: 20,
+    padding: 16,
+    backgroundColor: "#f5f5f5",
+    marginTop:20,
   },
-  header: {
+  heading: {
     fontSize: 22,
     fontWeight: "bold",
+    marginBottom: 16,
     textAlign: "center",
-    color: "#ff6600",
-    marginBottom: 10,
   },
-  card: {
+  notificationCard: {
     backgroundColor: "#fff",
-    padding: 15,
+    padding: 16,
+    marginVertical: 8,
     borderRadius: 10,
-    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  message: {
-    fontSize: 14,
-    color: "#666",
-    marginVertical: 2,
-  },
-  date: {
-    fontSize: 14,
-    color: "#777",
-    marginTop: 5,
-    textAlign: "right",
-  },
-  noNotificationText: {
-    textAlign: "center",
+  notificationMessage: {
     fontSize: 16,
-    color: "#777",
+    fontWeight: "bold",
+  },
+  dateText: {
+    fontSize: 14,
+    color: "gray",
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontWeight: "bold",
+    marginTop: 8,
+    color:'#FF5722',
+  },
+  noDataText: {
+    textAlign: "center",
     marginTop: 20,
+    fontSize: 16,
+    color: "gray",
   },
 });
 
-export default NotificationScreen;
+export default NotificationsScreen;

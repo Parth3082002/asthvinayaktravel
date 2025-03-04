@@ -201,17 +201,17 @@ const SelectTour = () => {
                                         <View style={styles.separator} />
                                         <View>
                                             {category.busType && category.busType.split(',').map((item, index) => (
-                                                <Text key={`bus-${index}`} style={styles.packageDetail}>
+                                                <Text key={`bus-${index}`} style={[styles.packageDetail,{fontWeight:"bold"}]}>
                                                     • {item.trim()}
                                                 </Text>
                                             ))}
                                             {category.stayType && category.stayType.split(',').map((item, index) => (
-                                                <Text key={`stay-${index}`} style={styles.packageDetail}>
+                                                <Text key={`stay-${index}`} style={[styles.packageDetail,{fontWeight:"bold"}]}>
                                                     • {item.trim()}
                                                 </Text>
                                             ))}
-                                            <Text style={styles.packageDetail}>Child with Seat Price: {category.childwithseatP}</Text>
-                                            <Text style={styles.packageDetail}>Child without Seat Price: {category.childwithoutseatP}</Text>
+                                            <Text style={[styles.packageDetail,{ color: "green",fontWeight:"bold" }]}>Child with Seat Price: {category.childwithseatP}</Text>
+                                            <Text style={[styles.packageDetail,{ color: "green",fontWeight:"bold" }]}>Child without Seat Price: {category.childwithoutseatP}</Text>
                                         </View>
                                     </TouchableOpacity>
                                 ))}
