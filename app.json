@@ -7,9 +7,7 @@
     "icon": "./assets/images/Bappa.png",
     "scheme": "myapp",
     "userInterfaceStyle": "light",
-
     "newArchEnabled": true,
-
     "splash": {
       "image": "./assets/images/Bappa.png",
       "resizeMode": "contain",
@@ -22,7 +20,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Bappa.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.punuuu03.AshtavinayakApp"
     },
     "web": {
       "bundler": "metro",
@@ -43,6 +42,14 @@
     ],
     "experiments": {
       "typedRoutes": true
-}
-}
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "e5df5285-b457-42f1-95bd-c93ec548d8c4"
+      }
+    }
+  }
 }
