@@ -266,8 +266,8 @@ const styles = StyleSheet.create({
   nextButton: {
     position: 'absolute',
     bottom: 20,
-    left: 20,
-    right: 20,
+    left: 30,
+    right: 30,
     backgroundColor: '#FF5722',
     borderRadius: 5,
     paddingVertical: 15,

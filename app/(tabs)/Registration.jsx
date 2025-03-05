@@ -52,12 +52,12 @@ const Registration = () => {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
-
+  
     if (phoneNumber.length !== 10) {
       Alert.alert("Error", "Please enter a valid 10-digit phone number");
       return;
     }
-
+  
     setLoading(true);
     try {
       const response = await axios.post(
@@ -69,7 +69,7 @@ const Registration = () => {
           PasswordHash: passwordHash,
         }
       );
-
+  
       if (response.status === 200) {
         Alert.alert("Success", "Registration successful!", [
           {
@@ -80,17 +80,25 @@ const Registration = () => {
             },
           },
         ]);
-      } else {
-        Alert.alert("Error", "Registration failed. Please try again.");
       }
     } catch (error) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
-      console.error(error);
+      let errorMessage = "Registration failed. Please try again.";
+  
+      if (error.response) {
+        if (error.response.data && typeof error.response.data === "string") {
+          errorMessage = error.response.data; // If response data is a string
+        } else if (error.response.data && error.response.data.message) {
+          errorMessage = error.response.data.message; // If message field exists
+        }
+      }
+  
+      Alert.alert("Error", errorMessage);
+      // console.error(error);
     } finally {
-      setLoading(false); // Ensure loading stops in all cases
+      setLoading(false);
     }
-};
-
+  };
+  
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();

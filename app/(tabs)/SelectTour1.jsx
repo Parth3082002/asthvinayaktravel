@@ -228,7 +228,7 @@ const SelectTour = () => {
             />
 
             {packageLoading && (
-                <ActivityIndicator size="large" color="#FF5722" />
+                <ActivityIndicator size="large" color="white" />
             )}
 
             <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
@@ -364,11 +364,13 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     nextButton: {
-        bottom: 0,
-        left: 20,
-        right: 20,
-        marginLeft:-5,
-        marginRight:35,
+       
+        // marginLeft:-5,
+        // marginRight:35,
+        position: 'absolute',
+        bottom: 20,
+        left: 30,
+        right: 30,
         backgroundColor: '#FF5722',
         borderRadius: 5,
         paddingVertical: 15,

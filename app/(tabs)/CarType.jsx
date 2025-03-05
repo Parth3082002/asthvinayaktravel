@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons';
+import Icon from "react-native-vector-icons/Ionicons";
 
 const CarType = () => {
     const route = useRoute();
@@ -105,31 +105,30 @@ const CarType = () => {
                     </TouchableOpacity>
 
                     <TouchableOpacity
-    style={[styles.button, carType === 17 && carTypeLabel === '17 AC' && styles.selectedButton]}
-    onPress={() => handleCarTypeSelection(17, '17 AC')}
->
-    <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 AC' && styles.selectedText]}>17 AC</Text>
-</TouchableOpacity>
+                        style={[styles.button, carType === 17 && carTypeLabel === '17 AC' && styles.selectedButton]}
+                        onPress={() => handleCarTypeSelection(17, '17 AC')}
+                    >
+                        <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 AC' && styles.selectedText]}>17 AC</Text>
+                    </TouchableOpacity>
 
-<TouchableOpacity
-    style={[styles.button, carType === 17 && carTypeLabel === '17 Non AC' && styles.selectedButton]}
-    onPress={() => handleCarTypeSelection(17, '17 Non AC')}
->
-    <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 Non AC' && styles.selectedText]}>17 Non AC</Text>
-</TouchableOpacity>
-
+                    <TouchableOpacity
+                        style={[styles.button, carType === 17 && carTypeLabel === '17 Non AC' && styles.selectedButton]}
+                        onPress={() => handleCarTypeSelection(17, '17 Non AC')}
+                    >
+                        <Text style={[styles.buttonText, carType === 17 && carTypeLabel === '17 Non AC' && styles.selectedText]}>17 Non AC</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Date Selection */}
                 <Text style={styles.label}>Select Date:</Text>
                 <View style={styles.inputContainer}>
                     <TextInput
-                        style={[styles.input, { paddingRight: 40 }]}
+                        style={[styles.input, { paddingRight: 20 }]}
                         value={date.toDateString()}
                         editable={false}
                     />
                     <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.iconButton}>
-                        <MaterialIcons name="calendar-today" size={24} color="black" />
+                        <Icon name="calendar" size={24} color="black" />
                     </TouchableOpacity>
                 </View>
                 {showDatePicker && (
@@ -148,14 +147,14 @@ const CarType = () => {
                 <Text style={styles.label}>Enter Time (HH:MM):</Text>
                 <View style={styles.inputContainer}>
                     <TextInput
-                        style={[styles.input, { paddingRight: 40 }]}
+                        style={[styles.input, { paddingRight: 20 }]}
                         placeholder="HH:MM"
                         value={time}
                         onChangeText={setTime}
                         keyboardType="numeric"
                     />
                     <TouchableOpacity onPress={() => setShowTimePicker(true)} style={styles.iconButton}>
-                        <MaterialIcons name="access-time" size={24} color="black" />
+                        <Icon name="time" size={24} color="black" />
                     </TouchableOpacity>
                 </View>
                 {showTimePicker && (
@@ -182,6 +181,7 @@ const CarType = () => {
         </ScrollView>
     );
 };
+
 
 const styles = StyleSheet.create({
     scrollContainer: {
@@ -247,7 +247,8 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         borderWidth: 1,
         borderColor: '#ccc',
-        marginRight: 10,
+        // marginRight: 10,
+        // paddingRight:-30,
     },
     iconButton: {
         position: 'absolute',

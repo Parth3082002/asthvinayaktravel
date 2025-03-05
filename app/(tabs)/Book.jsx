@@ -3,7 +3,7 @@ import { Alert, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
-import { Ionicons } from "@expo/vector-icons"; // For the date icon
+// import { Ionicons } from "@expo/vector-icons"; // For the date icon
 import Icon from "react-native-vector-icons/Ionicons"; // For icons
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

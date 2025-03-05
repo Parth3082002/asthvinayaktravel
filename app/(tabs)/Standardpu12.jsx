@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 5,
-    padding: 2,
+    padding: 7,
   },
   searchInput: {
     marginLeft: 8,
