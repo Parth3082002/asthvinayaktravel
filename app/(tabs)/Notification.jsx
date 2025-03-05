@@ -34,10 +34,10 @@ const NotificationsScreen = () => {
         if (response.ok) {
           setNotifications(data.notifications);
         } else {
-          console.error("Error fetching notifications:", data.message);
+          // console.error("Error fetching notifications:", data.message);
         }
       } catch (error) {
-        console.error("Error fetching notifications:", error);
+        // console.error("Error fetching notifications:", error);
       } finally {
         setLoading(false);
       }

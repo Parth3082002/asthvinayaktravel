@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   Image,
   BackHandler,
+  ActivityIndicator,
 } from "react-native";
 import axios from "axios";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -22,31 +23,31 @@ const { width, height } = Dimensions.get("window");
 
 const Login = () => {
   const [mobileNo, setMobileNo] = useState("");
+  const [loading, setLoading] = useState(false); // Loading state
   const navigation = useNavigation();
 
-  // Reset fields when navigating back or forward
   useFocusEffect(
     useCallback(() => {
       setMobileNo(""); // Reset input field
     }, [])
   );
 
-  // Handle back button press to navigate to Index page
   useEffect(() => {
     const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
-      navigation.navigate("index"); // Navigate to Index page
-      return true; // Prevent default back action
+      navigation.navigate("index");
+      return true;
     });
 
-    return () => backHandler.remove(); // Cleanup event listener
+    return () => backHandler.remove();
   }, [navigation]);
 
-  // Function to handle OTP sending
   const sendOtp = async () => {
     if (!mobileNo || mobileNo.length !== 10) {
       Alert.alert("Error", "Please enter a valid 10-digit mobile number");
       return;
     }
+
+    setLoading(true); // Start loading
 
     try {
       const response = await axios.post(
@@ -56,12 +57,10 @@ const Login = () => {
 
       if (response.status === 200) {
         await AsyncStorage.setItem("mobileNo", mobileNo);
-        
-        // Show alert and navigate only after clicking "OK"
+
         Alert.alert("Success", "OTP sent successfully!", [
           { text: "OK", onPress: () => navigation.navigate("Otp", { mobileNo }) }
         ]);
-        
       } else {
         Alert.alert("Error", "Failed to send OTP. Please try again.");
       }
@@ -70,10 +69,11 @@ const Login = () => {
         "Error",
         error.response?.data || "Something went wrong. Please try again."
       );
+    } finally {
+      setLoading(false); // Stop loading after request is complete
     }
   };
 
-  // Function to dismiss keyboard
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
@@ -85,16 +85,13 @@ const Login = () => {
     >
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <View style={styles.innerContainer}>
-          {/* Logo Illustration */}
           <Image
             source={require("@/assets/images/Login.png")}
             style={styles.image}
           />
 
-          {/* Heading */}
           <Text style={styles.subheading}>Enter Your Mobile Number</Text>
 
-          {/* Mobile Input with country code */}
           <View style={styles.inputContainer}>
             <Text style={styles.countryCode}>+91</Text>
             <TextInput
@@ -107,12 +104,14 @@ const Login = () => {
             />
           </View>
 
-          {/* Send OTP Button */}
-          <TouchableOpacity style={styles.button} onPress={sendOtp}>
-            <Text style={styles.buttonText}>Send OTP</Text>
+          <TouchableOpacity style={styles.button} onPress={sendOtp} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Send OTP</Text>
+            )}
           </TouchableOpacity>
 
-          {/* Don't have an account? Register */}
           <TouchableOpacity onPress={() => navigation.navigate("Registration")}>
             <Text style={styles.registerText}>
               Don't have an account?{" "}
@@ -124,8 +123,6 @@ const Login = () => {
     </KeyboardAvoidingView>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   container: {

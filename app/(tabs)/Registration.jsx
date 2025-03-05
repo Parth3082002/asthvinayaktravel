@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Image,
+  ActivityIndicator,
   BackHandler,
 } from "react-native";
 import axios from "axios";
@@ -24,6 +25,7 @@ const Registration = () => {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [passwordHash, setPasswordHash] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -38,7 +40,6 @@ const Registration = () => {
     return () => backHandler.remove();
   }, [navigation]);
 
-  // Function to reset fields
   const resetFields = () => {
     setUserName("");
     setEmail("");
@@ -46,18 +47,18 @@ const Registration = () => {
     setPasswordHash("");
   };
 
-  // Function to handle user registration
   const handleRegistration = async () => {
     if (!userName || !email || !phoneNumber || !passwordHash) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
-  
+
     if (phoneNumber.length !== 10) {
       Alert.alert("Error", "Please enter a valid 10-digit phone number");
       return;
     }
-  
+
+    setLoading(true);
     try {
       const response = await axios.post(
         "http://ashtavinayak.somee.com/api/User/Register",
@@ -68,16 +69,16 @@ const Registration = () => {
           PasswordHash: passwordHash,
         }
       );
-  
+
       if (response.status === 200) {
         Alert.alert("Success", "Registration successful!", [
-          { 
-            text: "OK", 
+          {
+            text: "OK",
             onPress: () => {
               navigation.reset({ index: 0, routes: [{ name: "Login" }] });
-              resetFields(); // Reset fields only after navigating
-            } 
-          }
+              resetFields();
+            },
+          },
         ]);
       } else {
         Alert.alert("Error", "Registration failed. Please try again.");
@@ -85,10 +86,12 @@ const Registration = () => {
     } catch (error) {
       Alert.alert("Error", "Something went wrong. Please try again.");
       console.error(error);
+    } finally {
+      setLoading(false); // Ensure loading stops in all cases
     }
-  };
-  
-  // Function to dismiss keyboard
+};
+
+
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
@@ -97,30 +100,18 @@ const Registration = () => {
     <KeyboardAvoidingView style={styles.container}>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <View style={styles.innerContainer}>
-          {/* Logo Illustration */}
           <Image source={require("@/assets/images/register.png")} style={styles.image} />
-
-          {/* Heading */}
           <Text style={styles.heading}>Create an Account</Text>
 
-          {/* User Name Input */}
           <TextInput style={styles.input} placeholder="User Name" value={userName} onChangeText={setUserName} />
-
-          {/* Email Input */}
           <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" value={email} onChangeText={setEmail} />
-
-          {/* Phone Number Input */}
           <TextInput style={styles.input} placeholder="Phone Number" keyboardType="numeric" maxLength={10} value={phoneNumber} onChangeText={setPhoneNumber} />
-
-          {/* Password Input */}
           <TextInput style={styles.input} placeholder="Password" secureTextEntry value={passwordHash} onChangeText={setPasswordHash} />
 
-          {/* Register Button */}
-          <TouchableOpacity style={styles.button} onPress={handleRegistration}>
-            <Text style={styles.buttonText}>Register</Text>
+          <TouchableOpacity style={styles.button} onPress={handleRegistration} disabled={loading}>
+            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.buttonText}>Register</Text>}
           </TouchableOpacity>
 
-          {/* Link to Login Screen */}
           <TouchableOpacity onPress={() => {
             resetFields();
             navigation.reset({ index: 0, routes: [{ name: "Login" }] });
@@ -132,6 +123,7 @@ const Registration = () => {
     </KeyboardAvoidingView>
   );
 };
+
 
 
 

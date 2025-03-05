@@ -9,15 +9,14 @@ import {
   Image,
   Dimensions,
   TouchableWithoutFeedback,
-  KeyboardAvoidingView,
   Keyboard,
-  Platform,
+  ActivityIndicator,
   BackHandler,
 } from "react-native";
 import axios from "axios";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Buffer } from "buffer"; 
+import { Buffer } from "buffer";
 
 const { width, height } = Dimensions.get("window");
 
@@ -31,20 +30,19 @@ const Otp = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { mobileNo } = route.params || {};
+  const [loading, setLoading] = useState(false);
 
-  // Reset OTP Fields When Page is Focused
   useFocusEffect(
     React.useCallback(() => {
-      setOtp(["", "", "", "", "", ""]); // Clear OTP fields
+      setOtp(["", "", "", "", "", ""]); 
     }, [])
   );
 
-  // Handle Back Button Press (Navigates to Login)
   useFocusEffect(
     React.useCallback(() => {
       const backAction = () => {
-        navigation.navigate("Login"); // Navigate to Login Page
-        return true; // Prevent default back action
+        navigation.navigate("Login"); 
+        return true;
       };
 
       const backHandler = BackHandler.addEventListener(
@@ -96,9 +94,11 @@ const Otp = () => {
       return;
     }
 
+    setLoading(true); 
+
     try {
       const response = await axios.post(
-        "http://ashtavinayak.somee.com/api/User/VerifyOTP", 
+        "http://ashtavinayak.somee.com/api/User/VerifyOTP",
         { mobileNo, otp: enteredOtp },
         {
           headers: {
@@ -109,42 +109,30 @@ const Otp = () => {
 
       if (response.status === 200 && response.data.token) {
         const token = response.data.token;
-        console.log("Generated Token:", token);
 
         const decodedPayload = decodeToken(token);
-        console.log("Decoded Payload:", decodedPayload);
 
-        if (decodedPayload && decodedPayload.email) {
-          Alert.alert("Success", "OTP verified successfully!", [
-            {
-              text: "OK",
-              onPress: () => navigation.navigate("SelectVehicle1"),
-            },
-          ]);
-        } else {
-          Alert.alert("Success", "OTP verified successfully!", [
-            {
-              text: "OK",
-              onPress: () =>
-                navigation.navigate("SelectVehicle1", {
-                  token,
-                  mobileNo,
-                }),
-            },
-          ]);
-        }
+        Alert.alert("Success", "OTP verified successfully!", [
+          {
+            text: "OK",
+            onPress: () =>
+              navigation.navigate("SelectVehicle1", {
+                token,
+                mobileNo,
+              }),
+          },
+        ]);
 
         await AsyncStorage.setItem("mobileNo", mobileNo);
         await AsyncStorage.setItem("token", token);
         await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
-
-        console.log("User Details Stored:", response.data.user);
       } else {
         Alert.alert("Error", "Invalid OTP. Please try again.");
       }
     } catch (error) {
       Alert.alert("Error", "Failed to verify OTP. Please try again.");
-      // console.error(error);
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -165,63 +153,46 @@ const Otp = () => {
   };
 
   return (
-//     <KeyboardAvoidingView
-//   behavior={Platform.OS === "ios" ? "padding" : "height"}
-//   keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0} // Adjust offset if needed
-//   style={styles.container}
-// >
-
-<TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
-          <View style={styles.container}>
-          <View style={styles.logoContainer}>
-            <Image
-              source={require("@/assets/images/Verify.png")}
-              style={styles.image}
-            />
-          </View>
-
-          <Text style={styles.verificationHeading}>OTP Verification</Text>
-
-          <Text style={styles.title}>Check your phone for the OTP</Text>
-          <Text style={styles.subtitle}>Sent to: {mobileNo}</Text>
-
-          <View style={styles.otpContainer}>
-            {otp.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => (otpRefs.current[index] = ref)}
-                style={styles.otpInput}
-                value={digit}
-                onChangeText={(text) => handleInputChange(text, index)}
-                keyboardType="numeric"
-                maxLength={1}
-                onKeyPress={({ nativeEvent }) => {
-                  if (
-                    nativeEvent.key === "Backspace" &&
-                    index > 0 &&
-                    !otp[index]
-                  ) {
-                    otpRefs.current[index - 1]?.focus();
-                  }
-                }}
-              />
-            ))}
-          </View>
-
-          <Text style={styles.notReceivedText}>
-            Not received yet? Resend it
-          </Text>
-
-          <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp}>
-            <Text style={styles.resendText}>Resend Code</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.nextButton} onPress={verifyOtp}>
-            <Text style={styles.nextText}>Verify OTP</Text>
-          </TouchableOpacity>
+    <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
+      <View style={styles.container}>
+        <View style={styles.logoContainer}>
+          <Image source={require("@/assets/images/Verify.png")} style={styles.image} />
         </View>
-        </TouchableWithoutFeedback>
-    // </KeyboardAvoidingView>
+
+        <Text style={styles.verificationHeading}>OTP Verification</Text>
+        <Text style={styles.title}>Check your phone for the OTP</Text>
+        <Text style={styles.subtitle}>Sent to: {mobileNo}</Text>
+
+        <View style={styles.otpContainer}>
+          {otp.map((digit, index) => (
+            <TextInput
+              key={index}
+              ref={(ref) => (otpRefs.current[index] = ref)}
+              style={styles.otpInput}
+              value={digit}
+              onChangeText={(text) => handleInputChange(text, index)}
+              keyboardType="numeric"
+              maxLength={1}
+              onKeyPress={({ nativeEvent }) => {
+                if (nativeEvent.key === "Backspace" && index > 0 && !otp[index]) {
+                  otpRefs.current[index - 1]?.focus();
+                }
+              }}
+            />
+          ))}
+        </View>
+
+        <Text style={styles.notReceivedText}>Not received yet? Resend it</Text>
+
+        <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp} disabled={loading}>
+          <Text style={styles.resendText}>Resend Code</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.nextButton} onPress={verifyOtp} disabled={loading}>
+          {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.nextText}>Verify OTP</Text>}
+        </TouchableOpacity>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
