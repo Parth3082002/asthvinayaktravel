@@ -5,7 +5,6 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   TouchableOpacity,
   BackHandler,
   ScrollView,
@@ -14,14 +13,34 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 
 const History = () => {
-  const [historyData, setHistoryData] = useState([]);
+  const [busHistoryData, setBusHistoryData] = useState([]);
+  const [carHistoryData, setCarHistoryData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState("bus");
   const [userId, setUserId] = useState(null);
   const navigation = useNavigation();
 
   useEffect(() => {
-    fetchUserAndHistory("bus");
+    const fetchUserData = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem("user");
+        if (storedUser) {
+          const userObj = JSON.parse(storedUser);
+          setUserId(userObj.userId);
+        }
+      } catch (error) {
+        console.error("Error retrieving data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchBusHistory();
+      fetchCarHistory();
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -39,98 +58,72 @@ const History = () => {
     };
   }, [navigation]);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const storedUser = await AsyncStorage.getItem("user");
-        if (storedUser) {
-          const userObj = JSON.parse(storedUser);
-          setUserId(userObj.userId);
-        } else {
-          // Alert.alert("Error", "No user data found in AsyncStorage");
-        }
-      } catch (error) {
-        console.error("Error retrieving data:", error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  const fetchUserAndHistory = async (type) => {
-    if (!userId) {
-      // Alert.alert("Error", "User not found. Please log in again.");
-      return;
-    }
-
+  const fetchBusHistory = async () => {
+    if (!userId) return;
     setLoading(true);
 
     try {
-      console.log(`Fetching ${type} history for userId:`, userId);
-
-      let apiUrl =
-        type === "bus"
-          ? `http://ashtavinayak.somee.com/api/Booking/HistoryByUser/${userId}`
-          : `http://ashtavinayak.somee.com/api/Booking/FamilyBookingHistory/${userId}`;
-
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch booking history. Status: ${response.status}`);
-      }
+      const response = await fetch(`http://ashtavinayak.somee.com/api/Booking/HistoryByUser/${userId}`);
+      if (!response.ok) throw new Error(`Failed to fetch bus booking history. Status: ${response.status}`);
 
       const data = await response.json();
-      console.log(`Fetched ${type} history data:`, data);
-
-      if (data.data && Array.isArray(data.data)) {
-        setHistoryData(data.data);
-      } else {
-        setHistoryData([]);
-      }
+      setBusHistoryData(data.data && Array.isArray(data.data) ? data.data : []);
     } catch (error) {
-      // console.error("Error fetching history:", error);
-      // Alert.alert("Error", "Failed to fetch booking history.");
+      // console.error("Error fetching bus history:", error);
+      setBusHistoryData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCarHistory = async () => {
+    if (!userId) return;
+    setLoading(true);
+
+    try {
+      const response = await fetch(`http://ashtavinayak.somee.com/api/Booking/FamilyBookingHistory/${userId}`);
+      if (!response.ok) throw new Error(`Failed to fetch car booking history. Status: ${response.status}`);
+
+      const data = await response.json();
+      setCarHistoryData(data.data && Array.isArray(data.data) ? data.data : []);
+    } catch (error) {
+      // console.error("Error fetching car history:", error);
+      setCarHistoryData([]);
     } finally {
       setLoading(false);
     }
   };
 
   const renderItem = ({ item }) => {
-    if (selectedType === "bus") {
-      return (
-        <View style={styles.card}>
-          <Text style={styles.title}>Trip: {item.tripName || "N/A"}</Text>
-          <Text style={styles.info}>Pickup Point: {item.pickupPointName || "N/A"}</Text>
-          <Text style={styles.info}>Drop Point: {item.droppoint || "N/A"}</Text>
-          <Text style={styles.info}>Booking Date: {item.bookingDate || "N/A"}</Text>
-          <Text style={styles.status(item.status)}>Status: {item.status || "Unknown"}</Text>
-          <Text style={styles.price}>Total Payment: ₹{item.totalPayment || "0"}</Text>
-          <Text style={styles.advance}>Advance: ₹{item.advance || "0"}</Text>
-
-          <Text style={styles.seatHeader}>Seat Numbers:</Text>
-          {item.seatNumbers && item.seatNumbers.length > 0 ? (
-            <Text style={styles.seatText}>
-              {item.seatNumbers.map((seat) => `S${seat.seatNumber}`).join(", ")}
-            </Text>
-          ) : (
-            <Text style={styles.info}>No Seat Information</Text>
-          )}
-        </View>
-      );
-    } else {
-      return (
-        <View style={styles.card}>
-          <Text style={styles.title}>Car Type: {item.carType || "N/A"}</Text>
-          <Text style={styles.info}>Pickup Point: {item.pickupPoint?.pickupPoint1 || "N/A"}</Text>
-
-      <Text style={styles.info}>Drop Point: {item.droppoint || "N/A"}</Text>
-      <Text style={styles.info}>Booking Date: {item.bookingDate || "N/A"}</Text>
-     
-      <Text style={styles.status(item.status)}>Status: {item.status || "Unknown"}</Text>
-      <Text style={styles.price}>Total Payment: ₹{item.totalPayment || "0"}</Text>
-      <Text style={styles.advance}>Advance: ₹{item.advance || "0"}</Text>
-        </View>
-      );
-    }
+    return selectedType === "bus" ? (
+      <View style={styles.card}>
+        <Text style={styles.title}>Trip: {item.tripName || "N/A"}</Text>
+        <Text style={styles.info}>Pickup Point: {item.pickupPointName || "N/A"}</Text>
+        <Text style={styles.info}>Drop Point: {item.droppoint || "N/A"}</Text>
+        <Text style={styles.info}>Booking Date: {item.bookingDate || "N/A"}</Text>
+        <Text style={styles.status(item.status)}>Status: {item.status || "Unknown"}</Text>
+        <Text style={styles.price}>Total Payment: ₹{item.totalPayment || "0"}</Text>
+        <Text style={styles.advance}>Advance: ₹{item.advance || "0"}</Text>
+        <Text style={styles.seatHeader}>Seat Numbers:</Text>
+        {item.seatNumbers && item.seatNumbers.length > 0 ? (
+          <Text style={styles.seatText}>
+            {item.seatNumbers.map((seat) => `S${seat.seatNumber}`).join(", ")}
+          </Text>
+        ) : (
+          <Text style={styles.info}>No Seat Information</Text>
+        )}
+      </View>
+    ) : (
+      <View style={styles.card}>
+        <Text style={styles.title}>Car Type: {item.carType || "N/A"}</Text>
+        <Text style={styles.info}>Pickup Point: {item.pickupPoint?.pickupPoint1 || "N/A"}</Text>
+        <Text style={styles.info}>Drop Point: {item.droppoint || "N/A"}</Text>
+        <Text style={styles.info}>Booking Date: {item.bookingDate || "N/A"}</Text>
+        <Text style={styles.status(item.status)}>Status: {item.status || "Unknown"}</Text>
+        <Text style={styles.price}>Total Payment: ₹{item.totalPayment || "0"}</Text>
+        <Text style={styles.advance}>Advance: ₹{item.advance || "0"}</Text>
+      </View>
+    );
   };
 
   return (
@@ -140,37 +133,40 @@ const History = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, selectedType === "bus" && styles.activeButton]}
-          onPress={() => {
-            setSelectedType("bus");
-            fetchUserAndHistory("bus");
-          }}
+          onPress={() => setSelectedType("bus")}
         >
           <Text style={styles.buttonText}>Bus Booking History</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, selectedType === "car" && styles.activeButton]}
-          onPress={() => {
-            setSelectedType("car");
-            fetchUserAndHistory("car");
-          }}
+          onPress={() => setSelectedType("car")}
         >
           <Text style={styles.buttonText}>Car Booking History</Text>
         </TouchableOpacity>
       </View>
 
       {loading ? (
-  <ActivityIndicator size="large" color="#ff6600" />
-) : historyData.length > 0 ? (
-  historyData.map((item, index) => (
-    <View key={item.bookingId ? item.bookingId.toString() : index.toString()}>
-      {renderItem({ item })}
-    </View>
-  ))
-) : (
-  <Text style={styles.noHistoryText}>No booking history found.</Text>
-)}
-
+        <ActivityIndicator size="large" color="#ff6600" />
+      ) : selectedType === "bus" ? (
+        busHistoryData.length > 0 ? (
+          busHistoryData.map((item, index) => (
+            <View key={item.bookingId ? item.bookingId.toString() : index.toString()}>
+              {renderItem({ item })}
+            </View>
+          ))
+        ) : (
+          <Text style={styles.noHistoryText}>No booking history found.</Text>
+        )
+      ) : carHistoryData.length > 0 ? (
+        carHistoryData.map((item, index) => (
+          <View key={item.bookingId ? item.bookingId.toString() : index.toString()}>
+            {renderItem({ item })}
+          </View>
+        ))
+      ) : (
+        <Text style={styles.noHistoryText}>No booking history found.</Text>
+      )}
     </ScrollView>
   );
 };
