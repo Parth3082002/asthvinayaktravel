@@ -116,12 +116,12 @@ const SelectTour = () => {
 
     const handleNextPress = () => {
         if (selectedCategory && selectedPackage && cityId) {
-            console.log('Selected Category ID:', selectedCategory);
-            console.log('Selected Category Name:', selectedCategoryName);
-            console.log('Selected Package ID:', selectedPackage);
-            console.log('Selected Package Name:', selectedPackageName);
-            console.log('Selected childwithseat:', childWithSeatP);
-            console.log('Selected childwithoutseat:', childWithoutSeatP);
+            // console.log('Selected Category ID:', selectedCategory);
+            // console.log('Selected Category Name:', selectedCategoryName);
+            // console.log('Selected Package ID:', selectedPackage);
+            // console.log('Selected Package Name:', selectedPackageName);
+            // console.log('Selected childwithseat:', childWithSeatP);
+            // console.log('Selected childwithoutseat:', childWithoutSeatP);
             navigation.navigate('Standardpu12', {
                 selectedCategory,
                 selectedCategoryName, // Sending the selectedCategoryName
@@ -181,7 +181,7 @@ const SelectTour = () => {
                                         onPress={() => {
                                             setSelectedCategory(category.categoryId);
                                             setSelectedCategoryName(category.categoryName || ''); // Ensure it's a string
-                                            console.log('Selected Category ID:', category.categoryId);
+                                            // console.log('Selected Category ID:', category.categoryId);
                                             setPackages([]); // Reset packages when category changes
                                             fetchPackages(cityId, category.categoryId); // Fetch packages for the selected category
                                             // Set child prices as integers

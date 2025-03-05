@@ -60,7 +60,7 @@ const Index = () => {
         router.push("Login"); // Navigate to Login page if no token
       }
     } catch (error) {
-      console.error("Error reading token from AsyncStorage", error);
+      // console.error("Error reading token from AsyncStorage", error);
       router.push("Login"); // Default fallback if error occurs
     }
   };

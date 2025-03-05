@@ -96,21 +96,21 @@ const SelectDateScreen = ({ route: propRoute }) => {
       return;
     }
 
-    console.log("City Name:", cityName);
-    console.log("City ID:", cityId);
-    console.log("Package Name:", packageName);
-    console.log("Package ID:", packageId);
-    console.log("Category Name:", categoryName);
-    console.log("Category ID:", categoryId);
-    console.log("Selected Pickup Point:", selectedPickupPoint);
-    console.log("Selected Pickup Point ID:", selectedPickupPointId);
-    console.log("Price:", price);
-    console.log("Vehicle Type:", vehicleType);
-    console.log("Child With Seat Price:", childWithSeatP);
-    console.log("Child Without Seat Price:", childWithoutSeatP);
-    console.log("Selected Date:", selectedDate.tripDate);
-    console.log("Trip ID:", selectedDate.tripId);
-    console.log("Tour Name:", selectedDate.tourName);
+    // console.log("City Name:", cityName);
+    // console.log("City ID:", cityId);
+    // console.log("Package Name:", packageName);
+    // console.log("Package ID:", packageId);
+    // console.log("Category Name:", categoryName);
+    // console.log("Category ID:", categoryId);
+    // console.log("Selected Pickup Point:", selectedPickupPoint);
+    // console.log("Selected Pickup Point ID:", selectedPickupPointId);
+    // console.log("Price:", price);
+    // console.log("Vehicle Type:", vehicleType);
+    // console.log("Child With Seat Price:", childWithSeatP);
+    // console.log("Child Without Seat Price:", childWithoutSeatP);
+    // console.log("Selected Date:", selectedDate.tripDate);
+    // console.log("Trip ID:", selectedDate.tripId);
+    // console.log("Tour Name:", selectedDate.tourName);
 
     navigation.navigate("SelectSeats", {
       cityName,

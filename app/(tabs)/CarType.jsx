@@ -32,7 +32,7 @@ const CarType = () => {
     }, [navigation]);
 
     useEffect(() => {
-        console.log("Received Params:", { selectedPickupPointId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, cityId, cityName });
+        // console.log("Received Params:", { selectedPickupPointId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, cityId, cityName });
     }, [selectedPickupPointId, cityId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, cityName]);
 
     // Handle car type selection
@@ -73,7 +73,7 @@ const CarType = () => {
             status: 'Confirmed',
         };
 
-        console.log("Booking Data:", bookingData);
+        // console.log("Booking Data:", bookingData);
 
         // Navigate to CarBook page with booking data
         navigation.navigate('CarBook', {

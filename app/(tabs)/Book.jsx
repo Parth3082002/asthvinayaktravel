@@ -57,29 +57,29 @@ const Book = () => {
 
   // Log all the received parameters on component mount
   useEffect(() => {
-    console.log("Passed Data from SelectSeats:");
-    console.log("City Name:", cityName);
-    console.log("City ID:", cityId);
-    console.log("Package Name:", packageName);
-    console.log("Package ID:", packageId);
-    console.log("Category Name:", categoryName);
-    console.log("Category ID:", categoryId);
-    console.log("Selected Pickup Point:", selectedPickupPoint);
-    console.log("Selected Pickup Point ID:", selectedPickupPointId);
-    console.log("Price:", price);
-    console.log("Vehicle Type:", vehicleType);
-    console.log("Child With Seat Price:", childWithSeatP);
-    console.log("Child Without Seat Price:", childWithoutSeatP);
-    console.log("Trip Date:", tripDate);
-    console.log("Trip ID:", tripId);
-    console.log("Tour Name:", tourName);
-    console.log("Selected Seats:", selectedSeats);
-    console.log("Selected Date:", selectedDate);
+    // console.log("Passed Data from SelectSeats:");
+    // console.log("City Name:", cityName);
+    // console.log("City ID:", cityId);
+    // console.log("Package Name:", packageName);
+    // console.log("Package ID:", packageId);
+    // console.log("Category Name:", categoryName);
+    // console.log("Category ID:", categoryId);
+    // console.log("Selected Pickup Point:", selectedPickupPoint);
+    // console.log("Selected Pickup Point ID:", selectedPickupPointId);
+    // console.log("Price:", price);
+    // console.log("Vehicle Type:", vehicleType);
+    // console.log("Child With Seat Price:", childWithSeatP);
+    // console.log("Child Without Seat Price:", childWithoutSeatP);
+    // console.log("Trip Date:", tripDate);
+    // console.log("Trip ID:", tripId);
+    // console.log("Tour Name:", tourName);
+    // console.log("Selected Seats:", selectedSeats);
+    // console.log("Selected Date:", selectedDate);
 
     // ✅ Calculate Total Seats from selectedSeats array
     if (Array.isArray(selectedSeats)) {
       setTotalSeats(selectedSeats.length);
-      console.log("Total Seats Selected:", selectedSeats.length);
+      // console.log("Total Seats Selected:", selectedSeats.length);
     }
   }, [selectedSeats]);
 
@@ -202,7 +202,7 @@ const Book = () => {
       return true;
     };
   
-    console.log("Pay Now button clicked"); // To verify button press
+    // console.log("Pay Now button clicked"); // To verify button press
   
     // Validate fields
     if (!validateFields()) {
@@ -233,7 +233,7 @@ const Book = () => {
       Childwithoutseat: parseInt(childWithoutSeat) || 0,
     };
   
-    console.log("Prepared Booking Data:", JSON.stringify(bookingData, null, 2)); // Log booking data
+    // console.log("Prepared Booking Data:", JSON.stringify(bookingData, null, 2)); // Log booking data
   
     try {
       // API call
@@ -250,7 +250,7 @@ const Book = () => {
       );
   
       const result = await response.json();
-      console.log("API Response:", result); // Log API response
+      // console.log("API Response:", result); // Log API response
   
       if (response.ok) {
         // Success Alert
@@ -274,7 +274,7 @@ const Book = () => {
         Alert.alert("Booking Failed", errorMessage);
       }
     } catch (error) {
-      console.error("API Error:", error); // Log any errors
+      // console.error("API Error:", error); // Log any errors
       Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };

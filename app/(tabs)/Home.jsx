@@ -75,9 +75,9 @@ const Home = () => {
     };
 
     const handlePress = async (cityId, cityName) => {
-        console.log("Selected City ID:", cityId);
-        console.log("Selected City Name:", cityName);
-        console.log("Selected Vehicle Type:", vehicleType);
+        // console.log("Selected City ID:", cityId);
+        // console.log("Selected City Name:", cityName);
+        // console.log("Selected Vehicle Type:", vehicleType);
 
         await storeCityData(cityId, cityName);
 

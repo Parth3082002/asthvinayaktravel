@@ -124,24 +124,24 @@ const PackageDetails = ({ route: propRoute }) => {
     }
 
 
-    console.log("City Name:", packageData.city);
-console.log("City ID:", cityId);
-console.log("Package Name:", packageData.packageName);
-console.log("Package ID:", packageData.packageId);
-console.log("Category Name:", packageData.categoryName);
-console.log("Category ID:", packageData.categoryId);
-console.log("Selected Pickup Point:", selectedPickupPoint);
-console.log("Selected Pickup Point ID:", selectedPickupPointId);
-console.log("Price:", packageData.price);
-console.log("Vehicle Type:", vehicleType);
-console.log("Child With Seat Price:", childWithSeatP);
-console.log("Child Without Seat Price:", childWithoutSeatP);
+//     console.log("City Name:", packageData.city);
+// console.log("City ID:", cityId);
+// console.log("Package Name:", packageData.packageName);
+// console.log("Package ID:", packageData.packageId);
+// console.log("Category Name:", packageData.categoryName);
+// console.log("Category ID:", packageData.categoryId);
+// console.log("Selected Pickup Point:", selectedPickupPoint);
+// console.log("Selected Pickup Point ID:", selectedPickupPointId);
+// console.log("Price:", packageData.price);
+// console.log("Vehicle Type:", vehicleType);
+// console.log("Child With Seat Price:", childWithSeatP);
+// console.log("Child Without Seat Price:", childWithoutSeatP);
 
 
-    console.log("Category Name:", categoryName);
-    console.log("Package Name:", packageName);
-    console.log("Child with Seat Price:", childWithSeatP);
-    console.log("Child without Seat Price:", childWithoutSeatP);
+//     console.log("Category Name:", categoryName);
+//     console.log("Package Name:", packageName);
+//     console.log("Child with Seat Price:", childWithSeatP);
+//     console.log("Child without Seat Price:", childWithoutSeatP);
 
     if (vehicleType === "BUS") {
       navigation.navigate("SelectDate", {

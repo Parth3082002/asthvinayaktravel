@@ -220,7 +220,7 @@ const {
       advance: advanceAmount,                 // Example: 3000.00
     };
   
-    console.log("Booking Data Sent:", bookingData);  // Log for debugging
+    // console.log("Booking Data Sent:", bookingData);  // Log for debugging
   
     try {
       const response = await fetch(

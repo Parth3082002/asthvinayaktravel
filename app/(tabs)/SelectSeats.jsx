@@ -131,22 +131,22 @@ const generateSeatsLayout = (totalSeats, bookedSeats) => {
   const handleNextPress = () => {
     if (selectedSeats.length > 0) {
       // Print each parameter separately
-      console.log("City Name:", cityName);
-      console.log("City ID:", cityId);
-      console.log("Package Name:", packageName);
-      console.log("Package ID:", packageId);
-      console.log("Category Name:", categoryName);
-      console.log("Category ID:", categoryId);
-      console.log("Selected Pickup Point:", selectedPickupPoint);
-      console.log("Selected Pickup Point ID:", selectedPickupPointId);
-      console.log("Price:", price);
-      console.log("Vehicle Type:", vehicleType);
-      console.log("Child With Seat Price:", childWithSeatP);
-      console.log("Child Without Seat Price:", childWithoutSeatP);
-      console.log("Trip Date:", selectedDate);
-      console.log("Trip ID:", tripId);
-      console.log("Tour Name:", tourName);
-      console.log("Selected Seats:", selectedSeats);
+      // console.log("City Name:", cityName);
+      // console.log("City ID:", cityId);
+      // console.log("Package Name:", packageName);
+      // console.log("Package ID:", packageId);
+      // console.log("Category Name:", categoryName);
+      // console.log("Category ID:", categoryId);
+      // console.log("Selected Pickup Point:", selectedPickupPoint);
+      // console.log("Selected Pickup Point ID:", selectedPickupPointId);
+      // console.log("Price:", price);
+      // console.log("Vehicle Type:", vehicleType);
+      // console.log("Child With Seat Price:", childWithSeatP);
+      // console.log("Child Without Seat Price:", childWithoutSeatP);
+      // console.log("Trip Date:", selectedDate);
+      // console.log("Trip ID:", tripId);
+      // console.log("Tour Name:", tourName);
+      // console.log("Selected Seats:", selectedSeats);
   
       // Navigate to the Book page with all params
       navigation.navigate("Book", {
