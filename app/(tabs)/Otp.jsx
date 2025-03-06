@@ -67,7 +67,7 @@ const Otp = () => {
   const handleResendOtp = async () => {
     try {
       const response = await axios.post(
-        "https://trialapp.somee.com/api/LoginAndRegistration/resend-otp",
+        "https://ashtavinayak.somee.com/api/LoginAndRegistration/resend-otp",
         { mobileNo },
         {
           headers: {
@@ -98,7 +98,7 @@ const Otp = () => {
 
     try {
       const response = await axios.post(
-        "http://ashtavinayak.somee.com/api/User/VerifyOTP",
+        "https://ashtavinayak.somee.com/api/User/VerifyOTP",
         { mobileNo, otp: enteredOtp },
         {
           headers: {

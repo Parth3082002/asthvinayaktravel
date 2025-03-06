@@ -63,7 +63,7 @@ const History = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://ashtavinayak.somee.com/api/Booking/HistoryByUser/${userId}`);
+      const response = await fetch(`https://ashtavinayak.somee.com/api/Booking/HistoryByUser/${userId}`);
       if (!response.ok) throw new Error(`Failed to fetch bus booking history. Status: ${response.status}`);
 
       const data = await response.json();
@@ -81,7 +81,7 @@ const History = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://ashtavinayak.somee.com/api/Booking/FamilyBookingHistory/${userId}`);
+      const response = await fetch(`https://ashtavinayak.somee.com/api/Booking/FamilyBookingHistory/${userId}`);
       if (!response.ok) throw new Error(`Failed to fetch car booking history. Status: ${response.status}`);
 
       const data = await response.json();

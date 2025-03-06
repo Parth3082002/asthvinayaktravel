@@ -72,7 +72,7 @@ const PackageDetails = ({ route: propRoute }) => {
       setLoading(true);
       setError(null);
       const encodedPackageId = encodeURIComponent(packageId);
-      const apiUrl = `http://ashtavinayak.somee.com/api/Package/GetPackagePrice/${cityId}/${categoryId}/${encodedPackageId}`;
+      const apiUrl = `https://ashtavinayak.somee.com/api/Package/GetPackagePrice/${cityId}/${categoryId}/${encodedPackageId}`;
   
       const response = await fetch(apiUrl);
       if (!response.ok) {
@@ -93,7 +93,7 @@ const PackageDetails = ({ route: propRoute }) => {
 
   const fetchPickupPoints = async (cityId) => {
     try {
-      const apiUrl = `http://ashtavinayak.somee.com/api/Pickup/City/${cityId}`;
+      const apiUrl = `https://ashtavinayak.somee.com/api/Pickup/City/${cityId}`;
       const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch pickup points');

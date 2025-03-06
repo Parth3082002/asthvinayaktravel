@@ -35,7 +35,7 @@ const Home = () => {
     }, []);
 
     useEffect(() => {
-        fetch("http://ashtavinayak.somee.com/api/City/")
+        fetch("https://ashtavinayak.somee.com/api/City/")
             .then((response) => response.json())
             .then((data) => {
                 setCities(data);

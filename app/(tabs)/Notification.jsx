@@ -28,7 +28,7 @@ const NotificationsScreen = () => {
       if (!userId) return;
 
       try {
-        const response = await fetch(`http://ashtavinayak.somee.com/api/Notification/GetUserNotifications/${userId}`);
+        const response = await fetch(`https://ashtavinayak.somee.com/api/Notification/GetUserNotifications/${userId}`);
         const data = await response.json();
 
         if (response.ok) {

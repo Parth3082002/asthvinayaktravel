@@ -238,7 +238,7 @@ const Book = () => {
     try {
       // API call
       const response = await fetch(
-        "http://ashtavinayak.somee.com/api/Booking/CreateBookingWithSeats",
+        "https://ashtavinayak.somee.com/api/Booking/CreateBookingWithSeats",
         {
           method: "POST",
           headers: {

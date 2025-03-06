@@ -51,7 +51,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "http://ashtavinayak.somee.com/api/User/LoginByOTP",
+        "https://ashtavinayak.somee.com/api/User/LoginByOTP",
         { MobileNo: mobileNo }
       );
 

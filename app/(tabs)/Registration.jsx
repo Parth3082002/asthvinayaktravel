@@ -61,7 +61,7 @@ const Registration = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "http://ashtavinayak.somee.com/api/User/Register",
+        "https://ashtavinayak.somee.com/api/User/Register",
         {
           UserName: userName,
           Email: email,

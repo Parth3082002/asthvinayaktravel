@@ -45,7 +45,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
 
       try {
         const response = await fetch(
-          `http://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
+          `https://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
         );
         const result = await response.json();
 

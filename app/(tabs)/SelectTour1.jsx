@@ -60,7 +60,7 @@ const SelectTour = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch('http://ashtavinayak.somee.com/api/categorys');
+            const response = await fetch('https://ashtavinayak.somee.com/api/categorys');
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             const result = await response.json();
             setCategories(result.data || []);
@@ -75,7 +75,7 @@ const SelectTour = () => {
     const fetchCityDetails = async (cityId) => {
         setPackageLoading(true);
         try {
-            const response = await fetch('http://ashtavinayak.somee.com/api/City');
+            const response = await fetch('https://ashtavinayak.somee.com/api/City');
             const cities = await response.json();
             const selectedCityData = cities.find(city => city.cityId === cityId);
 
@@ -102,7 +102,7 @@ const SelectTour = () => {
 
         setPackageLoading(true);
         try {
-            const response = await fetch(`http://ashtavinayak.somee.com/api/Package/GetPackages/${cityId}/${categoryId}`);
+            const response = await fetch(`https://ashtavinayak.somee.com/api/Package/GetPackages/${cityId}/${categoryId}`);
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             const result = await response.json();
             setPackages(result || []);

@@ -224,7 +224,7 @@ const {
   
     try {
       const response = await fetch(
-        "http://ashtavinayak.somee.com/api/Booking/BookCar",
+        "https://ashtavinayak.somee.com/api/Booking/BookCar",
         {
           method: "POST",
           headers: {

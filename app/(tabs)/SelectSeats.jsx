@@ -46,7 +46,7 @@ const SelectSeats = () => {
   const fetchSeatData = async () => {
     try {
       const tripResponse = await fetch(
-        `http://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
+        `https://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
       );
 
       if (!tripResponse.ok) {
