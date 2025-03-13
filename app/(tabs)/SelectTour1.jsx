@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, 
-    BackHandler, FlatList 
+import {
+    View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { Checkbox } from 'react-native-paper';
 
 const SelectTour = () => {
     const [categories, setCategories] = useState([]);
@@ -18,6 +18,7 @@ const SelectTour = () => {
     const [cityName, setCityName] = useState('');
     const [childWithSeatP, setChildWithSeatP] = useState(0);
     const [childWithoutSeatP, setChildWithoutSeatP] = useState(0);
+    const [price, setPrice] = useState(0);
 
     const navigation = useNavigation();
     const route = useRoute();
@@ -27,26 +28,9 @@ const SelectTour = () => {
         React.useCallback(() => {
             setSelectedCategory(null);
             setSelectedPackage(null);
-            setPackages([]); // Reset packages when screen is focused
+            setPackages([]);
         }, [])
     );
-
-    useEffect(() => {
-        const backAction = () => {
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'SelectVehicle1' }], 
-            });
-            return true;
-        };
-
-        const backHandler = BackHandler.addEventListener(
-            'hardwareBackPress',
-            backAction
-        );
-
-        return () => backHandler.remove();
-    }, [navigation]);
 
     useEffect(() => {
         fetchCategories();
@@ -83,10 +67,9 @@ const SelectTour = () => {
                 setCityId(selectedCityData.cityId);
                 setCityName(selectedCityData.cityName);
                 if (selectedCategory) {
-                    fetchPackages(selectedCityData.cityId, selectedCategory); // Fetch packages if category is selected
+                    fetchPackages(selectedCityData.cityId, selectedCategory);
                 }
             } else {
-                console.log('City not found');
                 setPackages([]);
             }
         } catch (error) {
@@ -98,7 +81,7 @@ const SelectTour = () => {
     };
 
     const fetchPackages = async (cityId, categoryId) => {
-        if (!categoryId) return; // Don't fetch packages if no category is selected
+        if (!categoryId) return;
 
         setPackageLoading(true);
         try {
@@ -107,281 +90,271 @@ const SelectTour = () => {
             const result = await response.json();
             setPackages(result || []);
         } catch (error) {
-            // console.error('Error fetching packages:', error);
+            console.error('Error fetching packages:', error);
             setPackages([]);
         } finally {
             setPackageLoading(false);
         }
     };
 
+    const handlePackageSelection = (item) => {
+        setSelectedPackage(item.packageId);
+        setSelectedPackageName(item.packageName);
+        setChildWithSeatP(parseInt(item.child3To8YrsWithSeat, 10) || 0);
+        setChildWithoutSeatP(parseInt(item.child3To8YrsWithoutSeat, 10) || 0);
+        setPrice(parseInt(item.adultPrice, 10) || 0);
+    };
+
     const handleNextPress = () => {
         if (selectedCategory && selectedPackage && cityId) {
-            // console.log('Selected Category ID:', selectedCategory);
-            // console.log('Selected Category Name:', selectedCategoryName);
-            // console.log('Selected Package ID:', selectedPackage);
-            // console.log('Selected Package Name:', selectedPackageName);
-            // console.log('Selected childwithseat:', childWithSeatP);
-            // console.log('Selected childwithoutseat:', childWithoutSeatP);
-            navigation.navigate('Standardpu12', {
+            console.log('Navigating with values:', {
                 selectedCategory,
-                selectedCategoryName, // Sending the selectedCategoryName
-                selectedPackage,      // Sending the selectedPackage ID
-                selectedPackageName,  // Sending the selectedPackageName
+                selectedCategoryName,
+                selectedPackage,
+                selectedPackageName,
                 cityId,
                 cityName,
                 vehicleType,
-                childWithSeatP: parseInt(childWithSeatP, 10), // Ensure it's an integer
-                childWithoutSeatP: parseInt(childWithoutSeatP, 10), // Ensure it's an integer
+                childWithSeatP,
+                childWithoutSeatP,
+                price
+            });
+            navigation.navigate('Standardpu12', {
+                selectedCategory,
+                selectedCategoryName,
+                selectedPackage,
+                selectedPackageName,
+                cityId,
+                cityName,
+                vehicleType,
+                childWithSeatP,
+                childWithoutSeatP,
+                price
             });
         } else {
-            console.log('Please select both category and package!');
             alert('Please select both category and package!');
         }
     };
-
-    const renderPackageItem = ({ item }) => (
-        <TouchableOpacity
-            style={[ 
-                styles.packageItemContainer,
-                selectedPackage === item.packageId && styles.selectedPackageItemContainer
-            ]}
-            onPress={() => {
-                setSelectedPackage(item.packageId);
-                setSelectedPackageName(item.packageName); // Set the selected package name
-            }}
-        >
-            <Text style={styles.packageItemText}>{item.packageName}</Text>
-        </TouchableOpacity>
-    );
-
     return (
         <View style={styles.container}>
-            <View style={styles.header} />
-            <TouchableOpacity onPress={() => navigation.navigate('SelectVehicle1')} style={styles.backButtonContainer}>
-                <View style={styles.backButtonCircle}>
-                    <Text style={styles.backButton}>{'<'}</Text>
-                </View>
-            </TouchableOpacity>
+            {/* Header with Back Button */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => navigation.navigate('SelectVehicle1')} style={styles.backButtonContainer}>
+                    <View style={styles.backButtonCircle}>
+                        <Text style={styles.backButton}>{'<'}</Text>
+                    </View>
+                </TouchableOpacity>
+                <Text style={styles.headerText}>Select Categories & Packages</Text>
+            </View>
 
-            <FlatList
-                ListHeaderComponent={
+            {/* Scrollable Content Below Header & Above Button */}
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
+                {/* Select Category */}
+                <Text style={styles.sectionTitle}>Select Category</Text>
+                {loading ? (
+                    <ActivityIndicator size="large" color="#FF5722" />
+                ) : (
+                    categories.map((item) => (
+                        <TouchableOpacity
+                            key={item.categoryId}
+                            style={[
+                                styles.categoryItem,
+                                selectedCategory === item.categoryId && styles.selectedCategory
+                            ]}
+                            onPress={() => {
+                                setSelectedCategory(item.categoryId);
+                                setSelectedCategoryName(item.categoryName || '');
+                                setPackages([]);
+                                fetchPackages(cityId, item.categoryId);
+                            }}
+                        >
+                            <Text style={styles.categoryText}>{item.categoryName}</Text>
+                        </TouchableOpacity>
+                    ))
+                )}
+
+                {selectedCategory && (
                     <>
-                        <Text style={styles.sectionTitle}>Select Category</Text>
-                        {loading ? (
+                        <Text style={packages.length > 0 ? styles.sectionTitle1 : styles.noPackageText}>
+                            {packages.length > 0 ? "Select Package" : "No packages available"}
+                        </Text>
+
+                        {packageLoading ? (
                             <ActivityIndicator size="large" color="#FF5722" />
                         ) : (
-                            <View style={styles.leftAlignedOptionsContainer}>
-                                {categories.map((category) => (
-                                    <TouchableOpacity
-                                        key={category.categoryId}
-                                        style={[ 
-                                            styles.packageContainer, 
-                                            selectedCategory === category.categoryId && styles.selectedPackage 
-                                        ]}
-                                        onPress={() => {
-                                            setSelectedCategory(category.categoryId);
-                                            setSelectedCategoryName(category.categoryName || ''); // Ensure it's a string
-                                            // console.log('Selected Category ID:', category.categoryId);
-                                            setPackages([]); // Reset packages when category changes
-                                            fetchPackages(cityId, category.categoryId); // Fetch packages for the selected category
-                                            // Set child prices as integers
-                                            setChildWithSeatP(parseInt(category.childwithseatP, 10) || 0);
-                                            setChildWithoutSeatP(parseInt(category.childwithoutseatP, 10) || 0);
-                                        }}
-                                    >
-                                        <View style={styles.row}>
-                                            <View style={[ 
-                                                styles.checkbox, 
-                                                selectedCategory === category.categoryId && styles.checkboxSelected 
-                                            ]}>
-                                                {selectedCategory === category.categoryId && <Text style={styles.tick}>✔</Text>}
-                                            </View>
-                                            <Text style={styles.packageTitle}>{category.categoryName}</Text>
-                                        </View>
-                                        <View style={styles.separator} />
-                                        <View>
-                                            {category.busType && category.busType.split(',').map((item, index) => (
-                                                <Text key={`bus-${index}`} style={[styles.packageDetail,{fontWeight:"bold"}]}>
-                                                    • {item.trim()}
-                                                </Text>
-                                            ))}
-                                            {category.stayType && category.stayType.split(',').map((item, index) => (
-                                                <Text key={`stay-${index}`} style={[styles.packageDetail,{fontWeight:"bold"}]}>
-                                                    • {item.trim()}
-                                                </Text>
-                                            ))}
-                                            <Text style={[styles.packageDetail,{ color: "green",fontWeight:"bold" }]}>Child with Seat Price: {category.childwithseatP}</Text>
-                                            <Text style={[styles.packageDetail,{ color: "green",fontWeight:"bold" }]}>Child without Seat Price: {category.childwithoutseatP}</Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
+                            packages.length > 0 && packages.map((item) => (
+                                <View key={item.packageId} style={styles.packageItemContainer}>
+                                    <View style={styles.packageRow}>
+                                        <Checkbox
+                                            status={selectedPackage === item.packageId ? 'checked' : 'unchecked'}
+                                            onPress={() => handlePackageSelection(item)}
+                                            color="#007AFF"
+                                        />
+                                        <Text style={styles.packageItemText}>{item.packageName}</Text>
+                                    </View>
+                                    <View style={styles.line} />
+                                    <Text style={styles.bulletText}>• Adult Price: ₹{item.adultPrice}</Text>
+                                    <Text style={styles.bulletText}>• Child (3-8) With Seat: ₹{item.child3To8YrsWithSeat}</Text>
+                                    <Text style={styles.bulletText}>• Child (3-8) Without Seat: ₹{item.child3To8YrsWithoutSeat}</Text>
+                                </View>
+                            ))
                         )}
-                        <Text style={styles.sectionTitle1}>Select Package</Text>
                     </>
-                }
-                data={packages}
-                renderItem={renderPackageItem}
-                keyExtractor={(item) => item.packageId.toString()}
-                numColumns={3}
-                contentContainerStyle={styles.packageListContainer}
-            />
+                )}
+            </ScrollView>
 
-            {packageLoading && (
-                <ActivityIndicator size="large" color="white" />
-            )}
-
-            <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
-                <Text style={styles.nextButtonText}>Next</Text>
-            </TouchableOpacity>
+            {/* Button Container */}
+            <View style={styles.buttonContainer}>
+                <TouchableOpacity onPress={handleNextPress} style={styles.nextButton}>
+                    <Text style={styles.nextButtonText}>Next</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
-};
+}   
+
+
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#F9F9F9",
-    },
-    packageContainer: {
-        backgroundColor: '#FFF',
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        marginHorizontal: 15,
-        borderWidth: 1,
-        borderColor: 'transparent',
-    },
-    selectedPackage: {
-        borderColor: '#007AFF',
-    },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    checkbox: {
-        width: 20,
-        height: 20,
-        borderRadius: 2,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    checkboxSelected: {
-        borderColor: '#FF5722',
-        backgroundColor: '#FF5722',
-    },
-    tick: {
-        color: '#FFFFFF',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    packageTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    separator: {
-        height: 1,
-        backgroundColor: '#E0E0E0',
-        marginVertical: 10,
-    },
-    packageDetail: {
-        fontSize: 14,
-        color: '#555',
-    },
-    header: {
-        height: 50,
-        backgroundColor: "#E65100",
-        justifyContent: "center",
-        paddingHorizontal: 15,
-    },
-    backButtonContainer: {
-        position: 'absolute',
-        top: 60,
-        left: 16,
-        zIndex: 1,
-    },
-    backButtonCircle: {
-        backgroundColor: '#FFFFFF',
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        elevation: 4,
-    },
-    backButton: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#000',
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        marginBottom: 10,
-        marginTop: 60,
-        marginLeft: 15,
-    },
-    sectionTitle1: {
-        fontSize: 16,
-        fontWeight: "bold",
-        marginBottom: 10,
-        marginTop: 20,
-        marginLeft: 15,
-    },
-    packageListContainer: {
-        justifyContent: 'space-between',
-    },
-    packageItemContainer: {
-        width: '30%',
-        backgroundColor: "#FFF",
-        borderRadius: 10,
-        padding: 15,
-        marginBottom: 10,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginHorizontal: '1.5%',
-    },
-    selectedPackageItemContainer: {
-        borderColor: "#007AFF",
-        borderWidth: 2,
-    },
-    packageItemText: {
-        fontSize: 14,
-        fontWeight: "bold",
-        textAlign: 'center',
-    },
-    nextButton: {
-       
-        // marginLeft:-5,
-        // marginRight:35,
-        position: 'absolute',
-        bottom: 20,
-        left: 30,
-        right: 30,
-        backgroundColor: '#FF5722',
-        borderRadius: 5,
-        paddingVertical: 15,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    nextButtonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
+   
+        container: {
+            flex: 1,
+            backgroundColor: '#fff',
+            marginTop:40,
+        },
+        header: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: 16,
+            paddingHorizontal: 16,
+            backgroundColor: '#FF5722',
+        },
+        backButtonContainer: {
+            marginRight: 12,
+        },
+        backButtonCircle: {
+            width: 30,
+            height: 30,
+            borderRadius: 15,
+            backgroundColor: '#fff',
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        backButton: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: '#FF5722',
+        },
+        headerText: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: '#fff',
+            textAlign:'center'
+        },
+        scrollContainer: {
+            flexGrow: 1,
+            padding: 16,
+        },
+        sectionTitle: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: '#333',
+            marginBottom: 10,
+        },
+        sectionTitle1: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: '#333',
+            marginTop: 20,
+            marginBottom: 10,
+        },
+        categoryItem: {
+            backgroundColor: '#fff',
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderRadius: 8,
+            marginBottom: 10,
+            elevation: 5, // For Android shadow
+            shadowColor: '#000', // Shadow color
+            shadowOffset: { width: 0, height: 2 }, // Shadow direction
+            shadowOpacity: 0.2, // Shadow transparency
+            shadowRadius: 4, // Shadow blur
+        },
+        
+        selectedCategory: {
+            borderColor: "#007AFF",
+            borderWidth: 2,
+        },
+        categoryText: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: '#333',
+        },
+        packageItemContainer: {
+            backgroundColor: '#fff',
+            padding: 12,
+            borderRadius: 8,
+            marginBottom: 10,
+            borderWidth: 1,
+            borderColor: '#ddd',
+
+            elevation: 5, // For Android shadow
+            shadowColor: '#000', // Shadow color
+            shadowOffset: { width: 0, height: 2 }, // Shadow direction
+            shadowOpacity: 0.2, // Shadow transparency
+            shadowRadius: 4, // Shadow blur
+        },
+        packageRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+
+        },
+        packageItemText: {
+            fontSize: 16,
+            marginLeft: 8,
+            color: '#333',
+            fontWeight:'bold'
+        },
+        line: {
+            height: 1,
+            backgroundColor: '#ddd',
+            marginVertical: 8,
+        },
+        bulletText: {
+            fontSize: 14,
+            color: 'green',
+            marginBottom: 2,
+            fontWeight:'bold'
+        },
+        noPackageText: {
+            fontSize: 16,
+            color: '#555',
+            fontWeight: 'bold',
+            textAlign: 'center',
+            marginTop: 20,
+        },
+        buttonContainer: {
+            paddingVertical: 16,
+            paddingHorizontal: 16,
+            backgroundColor: '#fff',
+            borderTopWidth: 1,
+            borderColor: '#ddd',
+        },
+        nextButton: {
+            backgroundColor: '#FF5722',
+            paddingVertical: 16,
+            borderRadius: 8,
+            alignItems: 'center',
+        },
+        nextButtonText: {
+            fontSize: 16,
+            fontWeight: 'bold',
+            color: '#fff',
+        },
+    
+    
+    
 });
+
 
 export default SelectTour;

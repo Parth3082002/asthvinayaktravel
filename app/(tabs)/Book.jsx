@@ -140,7 +140,8 @@ const Book = () => {
   // Calculate total price based on selections
   const calculatePrice = () => {
     let finalPrice = totalSeats * price; // ✅ (Seats * Price)
-    const childWithSeatCost = (parseInt(childWithSeat) || 0) * childWithSeatP;
+    // const childWithSeatCost = (parseInt(childWithSeat) || 0) * childWithSeatP;
+    const childWithSeatCost = (price - childWithSeatP) * (parseInt(childWithSeat) || 0);
     const childWithoutSeatCost = (parseInt(childWithoutSeat) || 0) * childWithoutSeatP;
 
     finalPrice = finalPrice - childWithSeatCost + childWithoutSeatCost;
@@ -537,7 +538,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#D44206",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    marginTop: 20,
+    marginTop: 40,
     justifyContent: "center",
   },
   backButtonContainer: {

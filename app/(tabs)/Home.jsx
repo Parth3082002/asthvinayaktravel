@@ -144,6 +144,7 @@ const styles = StyleSheet.create({
         position: "relative",
         zIndex: 1,
         marginBottom: height * 0.015,
+        marginTop:10
     },
     welcomeText: {
         fontSize: width * 0.08,

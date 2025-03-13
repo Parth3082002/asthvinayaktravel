@@ -11,7 +11,7 @@ import Book from './(tabs)/Book';
 import Standardpu12 from './(tabs)/Standardpu12';
 import SelectSeats from './(tabs)/SelectSeats';
 import SelectDate from './(tabs)/SelectDate'; // ✅ Add missing import
-import Dashboard from './(tabs)/Dashboard';
+// import Dashboard from './(tabs)/Dashboard';
 
 import History from './(tabs)/History';
 import CarType from './(tabs)/CarType';
@@ -38,7 +38,7 @@ export default function MainNavigator() {
       <Stack.Screen name="SelectDate" component={SelectDate} /> {/* ✅ Fixed */}
       <Stack.Screen name="Book" component={Book} />
       <Stack.Screen name="SelectSeats" component={SelectSeats} />
-      <Stack.Screen name="Dashboard" component={Dashboard} />
+      {/* <Stack.Screen name="Dashboard" component={Dashboard} /> */}
       <Stack.Screen name="History" component={History} />
       <Stack.Screen name="CarType" component={CarType} />
       <Stack.Screen name="CarBook" component={CarBook} />

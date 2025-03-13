@@ -189,7 +189,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingTop: 10,
+    // paddingTop: 10,
+   
   },
   header: {
     flexDirection: "row",
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#D44206",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    marginTop: 20,
+    marginTop: 40,
     justifyContent: "center",
   },
   backButtonContainer: {

@@ -124,6 +124,8 @@ const PackageDetails = ({ route: propRoute }) => {
     }
 
 
+    const price = packageData.adultPrice;
+
 //     console.log("City Name:", packageData.city);
 // console.log("City ID:", cityId);
 // console.log("Package Name:", packageData.packageName);
@@ -132,7 +134,7 @@ const PackageDetails = ({ route: propRoute }) => {
 // console.log("Category ID:", packageData.categoryId);
 // console.log("Selected Pickup Point:", selectedPickupPoint);
 // console.log("Selected Pickup Point ID:", selectedPickupPointId);
-// console.log("Price:", packageData.price);
+console.log("Price:", packageData.adultPrice);
 // console.log("Vehicle Type:", vehicleType);
 // console.log("Child With Seat Price:", childWithSeatP);
 // console.log("Child Without Seat Price:", childWithoutSeatP);
@@ -153,7 +155,7 @@ const PackageDetails = ({ route: propRoute }) => {
         categoryId: packageData.categoryId, 
         selectedPickupPoint: selectedPickupPoint,
         selectedPickupPointId: selectedPickupPointId,  
-        price: packageData.price,
+        price: packageData.adultPrice,
         vehicleType: vehicleType,
         childWithSeatP: childWithSeatP,
         childWithoutSeatP: childWithoutSeatP,
@@ -168,7 +170,7 @@ const PackageDetails = ({ route: propRoute }) => {
         categoryId: packageData.categoryId, 
         selectedPickupPoint: selectedPickupPoint,
         selectedPickupPointId: selectedPickupPointId,  
-        price: packageData.price,
+        price: packageData.adultPrice,
         vehicleType: vehicleType,
         childWithSeatP: childWithSeatP,
         childWithoutSeatP: childWithoutSeatP,
@@ -337,7 +339,7 @@ const PackageDetails = ({ route: propRoute }) => {
             <View style={styles.footer}>
                 <View>
                   <Text style={styles.costText}>Tour Cost</Text>
-                  <Text style={styles.priceText}>₹{packageData.price}</Text>
+                  <Text style={styles.priceText}>₹{packageData.adultPrice}</Text>
                 </View>
                 <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
                   <Text style={styles.bookButtonText}>Book Now</Text>

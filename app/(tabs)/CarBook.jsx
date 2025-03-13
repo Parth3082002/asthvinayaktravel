@@ -150,7 +150,8 @@ const {
   
   const calculatePrice = () => {
     let finalPrice = totalSeats * price; // (Seats * Price)
-    const childWithSeatCost = (parseInt(childWithSeat) || 0) * childWithSeatP;
+    // const childWithSeatCost = (parseInt(childWithSeat) || 0) * childWithSeatP;
+    const childWithSeatCost = (price - childWithSeatP) * (parseInt(childWithSeat) || 0);
     const childWithoutSeatCost = (parseInt(childWithoutSeat) || 0) * childWithoutSeatP;
 
     finalPrice = finalPrice - childWithSeatCost + childWithoutSeatCost;
@@ -483,7 +484,7 @@ const {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F5F5F5" },
-  header: { flexDirection: "row", alignItems: "center", backgroundColor: "#D44206", paddingVertical: 15, paddingHorizontal: 20, marginTop: 20, justifyContent: "center" },
+  header: { flexDirection: "row", alignItems: "center", backgroundColor: "#D44206", paddingVertical: 15, paddingHorizontal: 20, marginTop: 40, justifyContent: "center" },
   backButtonContainer: { marginRight: 10 },
   backButtonCircle: { backgroundColor: '#FFFFFF', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4, marginTop: 5, marginLeft: -115 },
   backButton: { fontSize: 24, fontWeight: 'bold', color: '#000' },
