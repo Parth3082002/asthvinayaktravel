@@ -90,7 +90,7 @@ const SelectTour = () => {
             const result = await response.json();
             setPackages(result || []);
         } catch (error) {
-            console.error('Error fetching packages:', error);
+            // console.error('Error fetching packages:', error);
             setPackages([]);
         } finally {
             setPackageLoading(false);

@@ -26,7 +26,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
     packageName,
     packageId,
     categoryName,
-    categoryId,
+    categoryId, // Updated to fetch by categoryId
     selectedPickupPoint,
     selectedPickupPointId,
     price,
@@ -37,15 +37,15 @@ const SelectDateScreen = ({ route: propRoute }) => {
 
   useEffect(() => {
     const fetchDates = async () => {
-      if (!packageId) {
-        console.error("Package ID is missing");
+      if (!categoryId) { // Fetching by categoryId instead of packageId
+        console.error("Category ID is missing");
         setLoading(false);
         return;
       }
 
       try {
         const response = await fetch(
-          `https://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
+          `https://ashtavinayak.somee.com/api/Trip/TripsByCategory/${categoryId}` // Changed endpoint
         );
         const result = await response.json();
 
@@ -65,7 +65,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
     };
 
     fetchDates();
-  }, [packageId]);
+  }, [categoryId]); // Updated dependency to categoryId
 
   useEffect(() => {
     const backAction = () => {
@@ -95,22 +95,6 @@ const SelectDateScreen = ({ route: propRoute }) => {
       alert("Please select a date");
       return;
     }
-
-    // console.log("City Name:", cityName);
-    // console.log("City ID:", cityId);
-    // console.log("Package Name:", packageName);
-    // console.log("Package ID:", packageId);
-    // console.log("Category Name:", categoryName);
-    // console.log("Category ID:", categoryId);
-    // console.log("Selected Pickup Point:", selectedPickupPoint);
-    // console.log("Selected Pickup Point ID:", selectedPickupPointId);
-    // console.log("Price:", price);
-    // console.log("Vehicle Type:", vehicleType);
-    // console.log("Child With Seat Price:", childWithSeatP);
-    // console.log("Child Without Seat Price:", childWithoutSeatP);
-    // console.log("Selected Date:", selectedDate.tripDate);
-    // console.log("Trip ID:", selectedDate.tripId);
-    // console.log("Tour Name:", selectedDate.tourName);
 
     navigation.navigate("SelectSeats", {
       cityName,
@@ -162,6 +146,10 @@ const SelectDateScreen = ({ route: propRoute }) => {
 
       {loading ? (
         <ActivityIndicator size="large" color="#FF5722" style={{ flex: 1 }} />
+      ) : dates.length === 0 ? (
+        <View style={styles.noDatesContainer}>
+          <Text style={styles.noDatesText}>No dates available</Text>
+        </View>
       ) : (
         <FlatList
           data={dates}
@@ -189,8 +177,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    // paddingTop: 10,
-   
   },
   header: {
     flexDirection: "row",
@@ -245,6 +231,16 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 16,
   },
+  noDatesContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noDatesText: {
+    fontSize: 18,
+    color: "#555",
+    fontWeight: "bold",
+  },
   radioCircle: {
     width: 20,
     height: 20,
@@ -265,15 +261,15 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   nextButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
     left: 30,
     right: 30,
-    backgroundColor: '#FF5722',
+    backgroundColor: "#FF5722",
     borderRadius: 5,
     paddingVertical: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   nextButtonText: {
     color: "#fff",

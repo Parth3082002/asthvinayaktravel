@@ -28,13 +28,13 @@ const SelectSeats = () => {
     tourName,
     selectedDate, // if required
   } = route.params || {};
-
+  
   useEffect(() => {
-    if (packageId && tripId) {
+    if (categoryId && tripId) {
       fetchSeatData();
     }
-  }, [packageId, tripId]);
-
+  }, [categoryId, tripId]);
+  
   useFocusEffect(
     useCallback(() => {
       // Reset selected seats when the screen is focused again
@@ -42,27 +42,27 @@ const SelectSeats = () => {
       fetchSeatData(); // Refresh seat data
     }, [])
   );
-
+  
   const fetchSeatData = async () => {
     try {
       const tripResponse = await fetch(
-        `https://ashtavinayak.somee.com/api/Trip/TripsByPackage/${packageId}`
+        `https://ashtavinayak.somee.com/api/Trip/TripsByCategory/${categoryId}`
       );
-
+  
       if (!tripResponse.ok) {
         throw new Error(`HTTP Error! Status: ${tripResponse.status}`);
       }
-
+  
       const tripData = await tripResponse.json();
       const trip = tripData.data.find((t) => t.tripId === tripId);
-
+  
       if (trip) {
         const totalSeats = trip.totalSeats;
-
+  
         const bookedSeatsResponse = await fetch(
           `https://www.ashtavinayak.somee.com/api/BookingSeat/ByTrip/${tripId}`
         );
-
+  
         let bookedSeats = [];
         if (bookedSeatsResponse.ok) {
           const bookedSeatsData = await bookedSeatsResponse.json();
@@ -72,17 +72,17 @@ const SelectSeats = () => {
         } else {
           throw new Error(`HTTP Error! Status: ${bookedSeatsResponse.status}`);
         }
-
+  
         const seatLayout = generateSeatsLayout(totalSeats, bookedSeats);
         setSeats(seatLayout);
       } else {
         console.warn("No matching trip found for the given tripId.");
       }
     } catch (error) {
-      console.error("Error fetching seat data:", error);
+      // console.error("Error fetching seat data:", error);
     }
   };
-
+  
 
 
   // Generating the layout with 5 seats in the last row
