@@ -1,5 +1,5 @@
 import React from 'react';
-import { createStackNavigator } from "@react-navigation/stack"; // ✅ Ensure @react-navigation/stack is installed
+import { createStackNavigator } from '@react-navigation/stack';
 import Index from './(tabs)/index';
 import Otp from './(tabs)/Otp'; 
 import Login from './(tabs)/Login';
@@ -10,12 +10,11 @@ import Registration from './(tabs)/Registration';
 import Book from './(tabs)/Book';
 import Standardpu12 from './(tabs)/Standardpu12';
 import SelectSeats from './(tabs)/SelectSeats';
-import SelectDate from './(tabs)/SelectDate'; // ✅ Add missing import
-// import Dashboard from './(tabs)/Dashboard';
-
+import SelectDate from './(tabs)/SelectDate';
 import History from './(tabs)/History';
 import CarType from './(tabs)/CarType';
 import CarBook from './(tabs)/CarBook';
+import PaymentScreen from './(tabs)/PaymentScreen';
 
 const Stack = createStackNavigator(); 
 
@@ -29,19 +28,17 @@ export default function MainNavigator() {
       <Stack.Screen name="Registration" component={Registration} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="Otp" component={Otp} />
-      <Stack.Screen name="SelectVehicle" component={SelectVehicle} />
       <Stack.Screen name="SelectVehicle1" component={SelectVehicle1} />
-
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="SelectTour1" component={SelectTour1} />
       <Stack.Screen name="Standardpu12" component={Standardpu12} />
-      <Stack.Screen name="SelectDate" component={SelectDate} /> {/* ✅ Fixed */}
+      <Stack.Screen name="SelectDate" component={SelectDate} />
       <Stack.Screen name="Book" component={Book} />
       <Stack.Screen name="SelectSeats" component={SelectSeats} />
-      {/* <Stack.Screen name="Dashboard" component={Dashboard} /> */}
       <Stack.Screen name="History" component={History} />
       <Stack.Screen name="CarType" component={CarType} />
       <Stack.Screen name="CarBook" component={CarBook} />
+      <Stack.Screen name="PaymentScreen" component={PaymentScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

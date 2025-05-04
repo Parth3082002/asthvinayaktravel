@@ -1,44 +1,63 @@
 import React, { useState, useEffect } from "react";
-import { Alert, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image } from "react-native";
+import {
+  Alert,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Platform,
+  ActivityIndicator
+} from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
-// import { Ionicons } from "@expo/vector-icons"; // For the date icon
-import Icon from "react-native-vector-icons/Ionicons"; // For icons
+import Icon from "react-native-vector-icons/Ionicons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import RazorpayCheckout from 'react-native-razorpay';
+import PaymentScreen from "./PaymentScreen";
 const Book = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
-  // Extracting all params from route
+  // Razorpay Keys - Directly integrated in the code
+  // Use these for development/testing
+  const RAZORPAY_KEY_ID = 'rzp_test_AiL3OYgdBPKEeu';
+  const RAZORPAY_KEY_SECRET = 'dRNtUmxCFSqA8mBIuOJjNmR9';
+
+  // For production, uncomment these lines and comment out the test keys above
+  // const RAZORPAY_KEY_ID = 'rzp_live_DGlzWoiGqqLg0A';
+  // const RAZORPAY_KEY_SECRET = 'your_live_secret_key_here';
+
+  // Add default values to prevent undefined errors
   const {
-    cityName,
-    cityId,
-    packageName,
-    packageId,
-    categoryName,
-    categoryId,
-    selectedPickupPoint,
-    selectedPickupPointId,
-    price,
-    vehicleType,
-    childWithSeatP,
-    childWithoutSeatP,
-    tripDate,
-    tripId,
-    tourName,
+    cityName = "",
+    cityId = 0,
+    packageName = "",
+    packageId = 0,
+    categoryName = "",
+    categoryId = 0,
+    selectedPickupPoint = "",
+    selectedPickupPointId = 0,
+    price = 0,
+    vehicleType = "",
+    childWithSeatP = 0,
+    childWithoutSeatP = 0,
+    tripDate = "",
+    tripId = 0,
+    tourName = "",
     selectedSeats = [],
-    selectedDate
+    selectedDate = new Date().toLocaleDateString()
   } = route.params || {};
 
   // State hooks
-  const [date, setDate] = useState(selectedDate || "dd-MM-yyyy");
+  const [date, setDate] = useState(selectedDate || new Date().toLocaleDateString());
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [pickupLocation, setPickupLocation] = useState(selectedPickupPoint || "");
-  const [totalAmount, setTotalAmount] = useState(price || "");
-  const [advanceAmount, setAdvanceAmount] = useState(price ? price / 2 : "");
-  const [seatNumber, setSeatNumber] = useState("");
+  const [totalAmount, setTotalAmount] = useState(price ? price.toString() : "0");
+  const [advanceAmount, setAdvanceAmount] = useState(price ? (price / 2).toString() : "0");
   const [mobileNo, setMobileNo] = useState(null);
   const [isAlertShown, setIsAlertShown] = useState(false);
   const [droppoint, setDroppoint] = useState('');
@@ -48,38 +67,18 @@ const Book = () => {
   const [errors, setErrors] = useState({});
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
-   const [isEditable, setIsEditable] = useState(false);
-  const [totalSeats, setTotalSeats] = useState(0); // ✅ New State for Total Seats
-  const [totalPersons, setTotalPersons] = useState(0); // For total persons calculation
+  const [isEditable, setIsEditable] = useState(false);
+  const [totalSeats, setTotalSeats] = useState(0);
+  const [totalPersons, setTotalPersons] = useState(0);
   const [availableRoomTypes, setAvailableRoomTypes] = useState(["shared"]);
   const [roomType, setRoomType] = useState("shared");
   const [errorMessage, setErrorMessage] = useState("");
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  // Log all the received parameters on component mount
+  // Calculate total seats from selectedSeats array
   useEffect(() => {
-    // console.log("Passed Data from SelectSeats:");
-    // console.log("City Name:", cityName);
-    // console.log("City ID:", cityId);
-    // console.log("Package Name:", packageName);
-    // console.log("Package ID:", packageId);
-    // console.log("Category Name:", categoryName);
-    // console.log("Category ID:", categoryId);
-    // console.log("Selected Pickup Point:", selectedPickupPoint);
-    // console.log("Selected Pickup Point ID:", selectedPickupPointId);
-    // console.log("Price:", price);
-    // console.log("Vehicle Type:", vehicleType);
-    // console.log("Child With Seat Price:", childWithSeatP);
-    // console.log("Child Without Seat Price:", childWithoutSeatP);
-    // console.log("Trip Date:", tripDate);
-    // console.log("Trip ID:", tripId);
-    // console.log("Tour Name:", tourName);
-    // console.log("Selected Seats:", selectedSeats);
-    // console.log("Selected Date:", selectedDate);
-
-    // ✅ Calculate Total Seats from selectedSeats array
     if (Array.isArray(selectedSeats)) {
       setTotalSeats(selectedSeats.length);
-      // console.log("Total Seats Selected:", selectedSeats.length);
     }
   }, [selectedSeats]);
 
@@ -97,7 +96,7 @@ const Book = () => {
           setToken(storedToken);
           setUser(userObj);
         } else {
-          Alert.alert("Error", "No data found in AsyncStorage");
+          console.log("No data found in AsyncStorage");
         }
       } catch (error) {
         console.error("Error retrieving data:", error);
@@ -106,43 +105,44 @@ const Book = () => {
     fetchUserData();
   }, []);
 
-
-
+  // Check if total persons exceed booked seats
   useEffect(() => {
-      const totalBookedPersons = (parseInt(adults) || 0) + (parseInt(childWithSeat) || 0);
-    
-      if (totalBookedPersons > totalSeats) {
-        Alert.alert("Warning", "Total persons exceed booked seats.", [
-          {
-            text: "OK",
-            onPress: () => {
-              if (parseInt(adults) > totalSeats) {
-                setAdults(""); // Clear only 'adults' field if it's the cause
-              } else {
-                setChildWithSeat(""); // Clear only 'childWithSeat' field if it's the cause
-              }
-            },
+    const totalBookedPersons = (parseInt(adults) || 0) + (parseInt(childWithSeat) || 0);
+
+    if (totalBookedPersons > totalSeats && totalSeats > 0) {
+      Alert.alert("Warning", "Total persons exceed booked seats.", [
+        {
+          text: "OK",
+          onPress: () => {
+            if (parseInt(adults) > totalSeats) {
+              setAdults("");
+            } else {
+              setChildWithSeat("");
+            }
           },
-        ]);
-      }
-    
-      setTotalPersons(totalBookedPersons + (parseInt(childWithoutSeat) || 0));
-    }, [adults, childWithSeat]);
-    
+        },
+      ]);
+    }
 
+    setTotalPersons(totalBookedPersons + (parseInt(childWithoutSeat) || 0));
+  }, [adults, childWithSeat, totalSeats]);
 
-    const handleConfirm = (date) => {
-      const formattedDate = date.toLocaleDateString();  // Format the date
-      setDate(formattedDate); // Update the date state
-      setDatePickerVisibility(false);
-    };
+  const handleConfirm = (date) => {
+    const formattedDate = date.toLocaleDateString();
+    setDate(formattedDate);
+    setDatePickerVisibility(false);
+  };
 
   // Calculate total price based on selections
   const calculatePrice = () => {
-    let finalPrice = totalSeats * price; // ✅ (Seats * Price)
-    // const childWithSeatCost = (parseInt(childWithSeat) || 0) * childWithSeatP;
-    const childWithSeatCost = (price - childWithSeatP) * (parseInt(childWithSeat) || 0);
-    const childWithoutSeatCost = (parseInt(childWithoutSeat) || 0) * childWithoutSeatP;
+    // Guard against NaN values
+    const basePrice = parseFloat(price) || 0;
+    const childWithSeatPrice = parseFloat(childWithSeatP) || 0;
+    const childWithoutSeatPrice = parseFloat(childWithoutSeatP) || 0;
+
+    let finalPrice = totalSeats * basePrice;
+    const childWithSeatCost = (basePrice - childWithSeatPrice) * (parseInt(childWithSeat) || 0);
+    const childWithoutSeatCost = (parseInt(childWithoutSeat) || 0) * childWithoutSeatPrice;
 
     finalPrice = finalPrice - childWithSeatCost + childWithoutSeatCost;
 
@@ -151,93 +151,216 @@ const Book = () => {
 
     // Dynamically set room type options
     if (totalPersonsCount >= 4) {
-      setAvailableRoomTypes(["shared", "family"]); // Show both options
+      setAvailableRoomTypes(["shared", "family"]);
     } else {
-      setAvailableRoomTypes(["shared"]); // Only shared room
-      setRoomType("shared"); // Reset to shared if less than 4 persons
+      setAvailableRoomTypes(["shared"]);
+      setRoomType("shared");
     }
 
     if (totalPersonsCount >= 4 && roomType === "family") {
-      finalPrice += totalPersonsCount * 500; // (Total Persons * 500)
+      finalPrice += totalPersonsCount * 500;
     }
 
-    setTotalAmount(finalPrice);
-    setAdvanceAmount(finalPrice / 2);
+    // Ensure values are valid numbers before setting state
+    setTotalAmount(isNaN(finalPrice) ? "0" : finalPrice.toString());
+    setAdvanceAmount(isNaN(finalPrice) ? "0" : (finalPrice / 2).toString());
   };
 
   // Trigger price calculation when relevant fields change
   useEffect(() => {
     calculatePrice();
-  }, [adults, childWithSeat, childWithoutSeat, roomType, totalSeats]);
+  }, [adults, childWithSeat, childWithoutSeat, roomType, totalSeats, price, childWithSeatP, childWithoutSeatP]);
 
   // Validate advance amount input
   const handleAdvanceInputChange = (value) => {
     const numericValue = parseFloat(value) || 0;
-    setAdvanceAmount(numericValue);
+    setAdvanceAmount(value);
 
-    if (numericValue < totalAmount / 2) {
-      setErrorMessage(`Advance amount should be at least ${totalAmount / 2}`);
+    const minAdvance = parseFloat(totalAmount) / 2;
+    if (numericValue < minAdvance) {
+      setErrorMessage(`Advance amount should be at least ₹${minAdvance.toFixed(2)}`);
     } else {
       setErrorMessage("");
     }
   };
 
+  // Handle child without seat info
+  const handleTextChange = (text) => {
+    if (!isAlertShown && text !== "") {
+      Alert.alert(
+        "Additional Charge",
+        `Child without seat cost: ₹${childWithoutSeatP} per person. This amount will be added to your total.`,
+        [{ text: "OK", onPress: () => setIsAlertShown(true) }]
+      );
+    }
+    setChildWithoutSeat(text);
+  };
 
- 
-    
-
-  const handleBooking = async () => {
-
-    // Validation function to check required fields
-    const validateFields = () => {
-      if (
-        !route?.params?.tripId ||
-        !route?.params?.selectedPickupPointId ||
-        !droppoint ||
-        !totalAmount ||
-        selectedSeats.length === 0
-      ) {
-        Alert.alert("Validation Error", "Please fill in all required fields.");
-        return false;
-      }
-      return true;
-    };
-  
-    // console.log("Pay Now button clicked"); // To verify button press
-  
-    // Validate fields
+  // Improved payment function that works with expo-razorpay
+  const handlePayment = async (amount, isAdvancePayment = false) => {
+    // Validate fields first
     if (!validateFields()) {
-      console.log("Validation failed");
-      return;
+      return false;
     }
   
-    // Check if user and token exist
+    // Check if user exists
     if (!user || !user.userId || !token) {
       Alert.alert("Error", "User not found. Please log in again.");
-      return;
+      return false;
     }
   
-    // Prepare booking data
-    const bookingData = {
-      UserId: parseInt(user.userId), // Ensure it's an integer
-      TripId: parseInt(route.params.tripId),
-      PickupPointId: parseInt(route.params.selectedPickupPointId),
-      Droppoint: droppoint.trim(), // Trim to avoid extra spaces
-      BookingDate: new Date(route.params.selectedDate).toISOString(), // Correct format
-      Status: "Confirmed",
-      TotalPayment: parseFloat(totalAmount), // Ensure float
-      Advance: parseFloat(advanceAmount),    // Ensure float
-      SeatNumbers: selectedSeats.map(seat => (seat.seatNumber || seat).toString()), // Ensure strings
-      Adults: parseInt(adults) || 0,
-      roomType: roomType || "", // RoomType field as per API
-      Childwithseat: parseInt(childWithSeat) || 0,
-      Childwithoutseat: parseInt(childWithoutSeat) || 0,
-    };
-  
-    // console.log("Prepared Booking Data:", JSON.stringify(bookingData, null, 2)); // Log booking data
+    setPaymentProcessing(true);
   
     try {
-      // API call
+      // Convert amount to paisa (Razorpay uses the smallest currency unit)
+      const amountInPaisa = Math.round(parseFloat(amount) * 100);
+      
+      const options = {
+        description: isAdvancePayment ? 'Advance Payment for Tour Booking' : 'Full Payment for Tour Booking',
+        image: 'https://i.imgur.com/3g7nmJC.png',
+        currency: 'INR',
+        key: RAZORPAY_KEY_ID,
+        amount: amountInPaisa,
+        name: 'Ashtavinayak Tours',
+        prefill: {
+          email: user.email || '',
+          contact: user.phoneNumber || '',
+          name: user.userName || ''
+        },
+        theme: { color: '#D44206' }
+      };
+  
+      // For all platforms, use WebView approach as a reliable fallback
+      navigation.navigate("PaymentScreen", {
+        amount,
+        isAdvancePayment,
+        userId: user?.userId,
+        userName: user?.userName,
+        email: user?.email,
+        phone: user?.phoneNumber,
+        tripId,
+        pickupPointId: selectedPickupPointId,
+        droppoint,
+        bookingDate: date,
+        seatNumbers: selectedSeats,
+        adults: parseInt(adults) || 0,
+        roomType,
+        childWithSeat: parseInt(childWithSeat) || 0,
+        childWithoutSeat: parseInt(childWithoutSeat) || 0,
+        totalAmount: parseFloat(totalAmount),
+        razorpayKeyId: RAZORPAY_KEY_ID,
+        onPaymentComplete: (paymentId) => {
+          processBooking(parseFloat(amount), paymentId);
+        }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("General payment error:", error);
+      setPaymentProcessing(false);
+      Alert.alert("Error", "Payment processing failed. Please try again.");
+      return false;
+    }
+  };
+
+  // iOS-specific payment handling using WebView approach
+  const handleIOSPayment = (amount, isAdvancePayment) => {
+    setPaymentProcessing(false);
+
+    // Navigate to separate PaymentScreen with necessary props
+    navigation.navigate("PaymentScreen", {
+      amount,
+      isAdvancePayment,
+      userId: user?.userId,
+      userName: user?.userName,
+      email: user?.email,
+      phone: user?.phoneNumber,
+      tripId,
+      pickupPointId: selectedPickupPointId,
+      droppoint,
+      bookingDate: date,
+      seatNumbers: selectedSeats,
+      adults: parseInt(adults) || 0,
+      roomType,
+      childWithSeat: parseInt(childWithSeat) || 0,
+      childWithoutSeat: parseInt(childWithoutSeat) || 0,
+      totalAmount: parseFloat(totalAmount),
+      razorpayKeyId: RAZORPAY_KEY_ID, // Pass the key directly to PaymentScreen
+      onPaymentComplete: (paymentId) => {
+        // This will be called by the PaymentScreen after successful payment
+        processBooking(parseFloat(amount), paymentId);
+      }
+    });
+  };
+
+  // Simulate payment when Razorpay fails or for testing
+  const simulatePayment = (amount, isAdvancePayment) => {
+    Alert.alert(
+      "Payment Simulation Mode",
+      `Would you like to simulate a payment of ₹${amount}?`,
+      [
+        {
+          text: "Yes, Process Payment",
+          onPress: async () => {
+            const mockPaymentId = "sim_" + Math.random().toString(36).substring(2, 15);
+            await processBooking(parseFloat(amount), mockPaymentId);
+          }
+        },
+        {
+          text: "Cancel",
+          onPress: () => setPaymentProcessing(false)
+        }
+      ]
+    );
+  };
+
+  // Payment button handlers
+  const handlePayFull = () => {
+    handlePayment(totalAmount, false);
+  };
+
+  const handlePayAdvance = () => {
+    const minAdvance = parseFloat(totalAmount) / 2;
+    if (parseFloat(advanceAmount) < minAdvance) {
+      setErrorMessage(`Advance amount should be at least ₹${minAdvance.toFixed(2)}`);
+      return;
+    }
+    handlePayment(advanceAmount, true);
+  };
+
+  // Process booking after successful payment
+  const processBooking = async (paidAmount, paymentId) => {
+    // Safety checks for null/undefined values
+    if (!route.params || !route.params.tripId) {
+      setPaymentProcessing(false);
+      Alert.alert("Error", "Trip information is missing.");
+      return;
+    }
+
+    // Ensure numeric values are properly parsed
+    const userIdValue = user && user.userId ? parseInt(user.userId) : 0;
+    const tripIdValue = parseInt(route.params.tripId) || 0;
+    const pickupPointIdValue = parseInt(route.params.selectedPickupPointId) || 0;
+
+    const bookingData = {
+      UserId: userIdValue,
+      TripId: tripIdValue,
+      PickupPointId: pickupPointIdValue,
+      Droppoint: droppoint.trim(),
+      BookingDate: new Date(route.params.selectedDate || new Date()).toISOString(),
+      Status: "Confirmed",
+      TotalPayment: parseFloat(totalAmount) || 0,
+      Advance: paidAmount || 0,
+      SeatNumbers: Array.isArray(selectedSeats) ? selectedSeats.map(seat => (seat.seatNumber || seat).toString()) : [],
+      Adults: parseInt(adults) || 0,
+      roomType: roomType || "shared",
+      Childwithseat: parseInt(childWithSeat) || 0,
+      Childwithoutseat: parseInt(childWithoutSeat) || 0,
+      PaymentId: paymentId || "", 
+      PaymentStatus: "Completed"
+    };
+
+    try {
       const response = await fetch(
         "https://ashtavinayak.somee.com/api/Booking/CreateBookingWithSeats",
         {
@@ -249,56 +372,111 @@ const Book = () => {
           body: JSON.stringify(bookingData),
         }
       );
-  
-      const result = await response.json();
-      // console.log("API Response:", result); // Log API response
-  
-      if (response.ok) {
-        // Success Alert
-        Alert.alert("Success", "Booking successful!", [
-          {
-            text: "OK",
-            onPress: async () => {
-              // Navigate back to SelectVehicle1 after success
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [{ name: "SelectVehicle1" }],
-                })
-              );
+
+      setPaymentProcessing(false);
+
+      // Handle non-JSON responses
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        const result = await response.json();
+        
+        if (response.ok) {
+          Alert.alert("Success", "Booking successful!", [
+            {
+              text: "OK",
+              onPress: async () => {
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: "Home" }],
+                  })
+                );
+              },
             },
-          },
-        ]);
+          ]);
+        } else {
+          const errorMessage = result.message || "Booking failed. Please try again.";
+          Alert.alert("Booking Failed", errorMessage);
+        }
       } else {
-        // Handle API errors
-        const errorMessage = result.message || "Booking failed. Please try again.";
-        Alert.alert("Booking Failed", errorMessage);
+        // Handle non-JSON response
+        if (response.ok) {
+          Alert.alert("Success", "Booking successful!", [
+            {
+              text: "OK",
+              onPress: async () => {
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: "Home" }],
+                  })
+                );
+              },
+            },
+          ]);
+        } else {
+          Alert.alert("Booking Failed", "Server returned an unexpected response. Please try again.");
+        }
       }
     } catch (error) {
-      // console.error("API Error:", error); // Log any errors
-      Alert.alert("Error", "Something went wrong. Please try again.");
+      setPaymentProcessing(false);
+      console.error("API Error:", error);
+      Alert.alert("Error", "Something went wrong during booking. Please try again.");
     }
   };
 
+  // Validation function to check required fields
+  const validateFields = () => {
+    let valid = true;
+    const newErrors = {};
 
+    if (!route?.params?.tripId) {
+      newErrors.trip = "Trip information is missing";
+      valid = false;
+    }
 
-  
-      const handleTextChange = (text) => {
-        if (!isAlertShown) {
-          Alert.alert(
-            "Additional Charge",
-            `Child without seat cost: ₹${childWithoutSeatP} per person. This amount will be added to your total.`,
-            [{ text: "OK", onPress: () => setIsAlertShown(true) }] // Show alert only once
-          );
-        }
-        setChildWithoutSeat(text); // Update input field
-      };
-  
+    if (!route?.params?.selectedPickupPointId) {
+      newErrors.pickup = "Pickup point is required";
+      valid = false;
+    }
+
+    if (!droppoint) {
+      newErrors.droppoint = "Drop location is required";
+      valid = false;
+    }
+
+    if (!totalAmount || parseFloat(totalAmount) <= 0) {
+      newErrors.amount = "Total amount is missing";
+      valid = false;
+    }
+
+    if (!Array.isArray(selectedSeats) || selectedSeats.length === 0) {
+      newErrors.seats = "No seats selected";
+      valid = false;
+    }
+
+    if (!adults && !childWithSeat) {
+      newErrors.passengers = "Please enter number of adults or children with seat";
+      valid = false;
+    }
+
+    setErrors(newErrors);
+
+    if (!valid) {
+      Alert.alert("Validation Error", "Please fill in all required fields.");
+    }
+
+    return valid;
+  };
+
   return (
     <View style={styles.container}>
       {/* Header with Back Arrow */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('SelectVehicle1')} style={styles.backButtonContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButtonContainer}
+        >
           <View style={styles.backButtonCircle}>
             <Text style={styles.backButton}>{'<'}</Text>
           </View>
@@ -311,35 +489,35 @@ const Book = () => {
           <View style={styles.inputFieldContainer}>
             <Text style={styles.label}>Name</Text>
             <TextInput
-  style={[styles.input, !isEditable && styles.nonEditableInput]} // Apply gray style if not editable
-  placeholder="Your Name"
-  placeholderTextColor="#aaa"
-  value={user?.userName || ""}
-  editable={isEditable} // Use the state
-/>
+              style={[styles.input, !isEditable && styles.nonEditableInput]}
+              placeholder="Your Name"
+              placeholderTextColor="#aaa"
+              value={user?.userName || ""}
+              editable={isEditable}
+            />
           </View>
 
           <View style={styles.inputFieldContainer}>
             <Text style={styles.label}>Contact Number</Text>
             <TextInput
-  style={[styles.input, !isEditable&& styles.nonEditableInput]}
-  placeholder="Your Contact"
-  keyboardType="numeric"
-  placeholderTextColor="#aaa"
-  value={user?.phoneNumber || ""}
-  editable={false} // Explicitly set to false
-/>
+              style={[styles.input, !isEditable && styles.nonEditableInput]}
+              placeholder="Your Contact"
+              keyboardType="numeric"
+              placeholderTextColor="#aaa"
+              value={user?.phoneNumber || ""}
+              editable={false}
+            />
           </View>
 
           <View style={styles.row}>
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Seat No</Text>
               <TextInput
-  style={[styles.input, !isEditable && styles.nonEditableInput]}
-  keyboardType="numeric"
-  value={selectedSeats.map(seat => seat.seatNumber || seat).join(", ")}
-  editable={false} // Explicitly set to false
-/>
+                style={[styles.input, !isEditable && styles.nonEditableInput]}
+                keyboardType="numeric"
+                value={Array.isArray(selectedSeats) ? selectedSeats.map(seat => seat.seatNumber || seat).join(", ") : ""}
+                editable={false}
+              />
             </View>
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Adult</Text>
@@ -364,127 +542,122 @@ const Book = () => {
               />
               {errors.childWithSeat && <Text style={styles.errorText}>{errors.childWithSeat}</Text>}
             </View>
-            {/* <View style={styles.halfWidth}>
-              <Text style={styles.label}>Without Booking </Text>
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Child (Without Seat)</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
                 value={childWithoutSeat}
-                onChangeText={(text) => setChildWithoutSeat(text)}
+                onChangeText={handleTextChange}
               />
-              {errors.childWithoutSeat && <Text style={styles.errorText}>{errors.childWithoutSeat}</Text>}
-            </View> */}
-
-<View style={styles.halfWidth}>
-      <Text style={styles.label}>Child (Without Seat)</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="numeric"
-        value={childWithoutSeat}
-        onChangeText={handleTextChange} // Show alert when user enters text for the first time
-      />
-    </View>
+            </View>
           </View>
 
-
-
-
-<View style={styles.inputFieldContainer}>
-  <Text style={styles.label}>Room Type:</Text>
-  <View style={styles.inputWithIcon}>
-    <Picker
-      selectedValue={roomType}
-      onValueChange={(itemValue) => setRoomType(itemValue)}
-      style={{ flex: 1 }}
-    >
-      {availableRoomTypes.map((type) => (
-        <Picker.Item key={type} label={type} value={type} />
-      ))}
-    </Picker>
-  </View>
-</View>
+          <View style={styles.inputFieldContainer}>
+            <Text style={styles.label}>Room Type:</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={roomType}
+                onValueChange={(itemValue) => setRoomType(itemValue)}
+                style={styles.picker}
+              >
+                {availableRoomTypes.map((type) => (
+                  <Picker.Item key={type} label={type.charAt(0).toUpperCase() + type.slice(1)} value={type} />
+                ))}
+              </Picker>
+            </View>
+          </View>
 
           <View style={styles.row}>
-  <View style={styles.halfWidth}>
-    <Text style={styles.label}>Journey Date</Text>
-    <TouchableOpacity
-      onPress={() => isEditable && setDatePickerVisibility(true)} // Allow clicking only if editable
-      style={[
-        styles.datePicker,
-        styles.inputWithIcon,
-        !isEditable && styles.nonEditableInput, // Apply gray background when not editable
-      ]}
-      disabled={!isEditable} // Disable touch if not editable
-    >
-      <Text style={{ color: date !== "dd-MM-yyyy" ? "#333" : "#aaa" }}>
-        {date}
-      </Text>
-    </TouchableOpacity>
-    <DateTimePickerModal
-      isVisible={isDatePickerVisible}
-      mode="date"
-      onConfirm={handleConfirm}
-      onCancel={() => setDatePickerVisibility(false)}
-    />
-  </View>
-</View>
-
-
+            <View style={styles.halfWidth}>
+              <Text style={styles.label}>Journey Date</Text>
+              <TouchableOpacity
+                onPress={() => isEditable && setDatePickerVisibility(true)}
+                style={[
+                  styles.datePicker,
+                  !isEditable && styles.nonEditableInput,
+                ]}
+                disabled={!isEditable}
+              >
+                <Text style={{ color: date !== "dd-MM-yyyy" ? "#333" : "#aaa" }}>
+                  {date}
+                </Text>
+              </TouchableOpacity>
+              <DateTimePickerModal
+                isVisible={isDatePickerVisible}
+                mode="date"
+                onConfirm={handleConfirm}
+                onCancel={() => setDatePickerVisibility(false)}
+              />
+            </View>
+          </View>
 
           <View style={styles.row}>
-          <View style={styles.halfInputContainer}>
-  <Text style={styles.label}>Pickup Location</Text>
-  <View
-    style={[
-      styles.inputWithIcon,
-      !isEditable && styles.nonEditableInput, // Apply gray background when not editable
-    ]}
-  >
-    <Icon name="location-outline" size={20} color="#555" />
-    <TextInput
-      style={styles.inputWithoutPadding}
-      value={pickupLocation}
-      placeholder="Pickup Location"
-      placeholderTextColor="#aaa"
-      onChangeText={(text) => setPickupLocation(text)}
-      editable={isEditable} // Make non-editable when needed
-    />
-  </View>
-  {errors.pickupLocation && <Text style={styles.errorText}>{errors.pickupLocation}</Text>}
-</View>
+            <View style={styles.halfInputContainer}>
+              <Text style={styles.label}>Pickup Location</Text>
+              <View
+                style={[
+                  styles.inputWithIcon,
+                  !isEditable && styles.nonEditableInput,
+                ]}
+              >
+                <Icon name="location-outline" size={20} color="#555" />
+                <TextInput
+                  style={styles.inputWithoutPadding}
+                  value={pickupLocation}
+                  placeholder="Pickup Location"
+                  placeholderTextColor="#aaa"
+                  onChangeText={(text) => setPickupLocation(text)}
+                  editable={isEditable}
+                />
+              </View>
+              {errors.pickupLocation && <Text style={styles.errorText}>{errors.pickupLocation}</Text>}
+            </View>
 
             <View style={styles.halfInputContainer}>
-  <Text style={styles.label}>Drop Location</Text>
-  <View style={styles.inputWithIcon}>
-    <Icon name="location-sharp" size={20} color="#555" />
-    <TextInput
-      style={styles.inputWithoutPadding}
-      placeholder="Drop Location"
-      placeholderTextColor="#aaa"
-      value={droppoint}
-      onChangeText={(text) => setDroppoint(text)}
-    />
-  </View>
-</View>
-
+              <Text style={styles.label}>Drop Location</Text>
+              <View style={styles.inputWithIcon}>
+                <Icon name="location-sharp" size={20} color="#555" />
+                <TextInput
+                  style={styles.inputWithoutPadding}
+                  placeholder="Drop Location"
+                  placeholderTextColor="#aaa"
+                  value={droppoint}
+                  onChangeText={(text) => setDroppoint(text)}
+                />
+              </View>
+              {errors.droppoint && <Text style={styles.errorText}>{errors.droppoint}</Text>}
+            </View>
           </View>
 
           {/* Total Amount */}
-          <TextInput
-  style={[styles.input, !isEditable && styles.nonEditableInput]}
-  keyboardType="numeric"
-  value={totalAmount ? totalAmount.toString() : ''}
-  placeholder="Total Amount"
-  placeholderTextColor="#aaa"
-  editable={false} // Explicitly set to false
-/>
+          <View style={styles.inputFieldContainer}>
+            <Text style={styles.label}>Total Amount</Text>
+            <TextInput
+              style={[styles.input, !isEditable && styles.nonEditableInput]}
+              keyboardType="numeric"
+              value={totalAmount ? totalAmount.toString() : ''}
+              placeholder="Total Amount"
+              placeholderTextColor="#aaa"
+              editable={false}
+            />
+          </View>
 
-          <TouchableOpacity style={[styles.button, styles.payFullButton]}>
-            <Text style={styles.buttonText}>Pay Full</Text>
+          {/* Payment Options */}
+          <TouchableOpacity 
+            style={[styles.button, styles.payFullButton, paymentProcessing && styles.disabledButton]}
+            onPress={handlePayFull}
+            disabled={paymentProcessing}
+          >
+            <Text style={styles.buttonText}>Pay Full ₹{totalAmount}</Text>
           </TouchableOpacity>
 
           <View style={styles.row}>
-            <TouchableOpacity style={[styles.button, styles.payAdvanceButton]}>
+            <TouchableOpacity 
+              style={[styles.button, styles.payAdvanceButton, paymentProcessing && styles.disabledButton]}
+              onPress={handlePayAdvance}
+              disabled={paymentProcessing}
+            >
               <Text style={styles.buttonText}>Pay Advance</Text>
             </TouchableOpacity>
             <TextInput
@@ -514,16 +687,21 @@ const Book = () => {
               source={require("@/assets/images/MasterCard.png")}
               style={styles.icon}
             />
+            <Image 
+              source={{ uri: 'https://razorpay.com/assets/razorpay-glyph.svg' }}
+              style={styles.icon}
+            />
           </View>
 
-         <TouchableOpacity style={styles.payButton} onPress={handleBooking}>
-                   <Text style={styles.payButtonText}>Pay Now</Text>
-                 </TouchableOpacity>
-
-
+          {paymentProcessing ? (
+            <View style={styles.processingContainer}>
+              <ActivityIndicator size="large" color="#D44206" />
+              <Text style={styles.processingText}>Processing payment...</Text>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
-   </View>
+    </View>
   );
 };
 
@@ -538,11 +716,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#D44206",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    marginTop: 40,
+    marginTop: Platform.OS === 'ios' ? 40 : 0,
     justifyContent: "center",
   },
   backButtonContainer: {
-    marginRight: 10,
+    position: 'absolute',
+    left: 20,
   },
   backButtonCircle: {
     backgroundColor: '#FFFFFF',
@@ -555,9 +734,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 4, // Adds shadow on Android
-    marginTop:5,
-    marginLeft:-115,
+    elevation: 4,
   },
   backButton: {
     fontSize: 24,
@@ -582,7 +759,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  
   label: {
     fontSize: 14,
     marginBottom: 5,
@@ -590,9 +766,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   errorText: {
-    color: 'red', // Red color for error messages
-    fontSize: 14, // Adjust the font size if needed
-    marginTop: 5, // Add some space above the error message
+    color: 'red',
+    fontSize: 14,
+    marginTop: 5,
   },
   input: {
     backgroundColor: "#fff",
@@ -600,15 +776,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#ddd",
-    width: "100%", // Ensures all inputs are the same width
-    marginBottom:-6,
+    width: "100%",
+    marginBottom: 8,
   },
   pickerContainer: {
     backgroundColor: "#fff",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#ddd",
-    height: 45,
+    marginBottom: 8,
+  },
+  picker: {
+    height: 44,
   },
   datePicker: {
     backgroundColor: "#fff",
@@ -617,7 +796,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
   },
-  button:{
+  button: {
     backgroundColor: "#D44206",
     paddingVertical: 15,
     borderRadius: 8,
@@ -627,6 +806,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 16,
+    fontWeight: "bold",
   },
   payFullButton: {
     backgroundColor: "#0D9F28",
@@ -634,12 +814,16 @@ const styles = StyleSheet.create({
   payAdvanceButton: {
     backgroundColor: "#3B8FC8",
     flex: 1,
+    marginRight: 10,
+  },
+  disabledButton: {
+    backgroundColor: "#cccccc",
   },
   inputFieldContainer: {
-    marginVertical: 10,
+    marginVertical: 8,
   },
   advanceInput: {
-    width: "30%",
+    flex: 1,
   },
   paymentIconsContainer: {
     flexDirection: "row",
@@ -651,35 +835,18 @@ const styles = StyleSheet.create({
     height: 50,
     resizeMode: "contain",
   },
-  payButton: {
-    backgroundColor: "#D44206",
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  payButtonText: {
-    color: "#fff",
-    fontSize: 16,
-  },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
-    display: 'flex', // Ensure it's a flex container
-    gap: 10, // Creates a gap between the fields in the same row
   },
-  
   halfWidth: {
-    flex: 5,
-    marginLeft:2,
-    marginRight:1,
+    flex: 1,
+    marginHorizontal: 4,
   },
-  
-  
   halfInputContainer: {
     flex: 1,
-    marginRight: 10,
+    marginHorizontal: 4,
   },
   
   inputWithoutPadding: {
@@ -687,98 +854,29 @@ const styles = StyleSheet.create({
     padding: 0,
     marginLeft: 5,
   },
-
-
-  inputFieldContainer: {
-    marginBottom: 15,
-    
-  },
-  
-   nonEditableInput: {
-    backgroundColor: "#e0e0e0", // Gray background when not editable
-    color: "#888", // Lighter text color to indicate it's disabled
-  },
-  
-  inputWithIcon: {
+  nonEditableInput: {
+    backgroundColor: "#f0f0f0",
+    color: "#666",
+  },inputWithIcon: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    paddingLeft: 5,
-    height: 44,
+    padding: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#ddd",
+    marginBottom: 8,
   },
-  datePickerText: {
-    marginLeft: 10,
+  processingContainer: {
+    alignItems: "center",
+    marginTop: 20,
+    padding: 10,
+  },
+  processingText: {
+    marginTop: 10,
+    color: "#D44206",
     fontSize: 16,
   },
-//   row: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//   },
-  halfInputContainer: {
-    width: "48%",
-  },
-  button: {
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  payFullButton: {
-    backgroundColor: "#FFCA63",
-    width: 100,
-    height:45,
-    marginTop:20,
-    padding: 10,
-  },
-  payAdvanceButton: {
-    backgroundColor: "#7CF7FF",
-    width: 130,
-    height:45,
-    padding: 10,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  advanceInput: {
-    marginLeft: -30,
-    width: "40%",
-    height:"75%",
-  },
-  paymentIconsContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 0,
-  },
-  icon: {
-    width: 70,
-    height: 70,
-    marginHorizontal: 10,
-    resizeMode: "contain",
-  },
-  payNowButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: '#FF5722',
-    borderRadius: 5,
-    paddingVertical: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-
-  },
-    buttonText1: {
-      color: "#fff",
-      fontSize: 14,
-      fontWeight: "bold",
-    },
-
-    
-  
 });
 
-export default Book;
+export default Book;
