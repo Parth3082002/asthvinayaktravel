@@ -8,7 +8,9 @@ import {
   ScrollView,
   Alert,
   Image,
-  BackHandler
+  BackHandler,
+  ActivityIndicator,
+  Platform
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -21,6 +23,15 @@ import Icon from "react-native-vector-icons/Ionicons";
 const CarBook = () => {
   const navigation = useNavigation();
   const route = useRoute();
+
+  // Razorpay Keys - Directly integrated in the code
+  // Use these for development/testing
+  const RAZORPAY_KEY_ID = 'rzp_test_AiL3OYgdBPKEeu';
+  const RAZORPAY_KEY_SECRET = 'dRNtUmxCFSqA8mBIuOJjNmR9';
+
+  // For production, uncomment these lines and comment out the test keys above
+  // const RAZORPAY_KEY_ID = 'rzp_live_DGlzWoiGqqLg0A';
+  // const RAZORPAY_KEY_SECRET = 'your_live_secret_key_here';
 
   // Extract bookingData safely with default values
   const { bookingData = {} } = route.params || {};
@@ -66,6 +77,7 @@ const CarBook = () => {
   const [advanceAmount, setAdvanceAmount] = useState(0);
   const [totalPersons, setTotalPersons] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   // UI state
   const [isEditable, setIsEditable] = useState(false);
@@ -182,52 +194,6 @@ const CarBook = () => {
     }
   }, [adults, childWithSeat, totalSeats]);
 
-  // Handle Razorpay payment
-  const handleRazorpayPayment = (payAmount) => {
-    // Validate inputs before payment
-    if (!validateInputs()) {
-      return;
-    }
-
-    const options = {
-      description: 'Car Booking Payment',
-      image: 'https://your-logo-url.png', // Change to your logo
-      currency: 'INR',
-      key: 'rzp_live_DGlzWoiGqqLg0A', // Updated with client's live key
-      amount: (parseInt(payAmount) * 100).toString(), // Amount in paise
-      name: 'Ashtavinayak Holidays', // Company name
-      prefill: {
-        email: user?.email || "customer@ashtavinayak.com",
-        contact: user?.phoneNumber || mobileNo || "9999999999",
-        name: user?.userName || "Guest User",
-      },
-      theme: { color: '#D44206' }
-    };
-  
-    RazorpayCheckout.open(options)
-      .then((data) => {
-        // Payment Success
-        Alert.alert(
-          "Payment Successful",
-          `Payment ID: ${data.razorpay_payment_id}`,
-          [
-            {
-              text: "OK",
-              onPress: () => handleBooking(data.razorpay_payment_id), // Pass payment ID to booking function
-            },
-          ]
-        );
-      })
-      .catch((error) => {
-        // Payment Failure
-        console.error("Razorpay Error:", error);
-        Alert.alert(
-          "Payment Failed",
-          `${error.code} | ${error.description}`
-        );
-      });
-  };
-
   // Validate all inputs before payment/booking
   const validateInputs = () => {
     const newErrors = {};
@@ -257,8 +223,9 @@ const CarBook = () => {
     const numericValue = parseFloat(value) || 0;
     setAdvanceAmount(numericValue);
   
-    if (numericValue < totalAmount / 2) {
-      setErrorMessage(`Advance amount should be at least ₹${totalAmount / 2}`);
+    const minAdvance = totalAmount / 2;
+    if (numericValue < minAdvance) {
+      setErrorMessage(`Advance amount should be at least ₹${minAdvance}`);
     } else {
       setErrorMessage("");
     }
@@ -266,7 +233,7 @@ const CarBook = () => {
   
   // Handle child without seat input
   const handleTextChange = (text) => {
-    if (!isAlertShown) {
+    if (!isAlertShown && text !== "") {
       Alert.alert(
         "Additional Charge",
         `Child without seat cost: ₹${childWithoutSeatP} per person. This amount will be added to your total.`,
@@ -276,40 +243,107 @@ const CarBook = () => {
     setChildWithoutSeat(text);
   };
 
-  // Handle booking submission
-  const handleBooking = async (paymentId = null) => {
+  // Improved payment function that works with PaymentScreen
+  const handlePayment = async (amount, isAdvancePayment = false) => {
+    // Validate fields first
     if (!validateInputs()) {
-      return;
+      return false;
     }
-
+  
+    // Check if user exists
     if (!user || !user.userId || !token) {
       Alert.alert("Error", "User not found. Please log in again.");
-      return;
+      return false;
     }
   
-    // Combine date and time into a valid DateTime format
-    const combinedDateTime = new Date(`${date}T${time}`);
-  
-    // Prepare booking data
-    const bookingPayload = {
-      carType: carTypeLabel,
-      date,
-      time: combinedDateTime.toISOString(),
-      userId: user.userId,
-      pickupPointId: selectedPickupPointId,
-      droppoint,
-      roomType,
-      status: "Confirmed",
-      totalPayment: totalAmount,
-      advance: advanceAmount,
-      // Add fields for passenger counts
-      adults: parseInt(adults) || 0,
-      childWithSeat: parseInt(childWithSeat) || 0,
-      childWithoutSeat: parseInt(childWithoutSeat) || 0,
-      paymentId: paymentId // Add payment ID from Razorpay
-    };
+    setPaymentProcessing(true);
   
     try {
+      // Combine date and time into a valid DateTime format
+      const combinedDateTime = new Date(`${date}T${time}`);
+      
+      // Navigate to PaymentScreen with all necessary props
+      navigation.navigate("PaymentScreen", {
+        amount,
+        isAdvancePayment,
+        userId: user?.userId,
+        userName: user?.userName,
+        email: user?.email,
+        phone: user?.phoneNumber,
+        carType: carTypeLabel,
+        pickupPointId: selectedPickupPointId,
+        droppoint,
+        bookingDate: combinedDateTime.toISOString(),
+        adults: parseInt(adults) || 0,
+        roomType,
+        childWithSeat: parseInt(childWithSeat) || 0,
+        childWithoutSeat: parseInt(childWithoutSeat) || 0,
+        totalAmount: parseFloat(totalAmount),
+        acType,
+        cityId,
+        cityName,
+        vehicleType,
+        status,
+        razorpayKeyId: RAZORPAY_KEY_ID,
+        onPaymentComplete: (paymentId) => {
+          processBooking(parseFloat(amount), paymentId);
+        }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("General payment error:", error);
+      setPaymentProcessing(false);
+      Alert.alert("Error", "Payment processing failed. Please try again.");
+      return false;
+    }
+  };
+
+  // Payment button handlers
+  const handlePayFull = () => {
+    handlePayment(totalAmount, false);
+  };
+
+  const handlePayAdvance = () => {
+    const minAdvance = totalAmount / 2;
+    if (advanceAmount < minAdvance) {
+      setErrorMessage(`Advance amount should be at least ₹${minAdvance}`);
+      return;
+    }
+    handlePayment(advanceAmount, true);
+  };
+
+  // Process booking after successful payment
+  const processBooking = async (paidAmount, paymentId) => {
+    setPaymentProcessing(true);
+    
+    try {
+      // Combine date and time into a valid DateTime format
+      const combinedDateTime = new Date(`${date}T${time}`);
+    
+      // Prepare booking data
+      const bookingPayload = {
+        carType: carTypeLabel,
+        date: combinedDateTime.toISOString(),
+        userId: user.userId,
+        pickupPointId: selectedPickupPointId,
+        droppoint,
+        roomType,
+        status: "Confirmed",
+        totalPayment: totalAmount,
+        advance: paidAmount,
+        acType,
+        cityId,
+        cityName,
+        vehicleType,
+        // Add fields for passenger counts
+        adults: parseInt(adults) || 0,
+        childWithSeat: parseInt(childWithSeat) || 0,
+        childWithoutSeat: parseInt(childWithoutSeat) || 0,
+        paymentId: paymentId, // Add payment ID from Razorpay
+        paymentStatus: "Completed"
+      };
+    
       const response = await fetch(
         "https://ashtavinayak.somee.com/api/Booking/BookCar",
         {
@@ -321,32 +355,56 @@ const CarBook = () => {
           body: JSON.stringify(bookingPayload),
         }
       );
+    
+      setPaymentProcessing(false);
   
-      const responseData = await response.json();
-  
-      if (response.ok) {
-        Alert.alert("Success", "Booking successful!", [
-          {
-            text: "OK",
-            onPress: () =>
-              navigation.dispatch(
-                CommonActions.reset({
-                  index: 0,
-                  routes: [{ name: "SelectVehicle1" }],
-                })
-              ),
-          },
-        ]);
+      // Handle non-JSON responses
+      const contentType = response.headers.get("content-type");
+      let responseData;
+      
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        responseData = await response.json();
+        
+        if (response.ok) {
+          Alert.alert("Success", "Booking successful!", [
+            {
+              text: "OK",
+              onPress: () =>
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: "SelectVehicle1" }],
+                  })
+                ),
+            },
+          ]);
+        } else {
+          const errorMessage = responseData.message || responseData.title || "Booking failed. Please try again.";
+          Alert.alert("Booking Failed", errorMessage);
+        }
       } else {
-        console.error("API Error:", responseData);
-        Alert.alert(
-          "Booking Failed",
-          responseData.title || "Something went wrong. Try again."
-        );
+        // Handle non-JSON response
+        if (response.ok) {
+          Alert.alert("Success", "Booking successful!", [
+            {
+              text: "OK",
+              onPress: () =>
+                navigation.dispatch(
+                  CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: "SelectVehicle1" }],
+                  })
+                ),
+            },
+          ]);
+        } else {
+          Alert.alert("Booking Failed", "Server returned an unexpected response. Please try again.");
+        }
       }
     } catch (error) {
-      console.error("Fetch Error:", error);
-      Alert.alert("Error", "Network error. Please try again.");
+      setPaymentProcessing(false);
+      console.error("API Error:", error);
+      Alert.alert("Error", "Something went wrong during booking. Please try again.");
     }
   };
 
@@ -409,6 +467,9 @@ const CarBook = () => {
                 value={adults}
                 onChangeText={setAdults}
               />
+              {errors.seatCount && (
+                <Text style={styles.errorText}>{errors.seatCount}</Text>
+              )}
             </View>
           </View>
 
@@ -505,17 +566,27 @@ const CarBook = () => {
 
           <TouchableOpacity
             style={styles.payButton}
-            onPress={() => handleRazorpayPayment(totalAmount)}
+            onPress={handlePayFull}
+            disabled={paymentProcessing}
           >
-            <Text style={styles.payButtonText}>Pay Full</Text>
+            {paymentProcessing ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.payButtonText}>Pay Full</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.row}>
             <TouchableOpacity
               style={[styles.button, styles.payAdvanceButton]}
-              onPress={() => handleRazorpayPayment(advanceAmount)}
+              onPress={handlePayAdvance}
+              disabled={paymentProcessing}
             >
-              <Text style={styles.buttonText}>Pay Advance</Text>
+              {paymentProcessing ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.buttonText}>Pay Advance</Text>
+              )}
             </TouchableOpacity>
             <TextInput
               style={[styles.input, styles.advanceInput]}
@@ -530,9 +601,6 @@ const CarBook = () => {
           {errorMessage ? (
             <Text style={styles.errorText}>{errorMessage}</Text>
           ) : null}
-          {errors.seatCount && (
-            <Text style={styles.errorText}>{errors.seatCount}</Text>
-          )}
 
           {/* Payment Icons */}
           <View style={styles.paymentIconsContainer}>
@@ -556,56 +624,154 @@ const CarBook = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F5F5F5" },
-  header: { flexDirection: "row", alignItems: "center", backgroundColor: "#D44206", paddingVertical: 15, paddingHorizontal: 20, marginTop: 40, justifyContent: "center" },
-  backButtonContainer: { marginRight: 10 },
-  backButtonCircle: { backgroundColor: '#FFFFFF', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4, marginTop: 5, marginLeft: -115 },
-  backButton: { fontSize: 24, fontWeight: 'bold', color: '#000' },
-  headerText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
-  formContainer: { padding: 20 },
-  card: { backgroundColor: "#FFFFFF", padding: 20, borderRadius: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 3 },
-  label: { fontSize: 14, marginBottom: 5, color: "#333", fontWeight: "500" },
-  errorText: { color: 'red', fontSize: 14, marginTop: 5 },
-  infoText: { color: '#555', fontSize: 12, marginTop: 5, fontStyle: 'italic' },
-  input: { backgroundColor: "#fff", padding: 10, borderRadius: 8, borderWidth: 1, borderColor: "#ddd", width: "100%", marginBottom: -6 },
-  pickerContainer: { backgroundColor: "#fff", borderRadius: 8, borderWidth: 1, borderColor: "#ddd", height: 45 },
-  button: { backgroundColor: "#D44206", paddingVertical: 15, borderRadius: 8, alignItems: "center", marginTop: 20 },
-  buttonText: { color: "#fff", fontSize: 16 },
-  payFullButton: { backgroundColor: "#0D9F28" },
-  payAdvanceButton: { backgroundColor: "#3B8FC8", flex: 1 },
-  inputFieldContainer: { marginVertical: 10 },
-  advanceInput: { width: "30%" },
-  nonEditableInput: {
-    backgroundColor: "#f0f0f0",
-    color: "#aaa",
+  container: {
+    flex: 1,
+    backgroundColor: "#f2f2f2",
   },
-  paymentIconsContainer: { flexDirection: "row", justifyContent: "space-around", marginTop: 20 },
-  icon: { width: 50, height: 50, resizeMode: "contain" },
-  payButton: { backgroundColor: "#D44206", paddingVertical: 15, borderRadius: 8, alignItems: "center", marginTop: 20 },
-  payButtonText: { color: "#fff", fontSize: 16 },
-  row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8, display: 'flex', gap: 10 },
-  halfWidth: { flex: 5, marginLeft: 2, marginRight: 1 },
-  halfInputContainer: { flex: 1, marginRight: 10 },
-  inputWithoutPadding: { flex: 1, padding: 0, marginLeft: 5 },
-  inputFieldContainer: { marginBottom: 15 },
-  nonEditableInput: { backgroundColor: "#e0e0e0", color: "#888" },
-  inputWithIcon: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", paddingLeft: 5, height: 44, borderRadius: 8, borderWidth: 1, borderColor: "#ddd" },
-  datePickerText: { marginLeft: 10, fontSize: 16 },
-  halfInputContainer: { width: "48%" },
-  button: { borderRadius: 8, alignItems: "center", marginBottom: 15 },
-  payFullButton: { backgroundColor: "#FFCA63", width: 100, height: 45, marginTop: 20, padding: 10 },
-  payAdvanceButton: { backgroundColor: "#7CF7FF", width: 130, height: 45, padding: 10 },
-  buttonText: { color: "#fff", fontSize: 14, fontWeight: "bold" },
-  advanceInput: { marginLeft: -30, width: "40%", height: "75%" },
-  paymentIconsContainer: { flexDirection: "row", justifyContent: "center", marginTop: 0 },
-  icon: { width: 70, height: 70, marginHorizontal: 10, resizeMode: "contain" },
-  payNowButton: { position: 'absolute', bottom: 20, left: 20, right: 20, backgroundColor: '#FF5722', borderRadius: 5, paddingVertical: 15, alignItems: 'center', justifyContent: 'center' },
-  buttonText1: { color: "#fff", fontSize: 14, fontWeight: "bold" },
-  label: { fontSize: 15, fontWeight: 'semibold', marginBottom: 5 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 10, fontSize: 16, backgroundColor: '#fff' },
-  nonEditableInput: { backgroundColor: '#f0f0f0', color: '#666' },
-  pickerContainer: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, backgroundColor: '#fff', paddingVertical: 2 },
-  picker: { height: 50, width: '100%', marginBottom: 0 }
+  header: {
+    backgroundColor: "#D44206",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backButtonContainer: {
+    marginRight: 15,
+  },
+  backButtonCircle: {
+    backgroundColor: "#fff",
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backButton: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#D44206",
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "white",
+  },
+  formContainer: {
+    padding: 15,
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  inputFieldContainer: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 5,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
+    color: "#333",
+    backgroundColor: "#fff",
+  },
+  nonEditableInput: {
+    backgroundColor: "#f9f9f9",
+    color: "#666",
+  },
+  row: {
+    flexDirection: "row",
+    marginBottom: 15,
+    justifyContent: "space-between",
+  },
+  halfWidth: {
+    width: "48%",
+  },
+  halfInputContainer: {
+    width: "48%",
+  },
+  inputWithIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 5,
+    padding: 10,
+    backgroundColor: "#fff",
+  },
+  inputWithoutPadding: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+    marginLeft: 5,
+  },
+  payButton: {
+    backgroundColor: "#D44206",
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  payButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  button: {
+    backgroundColor: "#2E7D32",
+    paddingVertical: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+  },
+  payAdvanceButton: {
+    backgroundColor: "#1976D2",
+    maxWidth: "40%",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  advanceInput: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  paymentIconsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
+    flexWrap: "wrap",
+  },
+  icon: {
+    width: 60,
+    height: 40,
+    resizeMode: "contain",
+    marginHorizontal: 10,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
+  },
+  infoText: {
+    color: "#D44206",
+    fontSize: 12,
+    marginTop: 5,
+  },
 });
 
 export default CarBook;
