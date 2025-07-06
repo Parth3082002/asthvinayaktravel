@@ -15,6 +15,7 @@ import History from './(tabs)/History';
 import CarType from './(tabs)/CarType';
 import CarBook from './(tabs)/CarBook';
 import PaymentScreen from './(tabs)/PaymentScreen';
+import SelectCar from './(tabs)/SelectCar';
 
 const Stack = createStackNavigator(); 
 
@@ -39,6 +40,7 @@ export default function MainNavigator() {
       <Stack.Screen name="CarType" component={CarType} />
       <Stack.Screen name="CarBook" component={CarBook} />
       <Stack.Screen name="PaymentScreen" component={PaymentScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SelectCar" component={SelectCar} />
     </Stack.Navigator>
   );
 }

@@ -1,15 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
-
-import { 
-  View, Text, StyleSheet, TextInput, Animated, TouchableOpacity, 
-  Image, FlatList, Modal,BackHandler,
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Animated,
+  TouchableOpacity,
+  Image,
+  FlatList,
+  Modal,
+  BackHandler,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from "@react-navigation/native";
 
-// Import images
+// Images
 import BusImage from "@/assets/images/bus1.png";
 import CarImage from "@/assets/images/Car.png";
 
@@ -18,14 +25,14 @@ const cars = [
     id: "1",
     name: "Bus",
     type: "BUS",
-    description: "A bus offers spacious seating and a comfortable ride for group travel.",
+    description: "Comfortable and spacious ride for group travel.",
     image: BusImage,
   },
   {
     id: "2",
     name: "Car",
     type: "CAR",
-    description: "A sedan offers comfort, fuel efficiency, and a smooth ride for travel.",
+    description: "Fuel-efficient, stylish ride for personalized journeys.",
     image: CarImage,
   },
 ];
@@ -34,9 +41,9 @@ const Dashboard = () => {
   const [selectedFilter, setSelectedFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState(null);
-  const navigation = useNavigation();
   const [isProfileVisible, setProfileVisible] = useState(false);
-  const moveAnim = useRef(new Animated.Value(0)).current;  // Animation to move the images around the center
+  const navigation = useNavigation();
+  const moveAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -52,26 +59,19 @@ const Dashboard = () => {
     fetchUserData();
   }, []);
 
-  
-    useEffect(() => {
-          const backAction = () => {
-              // Reset navigation stack and navigate back to Home
-              navigation.reset({
-                  index: 0,
-                  routes: [{ name: 'index' }],
-              });
-              return true;  // Prevent default back action
-          };
-  
-          // Add event listener for physical back button
-          const backHandler = BackHandler.addEventListener(
-              'hardwareBackPress',
-              backAction
-          );
-  
-          // Clean up the event listener on component unmount
-          return () => backHandler.remove();
-      }, [navigation]);
+  useEffect(() => {
+    const backAction = () => {
+      navigation.goBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, [navigation]);
 
   const handleLogout = async () => {
     try {
@@ -87,7 +87,13 @@ const Dashboard = () => {
   const handleVehicleSelect = async (vehicleType) => {
     try {
       await AsyncStorage.setItem("vehicleType", vehicleType);
-      navigation.navigate("Home"); // Navigate to SelectVehicle screen
+      let selectedVehicleId = vehicleType === "BUS" ? 1 : 2;
+      let selectedBus = vehicleType === "BUS";
+      navigation.navigate("Home", {
+        userName: user?.userName,
+        selectedVehicleId,
+        selectedBus,
+      });
     } catch (error) {
       console.error("Error saving vehicle type:", error);
     }
@@ -103,17 +109,16 @@ const Dashboard = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, {user?.userName}!</Text>
+        <Text style={styles.greeting}>Hi, {user?.userName} 👋</Text>
         <View style={styles.iconContainer}>
           <TouchableOpacity onPress={() => navigation.navigate("History")}>
-            <Icon name="history" size={30} color="black" style={styles.icon} />
+            <Icon name="history" size={26} color="#333" style={styles.icon} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate("Notification")}>
-
-          <Icon name="notifications" size={30} color="black" style={styles.icon} />
+            <Icon name="notifications" size={26} color="#333" style={styles.icon} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setProfileVisible(true)}>
-            <Icon name="account-circle" size={40} color="black" />
+            <Icon name="account-circle" size={36} color="#333" />
           </TouchableOpacity>
         </View>
       </View>
@@ -122,10 +127,10 @@ const Dashboard = () => {
       <Modal visible={isProfileVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.profileModal}>
-            <Text style={styles.profileText}>User Profile</Text>
+            <Text style={styles.profileText}>👤 User Profile</Text>
             <Text style={styles.userInfo}>Username: {user?.userName}</Text>
             <Text style={styles.userInfo}>Email: {user?.email}</Text>
-            <Text style={styles.userInfo}>Phone No: {user?.phoneNumber}</Text>
+            <Text style={styles.userInfo}>Phone: {user?.phoneNumber}</Text>
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                 <Text style={styles.buttonText}>Logout</Text>
@@ -138,52 +143,59 @@ const Dashboard = () => {
         </View>
       </Modal>
 
-      {/* Search Bar */}
+      {/* Search */}
       <View style={styles.searchBar}>
-        <Ionicons name="search" size={20} color="gray" />
-        <TextInput 
-          placeholder="Search here" 
-          style={styles.searchInput} 
-          value={searchQuery} 
-          onChangeText={setSearchQuery} 
+        <Ionicons name="search" size={20} color="#777" />
+        <TextInput
+          placeholder="Search transport type"
+          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
         />
       </View>
 
       {/* Filter Tabs */}
-      <View style={{ flexDirection: "row", marginTop: 20 }}>
+      <View style={styles.filterTabs}>
         {["ALL", "CAR", "BUS"].map((filter) => (
           <TouchableOpacity
             key={filter}
             onPress={() => setSelectedFilter(filter)}
-            style={{
-              marginRight: 15,
-              borderBottomWidth: selectedFilter === filter ? 2 : 0,
-              borderBottomColor: selectedFilter === filter ? "black" : "transparent",
-            }}
+            style={[
+              styles.tab,
+              selectedFilter === filter && styles.activeTab,
+            ]}
           >
-            <Text style={{ fontWeight: selectedFilter === filter ? "bold" : "normal" }}>{filter}</Text>
+            <Text style={selectedFilter === filter ? styles.activeTabText : styles.tabText}>
+              {filter}
+            </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Car List */}
+      {/* Cards */}
       <FlatList
         data={filteredCars}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 20 }}
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontWeight: "bold", fontSize: 16 }}>{item.name}</Text>
-              <Text style={{ color: "gray", fontSize: 12 }}>{item.description}</Text>
-              <TouchableOpacity 
-                style={styles.bookNowButton} 
-                onPress={() => handleVehicleSelect(item.type)}
+          <TouchableOpacity
+            style={styles.card}
+            activeOpacity={0.9}
+            onPress={() => handleVehicleSelect(item.type)}
+          >
+            <Image source={item.image} style={styles.cardImage} />
+            <View style={styles.cardOverlay} />
+            <View style={styles.cardContent}>
+              <Text style={styles.cardTitle}>{item.name}</Text>
+              <Text style={styles.cardDesc}>{item.description}</Text>
+              <TouchableOpacity style={styles.bookButton}
+              onPress={() => handleVehicleSelect(item.type)}
               >
-                <Text style={{ color: "white" }}>Book Now</Text>
+                <Text style={styles.bookButtonText}>Book Now</Text>
+                <Ionicons name="arrow-forward" color="#fff" size={16} />
               </TouchableOpacity>
             </View>
-            <Image source={item.image} style={styles.carImage} />
-          </View>
+          </TouchableOpacity>
         )}
       />
     </View>
@@ -191,24 +203,76 @@ const Dashboard = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 20 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center",marginTop: 20, marginBottom: 20 },
-  greeting: { fontSize: 24, fontWeight: "bold" },
-  iconContainer: { flexDirection: "row", alignItems: "center" },
-  icon: { marginLeft: 10 },
+  container: { flex: 1, backgroundColor: "#f2f4f7", paddingHorizontal: 20, paddingTop: 40 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
+  greeting: { fontSize: 24, fontWeight: "bold", color: "#222" },
+  iconContainer: { flexDirection: "row", alignItems: "center", gap: 12 },
+  icon: { marginHorizontal: 4 },
   modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" },
-  profileModal: { backgroundColor: "#fff", padding: 20, borderRadius: 10, width: "80%", alignItems: "center" },
-  profileText: { fontSize: 24, fontWeight: "bold", color: "#ff6600" },
-  userInfo: { fontSize: 16, color: "#333", marginVertical: 2 },
-  buttonContainer: { flexDirection: "row", justifyContent: "space-between", width: "100%", marginTop: 10 },
-  logoutButton: { backgroundColor: "#ff6600", paddingVertical: 10, paddingHorizontal: 30, borderRadius: 5 },
-  closeButton: { backgroundColor: "#ff6600", paddingVertical: 10, paddingHorizontal: 30, borderRadius: 5 },
-  buttonText: { fontSize: 18, color: "#fff", textAlign: "center" },
-  searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: "#f0f0f0", borderRadius: 10, paddingHorizontal: 10, height: 40 },
-  searchInput: { flex: 1, marginLeft: 10 },
-  card: { backgroundColor: "#fff", padding: 15, borderRadius: 10, flexDirection: "row", alignItems: "center", marginTop: 15, elevation: 3 },
-  carImage: { width: 150, height: 90, resizeMode: "contain" },
-  bookNowButton: { backgroundColor: "#ff6600", paddingVertical: 5, paddingHorizontal: 15, borderRadius: 5, marginTop: 10, alignSelf: "flex-start" },
+  profileModal: { backgroundColor: "#fff", padding: 25, borderRadius: 12, width: "85%", alignItems: "center" },
+  profileText: { fontSize: 22, fontWeight: "bold", color: "#ff6600", marginBottom: 10 },
+  userInfo: { fontSize: 15, color: "#444", marginVertical: 2 },
+  buttonContainer: { flexDirection: "row", justifyContent: "space-around", width: "100%", marginTop: 20 },
+  logoutButton: { backgroundColor: "#ff3b30", padding: 12, borderRadius: 8, width: "45%" },
+  closeButton: { backgroundColor: "#aaa", padding: 12, borderRadius: 8, width: "45%" },
+  buttonText: { color: "#fff", fontWeight: "bold", textAlign: "center" },
+  searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 15, height: 45, elevation: 2 },
+  searchInput: { flex: 1, marginLeft: 10, fontSize: 16, color: "#333" },
+  filterTabs: { flexDirection: "row", justifyContent: "space-around", marginVertical: 20 },
+  tab: { paddingBottom: 6 },
+  tabText: { fontSize: 16, color: "#777" },
+  activeTab: { borderBottomWidth: 2, borderColor: "#ff6600" },
+  activeTabText: { fontSize: 16, fontWeight: "bold", color: "#ff6600" },
+  card: {
+    height: 180,
+    marginBottom: 20,
+    borderRadius: 20,
+    overflow: "hidden",
+    position: "relative",
+    elevation: 4,
+    backgroundColor: "#fff",
+  },
+  cardImage: {
+    width: "100%",
+    height: "100%",
+    position: "absolute",
+    resizeMode: "cover",
+  },
+  cardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(48, 48, 48, 0.5)",
+  },
+  cardContent: {
+    flex: 1,
+    justifyContent: "space-between",
+    padding: 20,
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  cardDesc: {
+    fontSize: 14,
+    color: "#eee",
+    fontWeight: "bold",
+    marginTop: 5,
+  },
+  bookButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ff6600",
+    alignSelf: "flex-start",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginTop: 10,
+  },
+  bookButtonText: {
+    color: "#fff",
+    marginRight: 6,
+    fontWeight: "bold",
+  },
 });
 
 export default Dashboard;

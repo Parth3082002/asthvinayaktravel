@@ -1,213 +1,260 @@
-import React, { useEffect, useState } from "react";
-import { 
-    View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, 
-    ActivityIndicator, BackHandler, Dimensions, Platform, useWindowDimensions 
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  BackHandler,
+  Dimensions,
+  Platform,
+  useWindowDimensions,
+  ImageBackground,
 } from "react-native";
-import { Svg, Path } from "react-native-svg";
-import { useNavigation, useRoute } from "@react-navigation/native"; 
-import AsyncStorage from "@react-native-async-storage/async-storage"; 
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Picker } from "@react-native-picker/picker";
+import LottieView from "lottie-react-native";
+import Icon from 'react-native-vector-icons/Ionicons';
 
-const { width, height } = Dimensions.get("window"); // Get screen width and height
 
+const { width, height } = Dimensions.get("window");
 
 const Home = () => {
-    const navigation = useNavigation();
-    const route = useRoute(); 
-    const { width: screenWidth } = useWindowDimensions(); // Get dynamic screen width
-    const [cities, setCities] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [vehicleType, setVehicleType] = useState(null); 
-    const [selectedCity, setSelectedCity] = useState({ cityId: null, cityName: null });
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { width: screenWidth } = useWindowDimensions();
 
-    useEffect(() => {
-        const fetchVehicleType = async () => {
-            try {
-                const storedVehicleType = await AsyncStorage.getItem("vehicleType");
-                if (storedVehicleType) {
-                    setVehicleType(storedVehicleType);
+  const [cities, setCities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [vehicleType, setVehicleType] = useState(null);
+  const [selectedCityId, setSelectedCityId] = useState();
+  const [selectedDestination, setSelectedDestination] = useState();
+  const userName = route.params?.userName || "";
+  const selectedVehicleId = route.params?.selectedVehicleId;
+  const selectedBus = route.params?.selectedBus;
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCities = () => {
+        setLoading(true);
+        fetch("https://newenglishschool-001-site1.ktempurl.com/api/City/")
+          .then((res) => res.json())
+          .then((data) => {
+            setCities(data);
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error("Error fetching cities:", err);
+            setLoading(false);
+          });
+      };
+
+      fetchCities();
+
+      return () => {
+        setSelectedCityId(undefined);
+        setSelectedDestination(undefined);
+      };
+    }, [])
+  );
+
+  useEffect(() => {
+    const fetchVehicleType = async () => {
+      try {
+        const storedType = await AsyncStorage.getItem("vehicleType");
+        if (storedType) setVehicleType(storedType);
+      } catch (err) {
+        console.error("Error fetching vehicle type:", err);
+      }
+    };
+    fetchVehicleType();
+  }, []);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
+      navigation.navigate("SelectVehicle1");
+      return true;
+    });
+    return () => backHandler.remove();
+  }, []);
+
+  const storeCityData = async (cityId, cityName) => {
+    try {
+      await AsyncStorage.setItem("selectedCityId", cityId.toString());
+      await AsyncStorage.setItem("selectedCityName", cityName);
+    } catch (err) {
+      console.error("Error storing city data:", err);
+    }
+  };
+
+  const handlePress = async (cityId, cityName, destinationId, destinationName) => {
+    await storeCityData(cityId, cityName);
+    const isTuljapur = destinationId === "tuljapur";
+    navigation.navigate("SelectTour1", {
+      selectedCityId: cityId,
+      selectedCityName: cityName,
+      destinationId,
+      destinationName,
+      vehicleType,
+      selectedVehicleId,
+      selectedBus,
+      tuljapur: isTuljapur,
+    });
+  };
+
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.lottieWrapper}>
+        <TouchableOpacity
+          style={styles.backIcon}
+          onPress={() => navigation.navigate("SelectVehicle1")}
+        >
+          <Icon name="chevron-back" size={28} color="#FF5722" />
+        </TouchableOpacity>
+
+        <LottieView
+          source={require("../../assets/travelanimation.json")}
+          autoPlay
+          loop
+          style={styles.lottie}
+        />
+      </View>
+
+
+      <Text style={styles.welcomeText}>Welcome {userName}!</Text>
+
+      <View style={styles.citySelection}>
+        {loading ? (
+          <ActivityIndicator size="large" color="#FF5722" />
+        ) : (
+          <>
+            <View style={styles.pickerContainer}>
+              <Text style={styles.pickerLabel}>Select Start City</Text>
+              <Picker
+                selectedValue={selectedCityId}
+                style={styles.picker}
+                onValueChange={(val) => setSelectedCityId(val)}
+                dropdownIconColor="#FF5722"
+              >
+                <Picker.Item label="Select a city..." value={undefined} />
+                {cities.map((city) => (
+                  <Picker.Item key={city.cityId} label={city.cityName} value={city.cityId} />
+                ))}
+              </Picker>
+            </View>
+
+            <View style={styles.pickerContainer}>
+              <Text style={styles.pickerLabel}>Select Destination</Text>
+              <Picker
+                selectedValue={selectedDestination}
+                style={styles.picker}
+                onValueChange={(val) => setSelectedDestination(val)}
+                dropdownIconColor="#FF5722"
+              >
+                <Picker.Item label="Select a destination..." value={undefined} />
+                <Picker.Item label="Ashtavinayak" value="ashtavinayak" />
+                <Picker.Item label="Tuljapur" value="tuljapur" />
+              </Picker>
+            </View>
+
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={() => {
+                if (!selectedCityId || !selectedDestination) {
+                  alert("Please select both a city and a destination.");
+                  return;
                 }
-            } catch (error) {
-                console.error("Error fetching vehicle type from storage:", error);
-            }
-        };
-
-        fetchVehicleType();
-    }, []);
-
-    useEffect(() => {
-        fetch("https://ashtavinayak.somee.com/api/City/")
-            .then((response) => response.json())
-            .then((data) => {
-                setCities(data);
-                setLoading(false);
-            })
-            .catch((error) => {
-                console.error("Error fetching cities:", error);
-                setLoading(false);
-            });
-    }, []);
-
-    useEffect(() => {
-        const backAction = () => {
-            navigation.reset({
-                index: 0,
-                routes: [{ name: 'SelectVehicle1' }],
-            });
-            return true;
-        };
-
-        const backHandler = BackHandler.addEventListener(
-            'hardwareBackPress',
-            backAction
-        );
-
-        return () => backHandler.remove();
-    }, []);
-
-
-    const storeCityData = async (cityId, cityName) => {
-        try {
-            await AsyncStorage.setItem("selectedCityId", cityId.toString());
-            await AsyncStorage.setItem("selectedCityName", cityName);
-        } catch (error) {
-            console.error("Error storing city data:", error);
-        }
-    };
-
-    const handlePress = async (cityId, cityName) => {
-        // console.log("Selected City ID:", cityId);
-        // console.log("Selected City Name:", cityName);
-        // console.log("Selected Vehicle Type:", vehicleType);
-
-        await storeCityData(cityId, cityName);
-
-        navigation.navigate("SelectTour1", {
-            selectedCityId: cityId,
-            selectedCityName: cityName,
-            vehicleType: vehicleType,
-        });
-
-        
-        setSelectedCity({ cityId, cityName });
-    };
-
-    return (
-        <ScrollView style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.welcomeText}>“ Welcome Back Ganesh !! ”</Text>
-                <Text style={styles.subText}>Where You Want to go ?</Text>
-            </View>
-
-            <View style={styles.citySelection}>
-                <View style={styles.illustrationContainer}>
-                    <Svg width="100%" height={height * 0.15} viewBox="0 0 200 100">
-                        <Path stroke="#E0E0E0" fill="transparent" strokeWidth="2" />
-                    </Svg>
-                    <Image 
-                        source={require("../../assets/images/bus1.png")} 
-                        style={[styles.illustration, { width: screenWidth * 0.6 }]} 
-                    />
-                </View>
-
-                <Text style={styles.cityLabel}>Select Start City</Text>
-
-                {loading ? (
-                    <ActivityIndicator size="large" color="#FF5722" />
-                ) : (
-                    cities.map((city) => (
-                        <TouchableOpacity
-                            key={city.cityId}
-                            style={[styles.cityButton, { width: screenWidth * 0.4 }]}
-                            onPress={() => handlePress(city.cityId, city.cityName)}
-                        >
-                            <Text style={styles.cityText}>{city.cityName}</Text>
-                        </TouchableOpacity>
-                    ))
-                )}
-            </View>
-        </ScrollView>
-    );
+                const city = cities.find((c) => c.cityId === selectedCityId);
+                const destName =
+                  selectedDestination === "ashtavinayak" ? "Ashtavinayak" : "Tuljapur";
+                handlePress(city.cityId, city.cityName, selectedDestination, destName);
+              }}
+            >
+              <Text style={styles.nextButtonText}>Next</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </ScrollView>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#F5F5F5",
-        marginTop: Platform.OS === "ios" ? height * 0.05 : height * 0.04,
-    },
-    header: {
-        padding: width * 0.05,
-        paddingTop: height * 0.07,
-        height: height * 0.25,
-        alignItems: "center",
-        backgroundColor: "#FF5722",
-        position: "relative",
-        zIndex: 1,
-        marginBottom: height * 0.015,
-        marginTop:10
-    },
-    welcomeText: {
-        fontSize: width * 0.08,
-        fontWeight: "bold",
-        color: "#fff",
-        textAlign: "center",
-    },
-    subText: {
-        fontSize: width * 0.04,
-        color: "#fff",
-        marginTop: height * 0.01,
-        textAlign: "center",
-        marginBottom: height * 0.07,
-    },
-    illustrationContainer: {
-        alignItems: "center",
-        marginTop: -height * 0.1,
-        zIndex: 2,
-    },
-    illustration: {
-        height: height * 0.15,
-        resizeMode: "contain",
-    },
-    citySelection: {
-        alignItems: "center",
-        marginTop: height * 0.05,
-        backgroundColor: "#fff",
-        padding: width * 0.04,
-        borderRadius: 15,
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 3 },
-        shadowRadius: 5,
-        elevation: 4,
-        width: "80%",
-        alignSelf: "center",
-        zIndex: 2,
-    },
-    cityLabel: {
-        fontSize: width * 0.045,
-        color: "#555",
-        marginBottom: height * 0.02,
-    },
-    cityButton: {
-        backgroundColor: "#FFCCBC",
-        paddingVertical: height * 0.015,
-        borderRadius: 12,
-        marginVertical: height * 0.01,
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 3 },
-        shadowRadius: 5,
-        elevation: 4,
-        justifyContent: "center",
-        alignItems: "center",
-        flexDirection: "row",
-    },
-    cityText: {
-        fontSize: width * 0.05,
-        color: "#D84315",
-        fontWeight: "bold",
-        textAlign: "center",
-    },
+  container: {
+    flex: 1,
+    marginTop: Platform.OS === "ios" ? height * 0.05 : height * 0.04,
+  },
+  background: {
+    flex: 1,
+  },
+  lottieWrapper: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  lottie: {
+    width: 160,
+    height: 160,
+  },
+  backIcon: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    padding: 10,
+    zIndex: 10,
+  },
+
+  welcomeText: {
+    fontSize: width * 0.07,
+    fontWeight: "bold",
+    color: "#FF5722",
+    textAlign: "center",
+    marginVertical: 10,
+  },
+  citySelection: {
+    marginTop: 20,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    borderRadius: 20,
+    padding: 20,
+    marginHorizontal: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  pickerContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 18,
+    elevation: 2,
+  },
+  pickerLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FF5722",
+    marginBottom: 6,
+  },
+  picker: {
+    width: "100%",
+    color: "#333",
+    backgroundColor: "#f7f7f7",
+    borderRadius: 8,
+  },
+  nextButton: {
+    backgroundColor: "#FF5722",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  nextButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
 });
 
-export default Home;
+export default Home;

@@ -1,11 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, BackHandler, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from '@expo/vector-icons';
 
 const NotificationsScreen = () => {
   const [userId, setUserId] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const backAction = () => {
+      navigation.goBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () => backHandler.remove();
+  }, [navigation]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -28,7 +41,7 @@ const NotificationsScreen = () => {
       if (!userId) return;
 
       try {
-        const response = await fetch(`https://ashtavinayak.somee.com/api/Notification/GetUserNotifications/${userId}`);
+        const response = await fetch(`https://newenglishschool-001-site1.ktempurl.com/api/Notification/GetUserNotifications/${userId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -48,7 +61,18 @@ const NotificationsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Notifications</Text>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.reset({
+            index: 0,
+            routes: [{ name: "SelectVehicle1" }],
+          })}
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.heading}>Notifications</Text>
+      </View>
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : notifications.length === 0 ? (
@@ -80,13 +104,22 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: "#f5f5f5",
-    marginTop:20,
+    marginTop: 50,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 8,
   },
   heading: {
     fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 16,
     textAlign: "center",
+    flex: 1,
   },
   notificationCard: {
     backgroundColor: "#fff",

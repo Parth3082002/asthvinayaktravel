@@ -34,7 +34,7 @@ const Login = () => {
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
-      navigation.navigate("index");
+      navigation.goBack();
       return true;
     });
 
@@ -51,7 +51,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://ashtavinayak.somee.com/api/User/LoginByOTP",
+        "https://newenglishschool-001-site1.ktempurl.com/api/User/LoginByOTP",
         { MobileNo: mobileNo }
       );
 

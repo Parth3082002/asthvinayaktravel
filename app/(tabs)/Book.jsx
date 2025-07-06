@@ -24,12 +24,8 @@ const Book = () => {
 
   // Razorpay Keys - Directly integrated in the code
   // Use these for development/testing
-  const RAZORPAY_KEY_ID = 'rzp_test_AiL3OYgdBPKEeu';
-  const RAZORPAY_KEY_SECRET = 'dRNtUmxCFSqA8mBIuOJjNmR9';
-
-  // For production, uncomment these lines and comment out the test keys above
-  // const RAZORPAY_KEY_ID = 'rzp_live_DGlzWoiGqqLg0A';
-  // const RAZORPAY_KEY_SECRET = 'your_live_secret_key_here';
+  const RAZORPAY_KEY_ID = 'rzp_test_SqJODX06AyCHj3';
+  const RAZORPAY_KEY_SECRET = 'MXmpWdb28AdoOLWw3Vexsw0Q';
 
   // Add default values to prevent undefined errors
   const {
@@ -43,9 +39,14 @@ const Book = () => {
     selectedPickupPointId = 0,
     price = 0,
     vehicleType = "",
+    selectedVehicleId = 0,
+    selectedBus = false,
     childWithSeatP = 0,
     childWithoutSeatP = 0,
-    tripDate = "",
+    destinationId = "",
+    destinationName = "",
+    tuljapur = false,
+    tripDate = selectedDate,
     tripId = 0,
     tourName = "",
     selectedSeats = [],
@@ -60,7 +61,7 @@ const Book = () => {
   const [advanceAmount, setAdvanceAmount] = useState(price ? (price / 2).toString() : "0");
   const [mobileNo, setMobileNo] = useState(null);
   const [isAlertShown, setIsAlertShown] = useState(false);
-  const [droppoint, setDroppoint] = useState('');
+  const [droppoint, setDroppoint] = useState(selectedPickupPoint || "");
   const [adults, setAdults] = useState("");
   const [childWithSeat, setChildWithSeat] = useState("");
   const [childWithoutSeat, setChildWithoutSeat] = useState("");
@@ -229,10 +230,12 @@ const Book = () => {
         },
         theme: { color: '#D44206' }
       };
-  
+      console.log("user?.userId ================ ",user?.userId);
       // For all platforms, use WebView approach as a reliable fallback
+      const carPayment = false;
       navigation.navigate("PaymentScreen", {
         amount,
+        carPayment,
         isAdvancePayment,
         userId: user?.userId,
         userName: user?.userName,
@@ -241,7 +244,6 @@ const Book = () => {
         tripId,
         pickupPointId: selectedPickupPointId,
         droppoint,
-        bookingDate: date,
         seatNumbers: selectedSeats,
         adults: parseInt(adults) || 0,
         roomType,
@@ -249,9 +251,13 @@ const Book = () => {
         childWithoutSeat: parseInt(childWithoutSeat) || 0,
         totalAmount: parseFloat(totalAmount),
         razorpayKeyId: RAZORPAY_KEY_ID,
-        onPaymentComplete: (paymentId) => {
-          processBooking(parseFloat(amount), paymentId);
-        }
+        carType: selectedBus ? "" : "Car",
+        categoryId,
+        packageId,
+        cityId,
+        tripDate,
+        roomType: roomType || "shared",
+        remainingPayment : false
       });
       
       return true;
@@ -261,57 +267,6 @@ const Book = () => {
       Alert.alert("Error", "Payment processing failed. Please try again.");
       return false;
     }
-  };
-
-  // iOS-specific payment handling using WebView approach
-  const handleIOSPayment = (amount, isAdvancePayment) => {
-    setPaymentProcessing(false);
-
-    // Navigate to separate PaymentScreen with necessary props
-    navigation.navigate("PaymentScreen", {
-      amount,
-      isAdvancePayment,
-      userId: user?.userId,
-      userName: user?.userName,
-      email: user?.email,
-      phone: user?.phoneNumber,
-      tripId,
-      pickupPointId: selectedPickupPointId,
-      droppoint,
-      bookingDate: date,
-      seatNumbers: selectedSeats,
-      adults: parseInt(adults) || 0,
-      roomType,
-      childWithSeat: parseInt(childWithSeat) || 0,
-      childWithoutSeat: parseInt(childWithoutSeat) || 0,
-      totalAmount: parseFloat(totalAmount),
-      razorpayKeyId: RAZORPAY_KEY_ID, // Pass the key directly to PaymentScreen
-      onPaymentComplete: (paymentId) => {
-        // This will be called by the PaymentScreen after successful payment
-        processBooking(parseFloat(amount), paymentId);
-      }
-    });
-  };
-
-  // Simulate payment when Razorpay fails or for testing
-  const simulatePayment = (amount, isAdvancePayment) => {
-    Alert.alert(
-      "Payment Simulation Mode",
-      `Would you like to simulate a payment of ₹${amount}?`,
-      [
-        {
-          text: "Yes, Process Payment",
-          onPress: async () => {
-            const mockPaymentId = "sim_" + Math.random().toString(36).substring(2, 15);
-            await processBooking(parseFloat(amount), mockPaymentId);
-          }
-        },
-        {
-          text: "Cancel",
-          onPress: () => setPaymentProcessing(false)
-        }
-      ]
-    );
   };
 
   // Payment button handlers
@@ -326,103 +281,6 @@ const Book = () => {
       return;
     }
     handlePayment(advanceAmount, true);
-  };
-
-  // Process booking after successful payment
-  const processBooking = async (paidAmount, paymentId) => {
-    // Safety checks for null/undefined values
-    if (!route.params || !route.params.tripId) {
-      setPaymentProcessing(false);
-      Alert.alert("Error", "Trip information is missing.");
-      return;
-    }
-
-    // Ensure numeric values are properly parsed
-    const userIdValue = user && user.userId ? parseInt(user.userId) : 0;
-    const tripIdValue = parseInt(route.params.tripId) || 0;
-    const pickupPointIdValue = parseInt(route.params.selectedPickupPointId) || 0;
-
-    const bookingData = {
-      UserId: userIdValue,
-      TripId: tripIdValue,
-      PickupPointId: pickupPointIdValue,
-      Droppoint: droppoint.trim(),
-      BookingDate: new Date(route.params.selectedDate || new Date()).toISOString(),
-      Status: "Confirmed",
-      TotalPayment: parseFloat(totalAmount) || 0,
-      Advance: paidAmount || 0,
-      SeatNumbers: Array.isArray(selectedSeats) ? selectedSeats.map(seat => (seat.seatNumber || seat).toString()) : [],
-      Adults: parseInt(adults) || 0,
-      roomType: roomType || "shared",
-      Childwithseat: parseInt(childWithSeat) || 0,
-      Childwithoutseat: parseInt(childWithoutSeat) || 0,
-      PaymentId: paymentId || "", 
-      PaymentStatus: "Completed"
-    };
-
-    try {
-      const response = await fetch(
-        "https://ashtavinayak.somee.com/api/Booking/CreateBookingWithSeats",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(bookingData),
-        }
-      );
-
-      setPaymentProcessing(false);
-
-      // Handle non-JSON responses
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.indexOf("application/json") !== -1) {
-        const result = await response.json();
-        
-        if (response.ok) {
-          Alert.alert("Success", "Booking successful!", [
-            {
-              text: "OK",
-              onPress: async () => {
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: "Home" }],
-                  })
-                );
-              },
-            },
-          ]);
-        } else {
-          const errorMessage = result.message || "Booking failed. Please try again.";
-          Alert.alert("Booking Failed", errorMessage);
-        }
-      } else {
-        // Handle non-JSON response
-        if (response.ok) {
-          Alert.alert("Success", "Booking successful!", [
-            {
-              text: "OK",
-              onPress: async () => {
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: "Home" }],
-                  })
-                );
-              },
-            },
-          ]);
-        } else {
-          Alert.alert("Booking Failed", "Server returned an unexpected response. Please try again.");
-        }
-      }
-    } catch (error) {
-      setPaymentProcessing(false);
-      console.error("API Error:", error);
-      Alert.alert("Error", "Something went wrong during booking. Please try again.");
-    }
   };
 
   // Validation function to check required fields
@@ -615,15 +473,21 @@ const Book = () => {
             </View>
 
             <View style={styles.halfInputContainer}>
-              <Text style={styles.label}>Drop Location</Text>
-              <View style={styles.inputWithIcon}>
-                <Icon name="location-sharp" size={20} color="#555" />
+            <Text style={styles.label}>Drop Location</Text>
+              <View
+                style={[
+                  styles.inputWithIcon,
+                  !isEditable && styles.nonEditableInput,
+                ]}
+              >
+                <Icon name="location-outline" size={20} color="#555" />
                 <TextInput
                   style={styles.inputWithoutPadding}
+                  value={droppoint}
                   placeholder="Drop Location"
                   placeholderTextColor="#aaa"
-                  value={droppoint}
                   onChangeText={(text) => setDroppoint(text)}
+                  editable={isEditable}
                 />
               </View>
               {errors.droppoint && <Text style={styles.errorText}>{errors.droppoint}</Text>}
@@ -708,13 +572,15 @@ const Book = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F9FAFB",
+    marginTop: 30,
+    marginBottom:40
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#D44206",
-    paddingVertical: 15,
+    paddingVertical: 18,
     paddingHorizontal: 20,
     marginTop: Platform.OS === 'ios' ? 40 : 0,
     justifyContent: "center",
@@ -725,26 +591,25 @@ const styles = StyleSheet.create({
   },
   backButtonCircle: {
     backgroundColor: '#FFFFFF',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   backButton: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+    fontSize: 22,
+    color: '#1E40AF',
   },
   headerText: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: "600",
   },
   formContainer: {
     padding: 20,
@@ -752,93 +617,58 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#FFFFFF",
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
     elevation: 3,
   },
   label: {
     fontSize: 14,
-    marginBottom: 5,
-    color: "#333",
+    marginBottom: 6,
+    color: "#1F2937",
     fontWeight: "500",
   },
   errorText: {
     color: 'red',
-    fontSize: 14,
-    marginTop: 5,
+    fontSize: 13,
+    marginTop: 4,
   },
   input: {
-    backgroundColor: "#fff",
-    padding: 10,
+    backgroundColor: "#F3F4F6",
+    padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#E5E7EB",
     width: "100%",
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  nonEditableInput: {
+    backgroundColor: "#E5E7EB",
+    color: "#6B7280",
   },
   pickerContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: "#F3F4F6",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 8,
+    borderColor: "#E5E7EB",
+    marginBottom: 12,
   },
   picker: {
-    height: 44,
+    height: 48,
   },
   datePicker: {
-    backgroundColor: "#fff",
-    padding: 10,
+    backgroundColor: "#F3F4F6",
+    padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  button: {
-    backgroundColor: "#D44206",
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 20,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  payFullButton: {
-    backgroundColor: "#0D9F28",
-  },
-  payAdvanceButton: {
-    backgroundColor: "#3B8FC8",
-    flex: 1,
-    marginRight: 10,
-  },
-  disabledButton: {
-    backgroundColor: "#cccccc",
-  },
-  inputFieldContainer: {
-    marginVertical: 8,
-  },
-  advanceInput: {
-    flex: 1,
-  },
-  paymentIconsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 20,
-  },
-  icon: {
-    width: 50,
-    height: 50,
-    resizeMode: "contain",
+    borderColor: "#E5E7EB",
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   halfWidth: {
     flex: 1,
@@ -848,24 +678,63 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 4,
   },
-  
+  inputWithIcon: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginBottom: 12,
+  },
   inputWithoutPadding: {
     flex: 1,
     padding: 0,
-    marginLeft: 5,
+    marginLeft: 8,
+    fontSize: 14,
   },
-  nonEditableInput: {
-    backgroundColor: "#f0f0f0",
-    color: "#666",
-  },inputWithIcon: {
-    flexDirection: "row",
+  button: {
+    paddingVertical: 16,
+    borderRadius: 8,
     alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 10,
+    marginTop: 20,
+  },
+  payFullButton: {
+    backgroundColor: "#10B981",
+  },
+  payAdvanceButton: {
+    backgroundColor: "#3B82F6",
+    flex: 1,
+    marginRight: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  advanceInput: {
+    flex: 1,
+    marginTop:25,
+    backgroundColor: "#F3F4F6",
+    // padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 8,
+    borderColor: "#E5E7EB",
+  },
+  disabledButton: {
+    backgroundColor: "#D1D5DB",
+  },
+  paymentIconsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 24,
+  },
+  icon: {
+    width: 48,
+    height: 48,
+    resizeMode: "contain",
   },
   processingContainer: {
     alignItems: "center",
@@ -874,9 +743,10 @@ const styles = StyleSheet.create({
   },
   processingText: {
     marginTop: 10,
-    color: "#D44206",
+    color: "#1E40AF",
     fontSize: 16,
   },
 });
+
 
 export default Book;

@@ -1,13 +1,32 @@
 // app/(tabs)/PaymentScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Alert, Platform } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import axios from 'axios';
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+
+  // Debug: Log all received parameters
+  useEffect(() => {
+    console.log("=== PaymentScreen - Received Parameters ===");
+    console.log("All params:", params);
+    console.log("PackageId:", params.packageId);
+    console.log("BookingDate:", params.bookingDate);
+    console.log("BookingTime:", params.bookingTime);
+    console.log("CarType:", params.carType);
+    console.log("CategoryId:", params.categoryId);
+    console.log("PackageName:", params.packageName);
+    console.log("CategoryName:", params.categoryName);
+    console.log("CarPayment:", params.carPayment);
+    console.log("Adults:", params.adults);
+    console.log("ChildWithSeat:", params.childWithSeat);
+    console.log("ChildWithoutSeat:", params.childWithoutSeat);
+    console.log("=== End PaymentScreen Parameters ===");
+  }, [params]);
 
   const {
     amount = "0",
@@ -16,8 +35,234 @@ export default function PaymentScreen() {
     email = "",
     phone = "",
     razorpayKeyId = "",
-    // Extract other params as needed
+    bookingDate = "",
+    bookingTime = "",
+    carType = "",
+    categoryId = "",
+    packageId = "",
+    packageName = "",
+    categoryName = "",
+    cityId = "",
+    cityName = "",
+    seatNumbers = "", 
+    roomType = "",
+    adults = "",
+    childWithSeat = "",
+    childWithoutSeat = "",
+    totalAmount = "",
+    tripId = "",
+    pickupPointId = "",
+    droppoint = "",
+    droppointId = "",
+    tripDate,
+    carPayment,
+    remainingPayment,
+    transactionId,
+    bookingId    // Extract other params as needed
   } = params;
+
+  // Function to call demo API after successful payment
+  const handleSuccessfulPayment = async (paymentId) => {
+    try {
+
+      if(remainingPayment == "true"){
+        console.log("-------remaining payment body------");
+        console.log("transactionid: ",transactionId);
+        console.log("bookingid:", bookingId);
+        console.log("remaining amount:",amount);
+        console.log("transactionReference:",paymentId);
+        
+        const remainingPaymentBody={
+          transactionId: transactionId,
+          bookingId: bookingId,
+          paymentMethod: "RazorPay",
+          amount: amount,
+          paymentStatus: "Confirmed",
+          userId: parseInt(userId),
+          transactionReference: paymentId
+        };
+        const response = await axios.post(
+          "https://newenglishschool-001-site1.ktempurl.com/api/Booking/UpdatePayment",
+          remainingPaymentBody,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${params.token}`
+            }
+          }
+        );
+  
+        if (response.status === 200 || response.status === 201) {
+          Alert.alert("Success", "Remaining Amount Paid Successfully!", [
+            {
+              text: "OK",
+              onPress: () => {
+                router.replace("/(tabs)/SelectVehicle1");
+              }
+            }
+          ]);
+        } else {
+          Alert.alert("Payment Failed", "Unexpected server response.");
+        }
+        return; // Exit early for remaining payment
+      }
+      
+      // Only execute this for new bookings (not remaining payments)
+      const now = new Date();
+      const formattedDate = new Date(bookingDate || now).toISOString();
+      const formattedTime = now.toISOString();
+  
+      const transactionData = {
+        transactionId: 0,
+        paymentMethod: "Razorpay",
+        transactionDate: formattedTime,
+        amount: parseFloat(amount),
+        paymentStatus: "Completed",
+        userId: parseInt(userId),
+        transactionReference: paymentId
+      };
+      console.log("Transaction data : ", transactionData);
+      if (carPayment === 'true' || carPayment === true) {
+        // 🚗 Car Booking Request
+        console.log("=== Car Booking API Parameters ===");
+        console.log("PackageId:", packageId);
+        console.log("BookingDate:", bookingDate);
+        console.log("BookingTime:", bookingTime);
+        console.log("CarType:", carType);
+        console.log("CategoryId:", categoryId);
+        console.log("PackageName:", packageName);
+        console.log("CategoryName:", categoryName);
+        console.log("Adults:", adults);
+        console.log("ChildWithSeat:", childWithSeat);
+        console.log("ChildWithoutSeat:", childWithoutSeat);
+        console.log("=== End Car Booking Parameters ===");
+        
+        const carBookingBody = {
+          userId: parseInt(userId),
+          tripId: parseInt(tripId) || 0,
+          pickupPointId: parseInt(pickupPointId),
+          droppoint: droppoint?.trim(),
+          roomType: roomType || "shared",
+          status: "Confirmed",
+          totalPayment: parseFloat(totalAmount),
+          advance: parseFloat(amount),
+          carType: carType || "",
+          date: bookingDate, // Use bookingDate from CarBook
+          time: bookingTime, // Use bookingTime from CarBook
+          packageId: parseInt(packageId),
+          categoryId: parseInt(categoryId),
+          packageName: packageName,
+          categoryName: categoryName,
+          cityId: parseInt(cityId),
+          cityName: cityName,
+          adults: parseInt(adults) || 0,
+          childWithSeat: parseInt(childWithSeat) || 0,
+          childWithoutSeat: parseInt(childWithoutSeat) || 0,
+          transaction: transactionData
+        };
+        console.log("Car Booking : ", carBookingBody);
+        const response = await axios.post(
+          "https://newenglishschool-001-site1.ktempurl.com/api/Booking/BookCar",
+          carBookingBody,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${params.token}`
+            }
+          }
+        );
+  
+        if (response.status === 200 || response.status === 201) {
+          Alert.alert("Success", "Car booking successful!", [
+            {
+              text: "OK",
+              onPress: () => {
+                router.replace("/(tabs)/SelectVehicle1");
+              }
+            }
+          ]);
+        } else {
+          Alert.alert("Booking Failed", "Unexpected server response.");
+        }
+  
+      } else {
+        // 👥 Standard Passenger Booking with Seats
+        const seatBookingBody = {
+          carType: carType || "",
+          date: tripDate,
+          time: formattedTime,
+          userId: parseInt(userId),
+          tripId: parseInt(tripId),
+          pickupPointId: parseInt(pickupPointId),
+          droppoint: droppoint?.trim(),
+          droppointId: droppointId ? parseInt(droppointId) : 0,
+          bookingDate: formattedDate.split("T")[0],
+          roomType: "shared",
+          status: "Confirmed",
+          totalPayment: parseFloat(totalAmount),
+          advance: parseFloat(amount),
+          bookingCode: "",
+          seatNumbers: seatNumbers,
+          adults: parseInt(adults) || 0,
+          childwithseat: parseInt(childWithSeat) || 0,
+          childwithoutseat: parseInt(childWithoutSeat) || 0,
+          categoryId: parseInt(categoryId),
+          cityId: parseInt(cityId),
+          packageId: parseInt(packageId),
+          transaction: transactionData
+        };
+        console.log("Bus Booking : ",seatBookingBody);
+        const response = await axios.post(
+          "https://newenglishschool-001-site1.ktempurl.com/api/Booking/CreateBookingWithSeats",
+          seatBookingBody,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${params.token}`
+            }
+          }
+        );
+  
+        if (response.status === 200 || response.status === 201) {
+          Alert.alert("Success", "Booking successful!", [
+            {
+              text: "OK",
+              onPress: () => {
+                router.replace("/(tabs)/SelectVehicle1");
+              }
+            }
+          ]);
+        } else {
+          Alert.alert("Booking Failed", "Unexpected server response.");
+        }
+      }
+  
+    } catch (error) {
+      console.error("Booking API Error:", error);
+      Alert.alert("Error", "Failed to complete booking. Please try again.");
+    }
+  };
+  
+
+  const handleMessage = (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      
+      if (data.type === 'payment_success') {
+        // Handle successful payment
+        console.log("Payment successful:", data.paymentId);
+        
+        // Call the function to handle successful payment
+        handleSuccessfulPayment(data.paymentId);
+      } else if (data.type === 'payment_cancelled') {
+        console.log("Payment cancelled");
+        router.back();
+      }
+    } catch (error) {
+      console.error('Error processing WebView message:', error);
+      router.back();
+    }
+  };
 
   // Create the HTML for the Razorpay checkout
   const htmlContent = `
@@ -69,28 +314,6 @@ export default function PaymentScreen() {
     </html>
   `;
 
-  const handleMessage = (event) => {
-    try {
-      const data = JSON.parse(event.nativeEvent.data);
-      
-      if (data.type === 'payment_success') {
-        // Handle successful payment
-        console.log("Payment successful:", data.paymentId);
-        
-        // Navigate back or to a success page
-        router.back();
-        // Or to a success page:
-        // router.push('/(tabs)/PaymentSuccess');
-      } else if (data.type === 'payment_cancelled') {
-        console.log("Payment cancelled");
-        router.back();
-      }
-    } catch (error) {
-      console.error('Error processing WebView message:', error);
-      router.back();
-    }
-  };
-
   // Make sure WebView is installed
   useEffect(() => {
     // You can add any initialization logic here
@@ -120,7 +343,45 @@ export default function PaymentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === 'ios' ? 50 : 40,
+    paddingBottom: 45, // Add padding for status bar
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    marginTop: Platform.OS === 'ios' ? 0 : 20, // Add margin for Android
+  },
+  backButtonContainer: {
+    marginRight: 15,
+  },
+  backButtonCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  backButton: {
+    fontSize: 20,
+    color: "#333",
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 15,
+    paddingTop: 15,
+    paddingBottom: 100, // Add padding at bottom for better scrolling
   },
   webview: {
     flex: 1,

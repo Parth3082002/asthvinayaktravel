@@ -30,10 +30,7 @@ const Registration = () => {
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Login" }],
-      });
+      navigation.goBack();
       return true;
     });
 
@@ -61,7 +58,7 @@ const Registration = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "https://ashtavinayak.somee.com/api/User/Register",
+        "https://newenglishschool-001-site1.ktempurl.com/api/User/Register",
         {
           UserName: userName,
           Email: email,

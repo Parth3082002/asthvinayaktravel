@@ -26,8 +26,8 @@ const CarBook = () => {
 
   // Razorpay Keys - Directly integrated in the code
   // Use these for development/testing
-  const RAZORPAY_KEY_ID = 'rzp_test_AiL3OYgdBPKEeu';
-  const RAZORPAY_KEY_SECRET = 'dRNtUmxCFSqA8mBIuOJjNmR9';
+  const RAZORPAY_KEY_ID = 'rzp_test_SqJODX06AyCHj3';
+  const RAZORPAY_KEY_SECRET = 'MXmpWdb28AdoOLWw3Vexsw0Q';
 
   // For production, uncomment these lines and comment out the test keys above
   // const RAZORPAY_KEY_ID = 'rzp_live_DGlzWoiGqqLg0A';
@@ -38,12 +38,13 @@ const CarBook = () => {
 
   // Extract all values from bookingData
   const {
-    carType = 0,
-    carTypeLabel = "",
+    carType ,
+    carTypeLabel = carType,
     acType = "",
     childWithSeatP = 0,
     childWithoutSeatP = 0,
-    price = 0,
+    withoutBookingAmount = 0,
+    price,
     date = new Date().toISOString().split('T')[0], // Default to today if not provided
     time = new Date().toTimeString().split(' ')[0], // Default to current time if not provided
     selectedPickupPointId = 0,
@@ -54,9 +55,23 @@ const CarBook = () => {
     vehicleType = "",
   } = bookingData;
 
-  // Total seats based on car type
-  const totalSeats = carType;
+  // Extract additional parameters from route.params
+  const {
+    selectedVehicleId = 0,
+    selectedBus = false,
+    packageName = "",
+    packageId = 0,
+    categoryName = "",
+    categoryId = 0,
+    destinationId = "",
+    destinationName = "",
+    tuljapur = false,
+    withoutBookingAmount: routeWithoutBookingAmount = 0,
+  } = route.params || {};
 
+  // Total seats based on car type
+  const totalSeats = 5;
+  const carTypesss = carType;
   // State for user data
   const [user, setUser] = useState(null);
   const [mobileNo, setMobileNo] = useState(null);
@@ -64,7 +79,7 @@ const CarBook = () => {
 
   // State for booking details
   const [pickupLocation, setPickupLocation] = useState(selectedPickupPoint);
-  const [droppoint, setDroppoint] = useState("");
+  const [droppoint, setDroppoint] = useState(selectedPickupPoint || "");
   const [roomType, setRoomType] = useState("shared");
   const [adults, setAdults] = useState("");
   const [childWithSeat, setChildWithSeat] = useState("");
@@ -106,13 +121,25 @@ const CarBook = () => {
     fetchUserData();
   }, []);
 
+  // Log all parameters
+  useEffect(() => {
+    console.log("=== CarBook - All Parameters ===");
+    console.log("Date from CarType:", date);
+    console.log("Time from CarType:", time);
+    console.log("PackageId:", packageId);
+    console.log("PackageName:", packageName);
+    console.log("CategoryId:", categoryId);
+    console.log("CategoryName:", categoryName);
+    console.log("withoutBookingAmount from bookingData:", withoutBookingAmount);
+    console.log("withoutBookingAmount from route.params:", routeWithoutBookingAmount);
+    console.log("selectedBus:", selectedBus);
+    console.log("=== End CarBook Parameters ===");
+  }, [date, time, packageId, packageName, categoryId, categoryName, withoutBookingAmount, routeWithoutBookingAmount, selectedBus]);
+
   // Handle hardware back button
   useEffect(() => {
     const backAction = () => {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'SelectVehicle1' }],
-      });
+      handleBackNavigation();
       return true;
     };
 
@@ -124,48 +151,71 @@ const CarBook = () => {
     return () => backHandler.remove();
   }, [navigation]);
 
+  // Function to handle back navigation and clear states
+  const handleBackNavigation = () => {
+    console.log("=== CarBook - Back Navigation ===");
+    console.log("Navigating back to SelectVehicle1 and clearing states");
+    
+    // Clear all local states
+    setAdults("");
+    setChildWithSeat("");
+    setChildWithoutSeat("");
+    setPickupLocation("");
+    setDroppoint("");
+    setRoomType("shared");
+    setTotalAmount(0);
+    setAdvanceAmount(0);
+    setTotalPersons(0);
+    setErrorMessage("");
+    setPaymentProcessing(false);
+    setIsEditable(false);
+    setErrors({});
+    setIsAlertShown(false);
+    setAvailableRoomTypes(["shared"]);
+    
+    console.log("All states cleared");
+    console.log("=== End Back Navigation ===");
+    
+    // Navigate to SelectVehicle1 and reset the navigation stack
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "SelectVehicle1" }],
+      })
+    );
+  };
+
   // Calculate price based on inputs
+
+
   const calculatePrice = () => {
-    // Validate inputs to avoid NaN
     const numAdults = parseInt(adults) || 0;
     const numChildWithSeat = parseInt(childWithSeat) || 0;
     const numChildWithoutSeat = parseInt(childWithoutSeat) || 0;
-    
-    // Basic calculation (totalSeats * price per seat)
-    let finalPrice = totalSeats * price;
-    
-    // Adjust for child with seat (applying discount)
-    const childWithSeatCost = (price - childWithSeatP) * numChildWithSeat;
-    
-    // Add cost for child without seat
+  
+    const totalSeatUsers = numAdults + numChildWithSeat;
+    const totalPersonsCount = totalSeatUsers + numChildWithoutSeat;
     const childWithoutSeatCost = numChildWithoutSeat * childWithoutSeatP;
-    
-    // Calculate final price
-    finalPrice = finalPrice - childWithSeatCost + childWithoutSeatCost;
-    
-    // Calculate total persons
-    const totalPersonsCount = numAdults + numChildWithSeat + numChildWithoutSeat;
+  
+    if (totalPersonsCount > totalSeats) {
+      alert("Total passengers cannot exceed total seats.");
+      return;
+    }
+  
     setTotalPersons(totalPersonsCount);
-    
-    // Update room types based on total persons
-    if (totalPersonsCount >= 4) {
-      setAvailableRoomTypes(["shared", "family"]);
-    } else {
-      setAvailableRoomTypes(["shared"]);
-      if (roomType !== "shared") {
-        setRoomType("shared");
-      }
+  
+    // Base price covers up to 2 seated passengers (adult + childWithSeat)
+    let finalPrice = price + childWithoutSeatCost;
+    if (totalSeatUsers > 2) {
+      const extraSeats = totalSeatUsers - 2;
+      finalPrice += extraSeats * withoutBookingAmount;
     }
-    
-    // Apply family room surcharge if applicable
-    if (totalPersonsCount >= 4 && roomType === "family") {
-      finalPrice += totalPersonsCount * 500; // Family room surcharge
-    }
-    
-    // Update state
+  
     setTotalAmount(finalPrice);
-    setAdvanceAmount(Math.ceil(finalPrice / 2)); // Round up for advance amount
+    setAdvanceAmount(Math.ceil(finalPrice / 2));
+    setRoomType("shared");
   };
+  
 
   // Recalculate price when inputs change
   useEffect(() => {
@@ -196,23 +246,32 @@ const CarBook = () => {
 
   // Validate all inputs before payment/booking
   const validateInputs = () => {
+    console.log("=== Validating Inputs ===");
     const newErrors = {};
     
     if (!adults && !childWithSeat) {
       newErrors.seatCount = "Please enter at least one adult or child with seat";
+      console.log("❌ Validation failed: No adults or children with seat");
     }
     
     if (!droppoint) {
       newErrors.droppoint = "Please enter a drop location";
+      console.log("❌ Validation failed: No drop point");
     }
     
     if (!pickupLocation) {
       newErrors.pickupLocation = "Please select a pickup location";
+      console.log("❌ Validation failed: No pickup location");
     }
     
     if (!carTypeLabel) {
       newErrors.carType = "Please select a car type";
+      console.log("❌ Validation failed: No car type");
     }
+    
+    console.log("Validation errors:", newErrors);
+    console.log("Validation passed:", Object.keys(newErrors).length === 0);
+    console.log("=== End Validation ===");
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -245,23 +304,46 @@ const CarBook = () => {
 
   // Improved payment function that works with PaymentScreen
   const handlePayment = async (amount, isAdvancePayment = false) => {
+    console.log("=== handlePayment called ===");
+    console.log("Amount:", amount);
+    console.log("Is Advance Payment:", isAdvancePayment);
+    
     // Validate fields first
     if (!validateInputs()) {
+      console.log("❌ Validation failed, returning false");
       return false;
     }
+    console.log("✅ Validation passed");
   
     // Check if user exists
     if (!user || !user.userId || !token) {
+      console.log("❌ User validation failed");
       Alert.alert("Error", "User not found. Please log in again.");
       return false;
     }
+    console.log("✅ User validation passed");
   
     setPaymentProcessing(true);
   
     try {
       // Combine date and time into a valid DateTime format
-      const combinedDateTime = new Date(`${date}T${time}`);
+      // const combinedDateTime = new Date(`${date}T${time}`);
+      const carPayment = true;
       
+      console.log("=== CarBook - Passing Parameters to PaymentScreen ===");
+      console.log("Date from CarType:", date);
+      console.log("Time from CarType:", time);
+      console.log("Combined DateTime:", date);
+      console.log("PackageId:", packageId);
+      console.log("PackageName:", packageName);
+      console.log("CategoryId:", categoryId);
+      console.log("CategoryName:", categoryName);
+      console.log("Adults:", adults);
+      console.log("Child with seat:", childWithSeat);
+      console.log("Child without seat:", childWithoutSeat);
+      console.log("=== End Parameters ===");
+      
+      console.log("🚀 Attempting to navigate to PaymentScreen...");
       // Navigate to PaymentScreen with all necessary props
       navigation.navigate("PaymentScreen", {
         amount,
@@ -271,23 +353,26 @@ const CarBook = () => {
         email: user?.email,
         phone: user?.phoneNumber,
         carType: carTypeLabel,
-        pickupPointId: selectedPickupPointId,
+        pickupPointId: 1,
         droppoint,
-        bookingDate: combinedDateTime.toISOString(),
-        adults: parseInt(adults) || 0,
         roomType,
-        childWithSeat: parseInt(childWithSeat) || 0,
-        childWithoutSeat: parseInt(childWithoutSeat) || 0,
         totalAmount: parseFloat(totalAmount),
         acType,
         cityId,
         cityName,
         vehicleType,
-        status,
+        carPayment,
+        bookingDate: date,
+        bookingTime: time,
+        packageId: packageId,
+        packageName: packageName,
+        categoryId: categoryId,
+        categoryName: categoryName,
+        adults: adults,
+        childWithSeat: childWithSeat,
+        childWithoutSeat: childWithoutSeat,
         razorpayKeyId: RAZORPAY_KEY_ID,
-        onPaymentComplete: (paymentId) => {
-          processBooking(parseFloat(amount), paymentId);
-        }
+        remainingPayment : false
       });
       
       return true;
@@ -301,10 +386,32 @@ const CarBook = () => {
 
   // Payment button handlers
   const handlePayFull = () => {
+    console.log("=== Pay Full Button Clicked ===");
+    console.log("Total Amount:", totalAmount);
+    console.log("Adults:", adults);
+    console.log("Child with seat:", childWithSeat);
+    console.log("Drop point:", droppoint);
+    console.log("Pickup location:", pickupLocation);
+    console.log("Car type label:", carTypeLabel);
+    console.log("PackageId:", packageId);
+    console.log("PackageName:", packageName);
+    console.log("Date:", date);
+    console.log("Time:", time);
+    console.log("User:", user);
+    console.log("Token:", token);
+    console.log("=== End Pay Full Debug ===");
     handlePayment(totalAmount, false);
   };
 
   const handlePayAdvance = () => {
+    console.log("=== Pay Advance Button Clicked ===");
+    console.log("Advance Amount:", advanceAmount);
+    console.log("Total Amount:", totalAmount);
+    console.log("PackageId:", packageId);
+    console.log("PackageName:", packageName);
+    console.log("Date:", date);
+    console.log("Time:", time);
+    console.log("=== End Pay Advance Debug ===");
     const minAdvance = totalAmount / 2;
     if (advanceAmount < minAdvance) {
       setErrorMessage(`Advance amount should be at least ₹${minAdvance}`);
@@ -313,107 +420,12 @@ const CarBook = () => {
     handlePayment(advanceAmount, true);
   };
 
-  // Process booking after successful payment
-  const processBooking = async (paidAmount, paymentId) => {
-    setPaymentProcessing(true);
-    
-    try {
-      // Combine date and time into a valid DateTime format
-      const combinedDateTime = new Date(`${date}T${time}`);
-    
-      // Prepare booking data
-      const bookingPayload = {
-        carType: carTypeLabel,
-        date: combinedDateTime.toISOString(),
-        userId: user.userId,
-        pickupPointId: selectedPickupPointId,
-        droppoint,
-        roomType,
-        status: "Confirmed",
-        totalPayment: totalAmount,
-        advance: paidAmount,
-        acType,
-        cityId,
-        cityName,
-        vehicleType,
-        // Add fields for passenger counts
-        adults: parseInt(adults) || 0,
-        childWithSeat: parseInt(childWithSeat) || 0,
-        childWithoutSeat: parseInt(childWithoutSeat) || 0,
-        paymentId: paymentId, // Add payment ID from Razorpay
-        paymentStatus: "Completed"
-      };
-    
-      const response = await fetch(
-        "https://ashtavinayak.somee.com/api/Booking/BookCar",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(bookingPayload),
-        }
-      );
-    
-      setPaymentProcessing(false);
-  
-      // Handle non-JSON responses
-      const contentType = response.headers.get("content-type");
-      let responseData;
-      
-      if (contentType && contentType.indexOf("application/json") !== -1) {
-        responseData = await response.json();
-        
-        if (response.ok) {
-          Alert.alert("Success", "Booking successful!", [
-            {
-              text: "OK",
-              onPress: () =>
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: "SelectVehicle1" }],
-                  })
-                ),
-            },
-          ]);
-        } else {
-          const errorMessage = responseData.message || responseData.title || "Booking failed. Please try again.";
-          Alert.alert("Booking Failed", errorMessage);
-        }
-      } else {
-        // Handle non-JSON response
-        if (response.ok) {
-          Alert.alert("Success", "Booking successful!", [
-            {
-              text: "OK",
-              onPress: () =>
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [{ name: "SelectVehicle1" }],
-                  })
-                ),
-            },
-          ]);
-        } else {
-          Alert.alert("Booking Failed", "Server returned an unexpected response. Please try again.");
-        }
-      }
-    } catch (error) {
-      setPaymentProcessing(false);
-      console.error("API Error:", error);
-      Alert.alert("Error", "Something went wrong during booking. Please try again.");
-    }
-  };
-
   return (
     <View style={styles.container}>
       {/* Header with Back Arrow */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.navigate("SelectVehicle1")}
+          onPress={handleBackNavigation}
           style={styles.backButtonContainer}
         >
           <View style={styles.backButtonCircle}>
@@ -537,17 +549,22 @@ const CarBook = () => {
                 <Text style={styles.errorText}>{errors.pickupLocation}</Text>
               )}
             </View>
-
             <View style={styles.halfInputContainer}>
               <Text style={styles.label}>Drop Location</Text>
-              <View style={styles.inputWithIcon}>
-                <Icon name="location-sharp" size={20} color="#555" />
+              <View
+                style={[
+                  styles.inputWithIcon,
+                  !isEditable && styles.nonEditableInput,
+                ]}
+              >
+                <Icon name="location-outline" size={20} color="#555" />
                 <TextInput
                   style={styles.inputWithoutPadding}
+                  value={droppoint}
                   placeholder="Drop Location"
                   placeholderTextColor="#aaa"
-                  value={droppoint}
                   onChangeText={setDroppoint}
+                  editable={isEditable}
                 />
               </View>
               {errors.droppoint && (
@@ -626,7 +643,9 @@ const CarBook = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#fff",
+    marginTop: 30,
+    paddingBottom: 45,
   },
   header: {
     backgroundColor: "#D44206",

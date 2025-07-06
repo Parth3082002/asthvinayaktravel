@@ -12,6 +12,9 @@ import {
   Keyboard,
   ActivityIndicator,
   BackHandler,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import axios from "axios";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
@@ -34,14 +37,14 @@ const Otp = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      setOtp(["", "", "", "", "", ""]); 
+      setOtp(["", "", "", "", "", ""]);
     }, [])
   );
 
   useFocusEffect(
     React.useCallback(() => {
       const backAction = () => {
-        navigation.navigate("Login"); 
+        navigation.goBack();
         return true;
       };
 
@@ -67,8 +70,8 @@ const Otp = () => {
   const handleResendOtp = async () => {
     try {
       const response = await axios.post(
-        "https://ashtavinayak.somee.com/api/LoginAndRegistration/resend-otp",
-        { mobileNo },
+        "https://newenglishschool-001-site1.ktempurl.com/api/User/LoginByOTP",
+        { MobileNo: mobileNo },
         {
           headers: {
             "Content-Type": "application/json",
@@ -94,11 +97,11 @@ const Otp = () => {
       return;
     }
 
-    setLoading(true); 
+    setLoading(true);
 
     try {
       const response = await axios.post(
-        "https://ashtavinayak.somee.com/api/User/VerifyOTP",
+        "https://newenglishschool-001-site1.ktempurl.com/api/User/VerifyOTP",
         { mobileNo, otp: enteredOtp },
         {
           headers: {
@@ -132,7 +135,7 @@ const Otp = () => {
     } catch (error) {
       Alert.alert("Error", "Failed to verify OTP. Please try again.");
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -153,91 +156,85 @@ const Otp = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
-      <View style={styles.container}>
-        <View style={styles.logoContainer}>
-          <Image source={require("@/assets/images/Verify.png")} style={styles.image} />
-        </View>
+    <TouchableWithoutFeedback onPress={dismissKeyboard}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.container}>
+            <View style={styles.logoContainer}>
+              <Image source={require("@/assets/images/Verify.png")} style={styles.image} />
+            </View>
 
-        <Text style={styles.verificationHeading}>OTP Verification</Text>
-        <Text style={styles.title}>Check your phone for the OTP</Text>
-        <Text style={styles.subtitle}>Sent to: {mobileNo}</Text>
+            <Text style={styles.verificationHeading}>OTP Verification</Text>
+            <Text style={styles.title}>Check your phone for the OTP</Text>
+            <Text style={styles.subtitle}>Sent to: {mobileNo}</Text>
 
-        <View style={styles.otpContainer}>
-          {otp.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => (otpRefs.current[index] = ref)}
-              style={styles.otpInput}
-              value={digit}
-              onChangeText={(text) => handleInputChange(text, index)}
-              keyboardType="numeric"
-              maxLength={1}
-              onKeyPress={({ nativeEvent }) => {
-                if (nativeEvent.key === "Backspace" && index > 0 && !otp[index]) {
-                  otpRefs.current[index - 1]?.focus();
-                }
-              }}
-            />
-          ))}
-        </View>
+            <View style={styles.otpContainer}>
+              {otp.map((digit, index) => (
+                <TextInput
+                  key={index}
+                  ref={(ref) => (otpRefs.current[index] = ref)}
+                  style={styles.otpInput}
+                  value={digit}
+                  onChangeText={(text) => handleInputChange(text, index)}
+                  keyboardType="numeric"
+                  maxLength={1}
+                  onKeyPress={({ nativeEvent }) => {
+                    if (nativeEvent.key === "Backspace" && index > 0 && !otp[index]) {
+                      otpRefs.current[index - 1]?.focus();
+                    }
+                  }}
+                />
+              ))}
+            </View>
 
-        <Text style={styles.notReceivedText}>Not received yet? Resend it</Text>
+            <Text style={styles.notReceivedText}>Not received yet? Resend it</Text>
 
-        <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp} disabled={loading}>
-          <Text style={styles.resendText}>Resend Code</Text>
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp} disabled={loading}>
+              <Text style={styles.resendText}>Resend Code</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity style={styles.nextButton} onPress={verifyOtp} disabled={loading}>
-          {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.nextText}>Verify OTP</Text>}
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity style={styles.nextButton} onPress={verifyOtp} disabled={loading}>
+              {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.nextText}>Verify OTP</Text>}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
     paddingHorizontal: 20,
-  },
-  backArrow: {
-    marginTop: 50,
-    marginBottom: 20,
-    position: "absolute",
-    left: 0,
-    zIndex: 1,
+    justifyContent: "center",
   },
   verificationHeading: {
-    fontSize: 20, // Adjust font size as needed
-    fontWeight: "bold", // Makes the heading bold
-    textAlign: "center", // Centers the text
-    color: "#111", // Adjust color if needed
-    marginBottom: 10, // Adds spacing between the heading and the next text
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#111",
+    marginBottom: 10,
   },
-  
   logoContainer: {
     alignItems: "center",
     marginBottom: 20,
-  },
-  logo: {
-    width: width * 0.3,
-    height: height * 0.15,
-    resizeMode: "contain",
-    marginBottom: 30,
-    borderRadius:100,
-    marginTop:60,
   },
   image: {
     width: width * 0.9,
     height: height * 0.3,
     alignSelf: "center",
     resizeMode: "contain",
-    marginBottom: 0,
-    marginTop:100,
-    borderRadius:60,
+    marginTop: 100,
+    borderRadius: 60,
   },
   title: {
     fontSize: 15,
@@ -279,24 +276,14 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
     marginBottom: 20,
-    width:200,
-    marginLeft:65,
+    width: 200,
+    marginLeft: "auto",
+    marginRight: "auto",
   },
   nextText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
-  },
-  resetButton: {
-    alignItems: "center",
-    paddingVertical: 10,
-  },
-  resetText: {
-    fontSize: 16,
-    color: "blue",
-    fontWeight: "bold",
-    marginLeft:204,
-    marginTop:-30,
   },
   notReceivedText: {
     textAlign: "center",

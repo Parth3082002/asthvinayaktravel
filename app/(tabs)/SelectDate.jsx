@@ -15,63 +15,70 @@ const SelectDateScreen = ({ route: propRoute }) => {
   const [dates, setDates] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
-
   const route = useRoute();
   const routeParams = route.params || {};
 
-  // Destructure all params into separate variables
   const {
     cityName,
     cityId,
     packageName,
     packageId,
     categoryName,
-    categoryId, // Updated to fetch by categoryId
+    categoryId,
     selectedPickupPoint,
     selectedPickupPointId,
     price,
     vehicleType,
+    selectedVehicleId,
+    selectedBus,
     childWithSeatP,
     childWithoutSeatP,
+    destinationId,
+    destinationName,
+    tuljapur,
   } = routeParams;
 
   useEffect(() => {
     const fetchDates = async () => {
-      if (!categoryId) { // Fetching by categoryId instead of packageId
-        console.error("Category ID is missing");
+      if (!packageId) {
+        console.error("Package ID is missing");
         setLoading(false);
         return;
       }
 
       try {
         const response = await fetch(
-          `https://ashtavinayak.somee.com/api/Trip/TripsByCategory/${categoryId}` // Changed endpoint
+          `https://newenglishschool-001-site1.ktempurl.com/api/Trip/TripsByPackage/${packageId}`
         );
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
         const result = await response.json();
-
-        if (result.data) {
+        if (result && result.data) {
           const formattedDates = result.data.map((trip) => ({
             tripId: trip.tripId,
             tripDate: trip.tripDate,
             tourName: trip.tourName,
           }));
           setDates(formattedDates);
+        } else {
+          setDates([]);
         }
       } catch (error) {
         console.error("Error fetching dates:", error);
+        setDates([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchDates();
-  }, [categoryId]); // Updated dependency to categoryId
+  }, [packageId]);
 
   useEffect(() => {
     const backAction = () => {
       navigation.reset({
         index: 0,
-        routes: [{ name: "SelectVehicle1" }],
+        routes: [{ name: 'SelectVehicle1' }],
       });
       return true;
     };
@@ -107,8 +114,13 @@ const SelectDateScreen = ({ route: propRoute }) => {
       selectedPickupPointId,
       price,
       vehicleType,
+      selectedVehicleId,
+      selectedBus,
       childWithSeatP,
       childWithoutSeatP,
+      destinationId,
+      destinationName,
+      tuljapur,
       selectedDate: selectedDate.tripDate,
       tripId: selectedDate.tripId,
       tourName: selectedDate.tourName,
@@ -117,7 +129,10 @@ const SelectDateScreen = ({ route: propRoute }) => {
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.dateRow}
+      style={[
+        styles.dateRow,
+        selectedDate?.tripId === item.tripId && styles.dateRowSelected,
+      ]}
       onPress={() => setSelectedDate(item)}
     >
       <Text style={styles.dateText}>{item.tripDate}</Text>
@@ -127,7 +142,9 @@ const SelectDateScreen = ({ route: propRoute }) => {
           selectedDate?.tripId === item.tripId && styles.radioCircleSelected,
         ]}
       >
-        {selectedDate?.tripId === item.tripId && <View style={styles.radioInner} />}
+        {selectedDate?.tripId === item.tripId && (
+          <View style={styles.radioInner} />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -135,13 +152,21 @@ const SelectDateScreen = ({ route: propRoute }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('SelectVehicle1')} style={styles.backButtonContainer}>
+        <TouchableOpacity
+          onPress={() => {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'SelectVehicle1' }],
+            });
+          }}
+          style={styles.backButtonContainer}
+        >
           <View style={styles.backButtonCircle}>
-            <Text style={styles.backButton}>{'<'}</Text>
+            <Text style={styles.backButton}>{"<"}</Text>
           </View>
         </TouchableOpacity>
 
-        <Text style={styles.headerText}>Select Dates</Text>
+        <Text style={styles.headerText}>Select a Date</Text>
       </View>
 
       {loading ? (
@@ -162,7 +187,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
       <TouchableOpacity
         style={[
           styles.nextButton,
-          { backgroundColor: selectedDate ? "#FF5722" : "#FF5722" },
+          { opacity: selectedDate ? 1 : 0.5 },
         ]}
         onPress={handleNextPress}
         disabled={!selectedDate}
@@ -176,105 +201,126 @@ const SelectDateScreen = ({ route: propRoute }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#FAFAFA",
   },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#D44206",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    marginTop: 40,
-    justifyContent: "center",
+    backgroundColor: "#FF5722",
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingTop: 60,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
+
   backButtonContainer: {
     marginRight: 10,
   },
+
   backButtonCircle: {
-    backgroundColor: "#FFFFFF",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    backgroundColor: "#fff",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-    marginTop: 5,
-    marginLeft: -120,
   },
+
   backButton: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#000",
+    color: "#FF5722",
   },
+
   headerText: {
-    color: "#fff",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
+    color: "#fff",
+    flex: 1,
+    textAlign: "center",
+    marginRight: 30,
   },
+
   listContainer: {
-    marginTop: 20,
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingVertical: 20,
   },
+
   dateRow: {
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    justifyContent: "space-between",
+    marginBottom: 12,
   },
+
+  dateRowSelected: {
+    backgroundColor: "#FFF5EE",
+    borderColor: "#FF5722",
+  },
+
   dateText: {
     fontSize: 16,
+    color: "#333",
   },
+
   noDatesContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
+
   noDatesText: {
     fontSize: 18,
-    color: "#555",
-    fontWeight: "bold",
+    fontWeight: "500",
+    color: "#888",
   },
+
   radioCircle: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderWidth: 2,
+    borderColor: "#bbb",
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: 10,
   },
+
   radioCircleSelected: {
     borderColor: "#FF5722",
   },
+
   radioInner: {
     width: 10,
     height: 10,
     backgroundColor: "#FF5722",
     borderRadius: 5,
   },
+
   nextButton: {
     position: "absolute",
-    bottom: 20,
+    bottom: 50,
     left: 30,
     right: 30,
     backgroundColor: "#FF5722",
-    borderRadius: 5,
-    paddingVertical: 15,
+    borderRadius: 50,
+    paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
   },
+
   nextButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+    letterSpacing: 0.5,
   },
 });
 

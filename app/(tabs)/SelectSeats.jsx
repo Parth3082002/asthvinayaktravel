@@ -21,15 +21,20 @@ const SelectSeats = () => {
     selectedPickupPointId,
     price,
     vehicleType,
+    selectedVehicleId,
+    selectedBus,
     childWithSeatP,
     childWithoutSeatP,
-    
+    destinationId,
+    destinationName,
+    tuljapur,
     tripId,
     tourName,
     selectedDate, // if required
   } = route.params || {};
   
   useEffect(() => {
+    console.log('categoryId:', categoryId, 'tripId:', tripId);
     if (categoryId && tripId) {
       fetchSeatData();
     }
@@ -45,24 +50,25 @@ const SelectSeats = () => {
   
   const fetchSeatData = async () => {
     try {
-      const tripResponse = await fetch(
-        `https://ashtavinayak.somee.com/api/Trip/TripsByCategory/${categoryId}`
-      );
+      // const tripResponse = await fetch(
+      //   `https://newenglishschool-001-site1.ktempurl.com/api/Trip/TripsByCategory/${categoryId}`
+      // );
+      // console.log('tripResponse:', tripResponse);
   
-      if (!tripResponse.ok) {
-        throw new Error(`HTTP Error! Status: ${tripResponse.status}`);
-      }
+      // if (!tripResponse.ok) {
+      //   throw new Error(`HTTP Error! Status: ${tripResponse.status}`);
+      // }
   
-      const tripData = await tripResponse.json();
-      const trip = tripData.data.find((t) => t.tripId === tripId);
+      // const tripData = await tripResponse.json();
+      // const trip = tripData.data.find((t) => t.tripId === tripId);
   
-      if (trip) {
-        const totalSeats = trip.totalSeats;
+      // // if (trip) {
+      //   const totalSeats = trip.totalSeats;
   
         const bookedSeatsResponse = await fetch(
-          `https://www.ashtavinayak.somee.com/api/BookingSeat/ByTrip/${tripId}`
+          `https://newenglishschool-001-site1.ktempurl.com/api/BookingSeat/ByTrip/${tripId}`
         );
-  
+        console.log('bookedSeatsResponse:', bookedSeatsResponse);
         let bookedSeats = [];
         if (bookedSeatsResponse.ok) {
           const bookedSeatsData = await bookedSeatsResponse.json();
@@ -73,11 +79,11 @@ const SelectSeats = () => {
           throw new Error(`HTTP Error! Status: ${bookedSeatsResponse.status}`);
         }
   
-        const seatLayout = generateSeatsLayout(totalSeats, bookedSeats);
+        const seatLayout = generateSeatsLayout(20, bookedSeats);
         setSeats(seatLayout);
-      } else {
-        console.warn("No matching trip found for the given tripId.");
-      }
+      // } else {
+      //   console.warn("No matching trip found for the given tripId.");
+      // }
     } catch (error) {
       // console.error("Error fetching seat data:", error);
     }
@@ -131,22 +137,22 @@ const generateSeatsLayout = (totalSeats, bookedSeats) => {
   const handleNextPress = () => {
     if (selectedSeats.length > 0) {
       // Print each parameter separately
-      // console.log("City Name:", cityName);
-      // console.log("City ID:", cityId);
-      // console.log("Package Name:", packageName);
-      // console.log("Package ID:", packageId);
-      // console.log("Category Name:", categoryName);
-      // console.log("Category ID:", categoryId);
-      // console.log("Selected Pickup Point:", selectedPickupPoint);
-      // console.log("Selected Pickup Point ID:", selectedPickupPointId);
-      // console.log("Price:", price);
-      // console.log("Vehicle Type:", vehicleType);
-      // console.log("Child With Seat Price:", childWithSeatP);
-      // console.log("Child Without Seat Price:", childWithoutSeatP);
-      // console.log("Trip Date:", selectedDate);
-      // console.log("Trip ID:", tripId);
-      // console.log("Tour Name:", tourName);
-      // console.log("Selected Seats:", selectedSeats);
+      console.log("City Name:", cityName);
+      console.log("City ID:", cityId);
+      console.log("Package Name:", packageName);
+      console.log("Package ID:", packageId);
+      console.log("Category Name:", categoryName);
+      console.log("Category ID:", categoryId);
+      console.log("Selected Pickup Point:", selectedPickupPoint);
+      console.log("Selected Pickup Point ID:", selectedPickupPointId);
+      console.log("Price:", price);
+      console.log("Vehicle Type:", vehicleType);
+      console.log("Child With Seat Price:", childWithSeatP);
+      console.log("Child Without Seat Price:", childWithoutSeatP);
+      console.log("Trip Date:", selectedDate);
+      console.log("Trip ID:", tripId);
+      console.log("Tour Name:", tourName);
+      console.log("Selected Seats:", selectedSeats);
   
       // Navigate to the Book page with all params
       navigation.navigate("Book", {
@@ -239,6 +245,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    marginTop: 30,
     padding: 16,
   },
   title: {
@@ -306,7 +313,7 @@ const styles = StyleSheet.create({
     // alignItems: "center",
     // // marginTop: 20,
     position: 'absolute',
-    bottom: 20,
+    bottom: 50,
     left: 30,
     right: 30,
     backgroundColor: '#FF5722',
