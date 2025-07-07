@@ -143,7 +143,12 @@ const SelectTour = () => {
         setSelectedPackageName(item.packageName);
         setChildWithSeatP(parseInt(item.child3To8YrswithSeat, 10) || 0);
         setChildWithoutSeatP(parseInt(item.child3To8YrsWithoutSeat, 10) || 0);
-        setPrice(parseInt(item.adultPrice, 10) || 0);
+        // Set price based on selectedBus
+        if (selectedBus === true) {
+            setPrice(parseInt(item.adultPrice, 10) || 0);
+        } else {
+            setPrice(parseInt(item.carPackagePrice, 10) || 0);
+        }
         
         // Set withoutBookingAmount if selectedBus is false and the parameter exists
         if (selectedBus === false && item.withoutBookingAmount !== undefined) {
@@ -280,33 +285,40 @@ const SelectTour = () => {
                                             <Text style={styles.packageDuration}>{item.duration}</Text>
                                         </View>
                                         <View style={styles.packagePrice}>
-                                            <Text style={styles.priceText}>₹{item.adultPrice}</Text>
+                                            {/* Show carPackagePrice if selectedBus is false, else show adultPrice */}
+                                            {selectedBus === false ? (
+                                                <Text style={styles.priceText}>₹{item.carPackagePrice}</Text>
+                                            ) : (
+                                                <Text style={styles.priceText}>₹{item.adultPrice}</Text>
+                                            )}
                                         </View>
                                     </View>
-                                    {/* Show carType if selectedBus is false */}
+                                    {/* Show carType and carTotalSeat if selectedBus is false and carType exists */}
                                     {selectedBus === false && item.carType && (
-                                        <View style={{ marginTop: 4, marginBottom: 4 }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, marginBottom: 4 }}>
                                             <Text style={{ color: '#007AFF', fontWeight: 'bold' }}>Car Type : {item.carType}</Text>
+                                            <Text style={{ color: '#007AFF', fontWeight: 'bold', marginLeft: 10 }}>Seats: {item.carTotalSeat}</Text>
                                         </View>
                                     )}
-                                    {/* Pricing Cards */}
-                                    <View style={styles.pricingSection}>
-                                        <View style={styles.priceCard}>
-                                            <Text style={styles.priceCardTitle}>Adult Price</Text>
-                                            <Text style={styles.priceCardAmount}>₹{item.adultPrice}</Text>
+                                    {/* Pricing Cards: Only show if selectedBus is true */}
+                                    {selectedBus !== false && (
+                                        <View style={styles.pricingSection}>
+                                            <View style={styles.priceCard}>
+                                                <Text style={styles.priceCardTitle}>Adult Price</Text>
+                                                <Text style={styles.priceCardAmount}>₹{item.adultPrice}</Text>
+                                            </View>
+                                            <View style={styles.priceCard}>
+                                                <Text style={styles.priceCardTitle}>Child (3-8 yrs)</Text>
+                                                <Text style={styles.priceCardSubtitle}>With Seat</Text>
+                                                <Text style={styles.priceCardAmount}>₹{item.child3To8YrswithSeat}</Text>
+                                            </View>
+                                            <View style={styles.priceCard}>
+                                                <Text style={styles.priceCardTitle}>Child (3-8 yrs)</Text>
+                                                <Text style={styles.priceCardSubtitle}>Without Seat</Text>
+                                                <Text style={styles.priceCardAmount}>₹{item.child3To8YrsWithoutSeat}</Text>
+                                            </View>
                                         </View>
-                                        <View style={styles.priceCard}>
-                                            <Text style={styles.priceCardTitle}>Child (3-8 yrs)</Text>
-                                            <Text style={styles.priceCardSubtitle}>With Seat</Text>
-                                            <Text style={styles.priceCardAmount}>₹{item.child3To8YrswithSeat}</Text>
-                                        </View>
-                                        <View style={styles.priceCard}>
-                                            <Text style={styles.priceCardTitle}>Child (3-8 yrs)</Text>
-                                            <Text style={styles.priceCardSubtitle}>Without Seat</Text>
-                                            <Text style={styles.priceCardAmount}>₹{item.child3To8YrsWithoutSeat}</Text>
-                                        </View>
-                                    </View>
-                                    
+                                    )}
                                     {/* Show withoutBookingAmount if selectedBus is false and it exists */}
                                     {selectedBus === false && item.withoutBookingAmount && (
                                         <View style={styles.extraChargesSection}>
@@ -314,7 +326,6 @@ const SelectTour = () => {
                                             <Text style={styles.extraChargesAmount}>₹{item.withoutBookingAmount}</Text>
                                         </View>
                                     )}
-                                    
                                     <View style={styles.packageDetails}>
                                         <View style={styles.detailSection}>
                                             <Text style={styles.detailTitle}>✅ Inclusions:</Text>

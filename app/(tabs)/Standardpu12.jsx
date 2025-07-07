@@ -38,7 +38,8 @@ const PackageDetails = ({ route: propRoute }) => {
     childWithoutSeatP,
     price,
     withoutBookingAmount,
-    tuljapur
+    tuljapur,
+    carPackagePrice
   } = route.params || {};
   const categoryId = propRoute?.categoryId || routeParams.categoryId;
   const packageId = propRoute?.packageId || routeParams.packageId;
@@ -230,7 +231,8 @@ const PackageDetails = ({ route: propRoute }) => {
         destinationId: destinationId,
         destinationName: destinationName,
         tuljapur: tuljapur,
-        carType: route.params?.carType
+        carType: route.params?.carType,
+        carPackagePrice: packageData.carPackagePrice
       });
       console.log('=== End Standardpu12 Parameters (CAR) ===');
       
@@ -243,7 +245,7 @@ const PackageDetails = ({ route: propRoute }) => {
         categoryId: packageData.categoryId,
         selectedPickupPoint: selectedPickupPoint,
         selectedPickupPointId: selectedPickupPointId,
-        price: packageData.adultPrice,
+        price: price,
         vehicleType: vehicleType,
         selectedVehicleId: selectedVehicleId,
         selectedBus: selectedBus,
@@ -536,7 +538,7 @@ const PackageDetails = ({ route: propRoute }) => {
             <View style={styles.footer}>
               <View style={styles.priceSection}>
                 <Text style={styles.priceLabel}>Tour Cost</Text>
-                <Text style={styles.priceValue}>₹{packageData.adultPrice}</Text>
+                <Text style={styles.priceValue}>₹{price}</Text>
               </View>
               <TouchableOpacity style={styles.bookButton} onPress={handleBookNow}>
                 <Text style={styles.bookButtonText}>Book Now</Text>

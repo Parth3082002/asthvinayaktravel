@@ -57,6 +57,7 @@ export default function PaymentScreen() {
     tripDate,
     carPayment,
     remainingPayment,
+    pickupLocation,
     transactionId,
     bookingId    // Extract other params as needed
   } = params;
@@ -140,7 +141,8 @@ export default function PaymentScreen() {
         const carBookingBody = {
           userId: parseInt(userId),
           tripId: parseInt(tripId) || 0,
-          pickupPointId: parseInt(pickupPointId),
+          // pickupPointId: parseInt(pickupPointId),
+          pickuppointname: pickupLocation?.trim(),
           droppoint: droppoint?.trim(),
           roomType: roomType || "shared",
           status: "Confirmed",

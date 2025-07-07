@@ -30,6 +30,7 @@ const SelectSeats = () => {
     tuljapur,
     tripId,
     tourName,
+    totalBusSeats,
     selectedDate, // if required
   } = route.params || {};
   
@@ -64,22 +65,22 @@ const SelectSeats = () => {
   
       // // if (trip) {
       //   const totalSeats = trip.totalSeats;
-  
+        console.log("trip id seat fetch : ",tripId);
         const bookedSeatsResponse = await fetch(
           `https://newenglishschool-001-site1.ktempurl.com/api/BookingSeat/ByTrip/${tripId}`
         );
-        console.log('bookedSeatsResponse:', bookedSeatsResponse);
         let bookedSeats = [];
         if (bookedSeatsResponse.ok) {
           const bookedSeatsData = await bookedSeatsResponse.json();
           bookedSeats = bookedSeatsData.data || [];
+          console.log("Booked Seat List : ",bookedSeats);
         } else if (bookedSeatsResponse.status === 404) {
           bookedSeats = [];
         } else {
           throw new Error(`HTTP Error! Status: ${bookedSeatsResponse.status}`);
         }
   
-        const seatLayout = generateSeatsLayout(20, bookedSeats);
+        const seatLayout = generateSeatsLayout(totalBusSeats, bookedSeats);
         setSeats(seatLayout);
       // } else {
       //   console.warn("No matching trip found for the given tripId.");
@@ -95,10 +96,13 @@ const SelectSeats = () => {
 const generateSeatsLayout = (totalSeats, bookedSeats) => {
   let layout = [];
   let seatCount = 1;
+  const seatsPerRow = 4;
+  const fullRows = Math.floor(totalSeats / seatsPerRow);
+  const remainingSeats = totalSeats % seatsPerRow;
 
-  // First 10 rows with 4 seats each
-  for (let i = 0; i < 10; i++) {
-    for (let j = 0; j < 4; j++) {
+  // Full rows
+  for (let i = 0; i < fullRows; i++) {
+    for (let j = 0; j < seatsPerRow; j++) {
       const seatNumber = `S${seatCount++}`;
       layout.push({
         seatNumber,
@@ -107,13 +111,15 @@ const generateSeatsLayout = (totalSeats, bookedSeats) => {
     }
   }
 
-  // Last row with 5 seats
-  for (let i = 0; i < 5; i++) {
-    const seatNumber = `S${seatCount++}`;
-    layout.push({
-      seatNumber,
-      status: bookedSeats.includes(seatNumber) ? "booked" : "available",
-    });
+  // Last row (if any remaining seats)
+  if (remainingSeats > 0) {
+    for (let j = 0; j < remainingSeats; j++) {
+      const seatNumber = `S${seatCount++}`;
+      layout.push({
+        seatNumber,
+        status: bookedSeats.includes(seatNumber) ? "booked" : "available",
+      });
+    }
   }
 
   return layout;

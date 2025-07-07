@@ -135,7 +135,7 @@ const History = () => {
       userName: user?.userName,
       email: user?.email,
       phone: user?.phoneNumber,
-      amount: 987,
+      amount: item.pendingAmount || 0,
       remainingPayment: true,
       transactionId : item.transactions[0]?.transactionId,
       bookingId : item.bookingId,
@@ -162,7 +162,7 @@ const History = () => {
 
         <View style={styles.detailRow}>
           <Icon name="location" size={18} color="#555" />
-          <Text style={styles.info}>Pickup: {item.pickupPointName || item.pickupPoint?.pickupPoint1 || "N/A"}</Text>
+          <Text style={styles.info}>{selectedType === "bus" ? `Pickup: ${item.pickupPointName || "N/A"}` : `Pickup: ${item.pickUpPointName || "N/A"}`}</Text>
         </View>
 
         <View style={styles.detailRow}>
@@ -211,7 +211,7 @@ const History = () => {
             <Text style={styles.expandText}>{isExpanded ? "Hide Details ▲" : "Show Details ▼"}</Text>
           </TouchableOpacity>
 
-                     {pendingAmount == 0 && (
+                     {pendingAmount > 0 && (
              <TouchableOpacity
                style={styles.payButton}
                onPress={() => handlePayRemaining(item)}

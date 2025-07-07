@@ -59,6 +59,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
             tripId: trip.tripId,
             tripDate: trip.tripDate,
             tourName: trip.tourName,
+            totalSeats: trip.totalSeats,
           }));
           setDates(formattedDates);
         } else {
@@ -124,6 +125,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
       selectedDate: selectedDate.tripDate,
       tripId: selectedDate.tripId,
       tourName: selectedDate.tourName,
+      totalBusSeats: selectedDate.totalSeats
     });
   };
 
@@ -134,8 +136,19 @@ const SelectDateScreen = ({ route: propRoute }) => {
         selectedDate?.tripId === item.tripId && styles.dateRowSelected,
       ]}
       onPress={() => setSelectedDate(item)}
+      activeOpacity={0.85}
     >
-      <Text style={styles.dateText}>{item.tripDate}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.tourNameText}>{item.tourName}</Text>
+        <View style={styles.infoRow}>
+          <Text>📅</Text>
+          <Text style={styles.dateText}>{item.tripDate}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text>🚌</Text>
+          <Text style={styles.seatsText}>Total Seats: {item.totalSeats}</Text>
+        </View>
+      </View>
       <View
         style={[
           styles.radioCircle,
@@ -250,25 +263,52 @@ const styles = StyleSheet.create({
 
   dateRow: {
     backgroundColor: "#fff",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 1,
+    paddingVertical: 18,
+    paddingHorizontal: 22,
+    borderRadius: 16,
+    borderWidth: 1.5,
     borderColor: "#E0E0E0",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: 16,
+    shadowColor: "#FF5722",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
 
   dateRowSelected: {
-    backgroundColor: "#FFF5EE",
+    backgroundColor: "#FFF3E6",
     borderColor: "#FF5722",
+    shadowOpacity: 0.18,
+    elevation: 6,
   },
 
   dateText: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#333",
+    marginBottom: 2,
+    marginLeft: 4,
+  },
+  tourNameText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FF5722",
+    marginBottom: 4,
+    letterSpacing: 0.2,
+  },
+  seatsText: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 2,
+    marginLeft: 4,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 2,
   },
 
   noDatesContainer: {

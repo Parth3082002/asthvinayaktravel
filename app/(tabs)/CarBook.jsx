@@ -53,6 +53,7 @@ const CarBook = () => {
     cityName = "",
     status = "Confirmed",
     vehicleType = "",
+
   } = bookingData;
 
   // Extract additional parameters from route.params
@@ -85,7 +86,7 @@ const CarBook = () => {
   const [childWithSeat, setChildWithSeat] = useState("");
   const [childWithoutSeat, setChildWithoutSeat] = useState("");
   const [isAlertShown, setIsAlertShown] = useState(false);
-  const [availableRoomTypes, setAvailableRoomTypes] = useState(["shared"]);
+  const [availableRoomTypes, setAvailableRoomTypes] = useState(["shared", "Separate"]);
 
   // State for payment details
   const [totalAmount, setTotalAmount] = useState(0);
@@ -130,6 +131,7 @@ const CarBook = () => {
     console.log("PackageName:", packageName);
     console.log("CategoryId:", categoryId);
     console.log("CategoryName:", categoryName);
+    console.log("price: ",price)
     console.log("withoutBookingAmount from bookingData:", withoutBookingAmount);
     console.log("withoutBookingAmount from route.params:", routeWithoutBookingAmount);
     console.log("selectedBus:", selectedBus);
@@ -207,13 +209,14 @@ const CarBook = () => {
     // Base price covers up to 2 seated passengers (adult + childWithSeat)
     let finalPrice = price + childWithoutSeatCost;
     if (totalSeatUsers > 2) {
+     
       const extraSeats = totalSeatUsers - 2;
       finalPrice += extraSeats * withoutBookingAmount;
     }
   
     setTotalAmount(finalPrice);
     setAdvanceAmount(Math.ceil(finalPrice / 2));
-    setRoomType("shared");
+    // setRoomType("shared");
   };
   
 
@@ -242,6 +245,7 @@ const CarBook = () => {
         },
       ]);
     }
+
   }, [adults, childWithSeat, totalSeats]);
 
   // Validate all inputs before payment/booking
@@ -353,7 +357,8 @@ const CarBook = () => {
         email: user?.email,
         phone: user?.phoneNumber,
         carType: carTypeLabel,
-        pickupPointId: 1,
+        // pickupPointId: 1,
+        pickupLocation,
         droppoint,
         roomType,
         totalAmount: parseFloat(totalAmount),
@@ -464,7 +469,7 @@ const CarBook = () => {
           {/* Seat Selection */}
           <View style={styles.row}>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Total Seats</Text>
+              <Text style={styles.label}>Available Seats</Text>
               <TextInput
                 style={[styles.input, !isEditable && styles.nonEditableInput]}
                 value={totalSeats.toString()}
@@ -472,7 +477,7 @@ const CarBook = () => {
               />
             </View>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Adults</Text>
+              <Text style={styles.label}>Passengers</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
@@ -484,7 +489,7 @@ const CarBook = () => {
               )}
             </View>
           </View>
-
+{/* 
           <View style={styles.row}>
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Child (With Seat)</Text>
@@ -504,73 +509,80 @@ const CarBook = () => {
                 onChangeText={handleTextChange}
               />
             </View>
-          </View>
+          </View> */}
 
-          {/* Room Type */}
-          <View style={styles.inputFieldContainer}>
-            <Text style={styles.label}>Room Type:</Text>
-            <View style={styles.inputWithIcon}>
+          {/* Room Type Selection */}
+          <View style={{ marginBottom: 18 }}>
+            <Text style={styles.label}>Room Type</Text>
+            <View style={[styles.inputWithIcon, !isEditable && styles.nonEditableInput]}>
+              <Icon name="bed-outline" size={20} color="#555" />
               <Picker
                 selectedValue={roomType}
+                style={{ flex: 1, minHeight: 44 }}
+                enabled={!isEditable}
                 onValueChange={(itemValue) => setRoomType(itemValue)}
-                style={{ flex: 1 }}
               >
                 {availableRoomTypes.map((type) => (
                   <Picker.Item key={type} label={type.charAt(0).toUpperCase() + type.slice(1)} value={type} />
                 ))}
               </Picker>
             </View>
-            {roomType === "family" && (
-              <Text style={styles.infoText}>Family room adds ₹500 per person</Text>
-            )}
           </View>
 
           {/* Locations */}
-          <View style={styles.row}>
-            <View style={styles.halfInputContainer}>
-              <Text style={styles.label}>Pickup Location</Text>
-              <View
-                style={[
-                  styles.inputWithIcon,
-                  !isEditable && styles.nonEditableInput,
-                ]}
-              >
-                <Icon name="location-outline" size={20} color="#555" />
-                <TextInput
-                  style={styles.inputWithoutPadding}
-                  value={pickupLocation}
-                  placeholder="Pickup Location"
-                  placeholderTextColor="#aaa"
-                  onChangeText={setPickupLocation}
-                  editable={isEditable}
-                />
-              </View>
-              {errors.pickupLocation && (
-                <Text style={styles.errorText}>{errors.pickupLocation}</Text>
-              )}
+          {/* Pickup Location Field */}
+          <View style={{ marginBottom: 18 }}>
+            <Text style={styles.label}>Pickup Location</Text>
+            <View
+              style={[
+                styles.inputWithIcon,
+                !isEditable && styles.nonEditableInput,
+              ]}
+            >
+              <Icon name="location-outline" size={20} color="#555" />
+              <TextInput
+                style={[styles.inputWithoutPadding, { minHeight: 44, maxHeight: 100 }]}
+                value={pickupLocation}
+                placeholder="Pickup Location"
+                placeholderTextColor="#aaa"
+                onChangeText={setPickupLocation}
+                editable={isEditable}
+                multiline={true}
+                numberOfLines={2}
+                scrollEnabled={true}
+                textAlignVertical="top"
+              />
             </View>
-            <View style={styles.halfInputContainer}>
-              <Text style={styles.label}>Drop Location</Text>
-              <View
-                style={[
-                  styles.inputWithIcon,
-                  !isEditable && styles.nonEditableInput,
-                ]}
-              >
-                <Icon name="location-outline" size={20} color="#555" />
-                <TextInput
-                  style={styles.inputWithoutPadding}
-                  value={droppoint}
-                  placeholder="Drop Location"
-                  placeholderTextColor="#aaa"
-                  onChangeText={setDroppoint}
-                  editable={isEditable}
-                />
-              </View>
-              {errors.droppoint && (
-                <Text style={styles.errorText}>{errors.droppoint}</Text>
-              )}
+            {errors.pickupLocation && (
+              <Text style={styles.errorText}>{errors.pickupLocation}</Text>
+            )}
+          </View>
+          {/* Drop Location Field */}
+          <View style={{ marginBottom: 18 }}>
+            <Text style={styles.label}>Drop Location</Text>
+            <View
+              style={[
+                styles.inputWithIcon,
+                !isEditable && styles.nonEditableInput,
+              ]}
+            >
+              <Icon name="location-outline" size={20} color="#555" />
+              <TextInput
+                style={[styles.inputWithoutPadding, { minHeight: 44, maxHeight: 100 }]}
+                value={droppoint}
+                placeholder="Drop Location"
+                placeholderTextColor="#aaa"
+                onChangeText={setDroppoint}
+                editable={isEditable}
+                multiline={true}
+                numberOfLines={2}
+                scrollEnabled={true}
+                textAlignVertical="top"
+              />
             </View>
+            {errors.droppoint && (
+              <Text style={styles.errorText}>{errors.droppoint}</Text>
+            )}
           </View>
 
           {/* Payment Section */}
