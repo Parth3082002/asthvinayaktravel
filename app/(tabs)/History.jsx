@@ -156,7 +156,7 @@ const History = () => {
           <Text style={styles.title}>
             {selectedType === "bus" ? `Trip: ${item.tripName || "N/A"}` : `Car: ${item.carType || "N/A"}`}
           </Text>
-          <Text style={styles.dateText}> | {formatDate(item.bookingDate)}</Text>
+          <Text style={styles.dateText}> | {selectedType === "bus" ? formatDate(item.bookingDate) : formatDate(item.date)}</Text>
         </View>
 
 

@@ -50,11 +50,11 @@ const Book = () => {
     tripId = 0,
     tourName = "",
     selectedSeats = [],
-    selectedDate = new Date().toLocaleDateString()
+    selectedDate
   } = route.params || {};
 
   // State hooks
-  const [date, setDate] = useState(selectedDate || new Date().toLocaleDateString());
+  const [date, setDate] = useState(selectedDate);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [pickupLocation, setPickupLocation] = useState(selectedPickupPoint || "");
   const [totalAmount, setTotalAmount] = useState(price ? price.toString() : "0");
@@ -255,7 +255,7 @@ const Book = () => {
         categoryId,
         packageId,
         cityId,
-        tripDate,
+        selectedDate,
         roomType: roomType || "shared",
         remainingPayment : false
       });

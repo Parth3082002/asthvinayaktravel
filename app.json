@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "AshtavinayakApp",
-    "slug": "AshtavinayakApp",
+    "slug": "astavinayakapkk",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Bappa.png",
@@ -14,14 +14,18 @@
       "backgroundColor": "#FCF1DF"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "runtimeVersion": {
+        "policy": "appVersion"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Bappa.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.punuuu03.AshtavinayakApp"
+      "package": "com.punuuu03.AshtavinayakApp",
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "bundler": "metro",
@@ -48,9 +52,12 @@
         "origin": false
       },
       "eas": {
-        "projectId": "e00d35d0-6382-4d06-9736-3f886827218f"
+        "projectId": "e1040a26-c62c-4244-9c21-455b0fc00f5a"
       }
     },
-    "owner": "parthsalunkhe"
+    "owner": "parthsalunkhe1234",
+    "updates": {
+      "url": "https://u.expo.dev/e1040a26-c62c-4244-9c21-455b0fc00f5a"
+    }
   }
 }

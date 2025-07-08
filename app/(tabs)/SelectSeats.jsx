@@ -1,215 +1,315 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  ScrollView,
+} from "react-native";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
-import Icon from 'react-native-vector-icons/MaterialIcons';
+
 const SelectSeats = () => {
   const [seats, setSeats] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const navigation = useNavigation();
-  const { params } = useRoute();
   const route = useRoute();
 
-  
   const {
-    cityName,
-    cityId,
-    packageName,
-    packageId,
-    categoryName,
     categoryId,
-    selectedPickupPoint,
-    selectedPickupPointId,
-    price,
-    vehicleType,
-    selectedVehicleId,
-    selectedBus,
-    childWithSeatP,
-    childWithoutSeatP,
-    destinationId,
-    destinationName,
-    tuljapur,
     tripId,
-    tourName,
     totalBusSeats,
-    selectedDate, // if required
+    selectedDate,
+    ...restParams
   } = route.params || {};
-  
+
   useEffect(() => {
-    console.log('categoryId:', categoryId, 'tripId:', tripId);
     if (categoryId && tripId) {
       fetchSeatData();
     }
   }, [categoryId, tripId]);
-  
+
   useFocusEffect(
     useCallback(() => {
-      // Reset selected seats when the screen is focused again
       setSelectedSeats([]);
-      fetchSeatData(); // Refresh seat data
+      fetchSeatData();
     }, [])
   );
-  
+
   const fetchSeatData = async () => {
     try {
-      // const tripResponse = await fetch(
-      //   `https://newenglishschool-001-site1.ktempurl.com/api/Trip/TripsByCategory/${categoryId}`
-      // );
-      // console.log('tripResponse:', tripResponse);
-  
-      // if (!tripResponse.ok) {
-      //   throw new Error(`HTTP Error! Status: ${tripResponse.status}`);
-      // }
-  
-      // const tripData = await tripResponse.json();
-      // const trip = tripData.data.find((t) => t.tripId === tripId);
-  
-      // // if (trip) {
-      //   const totalSeats = trip.totalSeats;
-        console.log("trip id seat fetch : ",tripId);
-        const bookedSeatsResponse = await fetch(
-          `https://newenglishschool-001-site1.ktempurl.com/api/BookingSeat/ByTrip/${tripId}`
-        );
-        let bookedSeats = [];
-        if (bookedSeatsResponse.ok) {
-          const bookedSeatsData = await bookedSeatsResponse.json();
-          bookedSeats = bookedSeatsData.data || [];
-          console.log("Booked Seat List : ",bookedSeats);
-        } else if (bookedSeatsResponse.status === 404) {
-          bookedSeats = [];
-        } else {
-          throw new Error(`HTTP Error! Status: ${bookedSeatsResponse.status}`);
-        }
-  
-        const seatLayout = generateSeatsLayout(totalBusSeats, bookedSeats);
-        setSeats(seatLayout);
-      // } else {
-      //   console.warn("No matching trip found for the given tripId.");
-      // }
+      const bookedSeatsResponse = await fetch(
+        `https://newenglishschool-001-site1.ktempurl.com/api/BookingSeat/ByTrip/${tripId}`
+      );
+
+      let bookedSeats = [];
+      if (bookedSeatsResponse.ok) {
+        const bookedSeatsData = await bookedSeatsResponse.json();
+        bookedSeats = bookedSeatsData.data || [];
+      }
+      // const totalBusSeats = 45;
+      let layout = [];
+      if (totalBusSeats === 32) {
+        layout = generateLayout32(bookedSeats);
+      } else if (totalBusSeats === 17) {
+        layout = generateLayout17(bookedSeats);
+      } else {
+        layout = generateLayout45(bookedSeats);
+      }
+
+      setSeats(layout);
     } catch (error) {
-      // console.error("Error fetching seat data:", error);
+      console.error("Seat fetch error:", error);
     }
+  };
+
+  const generateLayout45 = (bookedSeats) => {
+    const rows = [
+      [1, 2, 3, 4],
+      [5, 6 ,7, 8],
+      [9, 10, 11, 12],
+      [13, 14, 15, 16],
+      [17, 18, 19, 20],
+      [21, 22, 23, 24],
+      [25, 26, 27, 28],
+      [29, 30, 31, 32],
+      [33, 34, 35, 36],
+      [37, 38, 39, 40],
+      [41, 42, 43, 44, 45], // last row, 5-seats, no aisle
+    ];
+  
+    // Transform seat numbers into objects
+    return rows.map((row) =>
+      row.map((num) => {
+        if (num === null) return null;
+        const seatNumber = `S${num}`;
+        return {
+          seatNumber,
+          status: bookedSeats.includes(seatNumber) ? "booked" : "available",
+        };
+      })
+    );
   };
   
 
-
-  // Generating the layout with 5 seats in the last row
-const generateSeatsLayout = (totalSeats, bookedSeats) => {
-  let layout = [];
-  let seatCount = 1;
-  const seatsPerRow = 4;
-  const fullRows = Math.floor(totalSeats / seatsPerRow);
-  const remainingSeats = totalSeats % seatsPerRow;
-
-  // Full rows
-  for (let i = 0; i < fullRows; i++) {
-    for (let j = 0; j < seatsPerRow; j++) {
-      const seatNumber = `S${seatCount++}`;
-      layout.push({
-        seatNumber,
-        status: bookedSeats.includes(seatNumber) ? "booked" : "available",
-      });
-    }
-  }
-
-  // Last row (if any remaining seats)
-  if (remainingSeats > 0) {
-    for (let j = 0; j < remainingSeats; j++) {
-      const seatNumber = `S${seatCount++}`;
-      layout.push({
-        seatNumber,
-        status: bookedSeats.includes(seatNumber) ? "booked" : "available",
-      });
-    }
-  }
-
-  return layout;
-};
-
+  const generateLayout32 = (bookedSeats) => {
+    const layout = [];
   
+    const rows = [
+      [null, null, 1, 2],
+      [6, 5, 4, 3],
+      [7, 8, 9, 10],
+      [14, 13, 12, 11],
+      [15, 16, 17, 18],
+      [22, 21, 20, 19],
+      [23, 24, 25, 26],
+      [31, 30, 29, 28, 27], // last row, 5-seats, no aisle
+    ];
   
+    // Transform seat numbers into objects
+    return rows.map((row) =>
+      row.map((num) => {
+        if (num === null) return null;
+        const seatNumber = `S${num}`;
+        return {
+          seatNumber,
+          status: bookedSeats.includes(seatNumber) ? "booked" : "available",
+        };
+      })
+    );
+  };
   
-  const toggleSeat = (index) => {
-    const seat = seats[index];
-    if (seat.status === "booked") return;
 
-    const seatKey = seat.seatNumber;
+  const generateLayout17 = (bookedSeats) => {
+    const rows = [
+      [17, null, null,null],
+      [1, null, 2, 3],
+      [4, null, 5, 6],
+      [7, null, 8, 9],
+      [10, null, 11, 12],
+      [13, 14, 15, 16],
+    ];
+
+    return rows.map((row) =>
+      row.map((num) => {
+        if (num === null) return null;
+        const seatNumber = `S${num}`;
+        return {
+          seatNumber,
+          status: bookedSeats.includes(seatNumber) ? "booked" : "available",
+        };
+      })
+    );
+  };
+
+  const toggleSeat = (seatKey) => {
     if (selectedSeats.includes(seatKey)) {
-      setSelectedSeats(selectedSeats.filter((seat) => seat !== seatKey));
+      setSelectedSeats(selectedSeats.filter((s) => s !== seatKey));
     } else {
       setSelectedSeats([...selectedSeats, seatKey]);
     }
   };
 
   const handleNextPress = () => {
-    if (selectedSeats.length > 0) {
-      // Print each parameter separately
-      console.log("City Name:", cityName);
-      console.log("City ID:", cityId);
-      console.log("Package Name:", packageName);
-      console.log("Package ID:", packageId);
-      console.log("Category Name:", categoryName);
-      console.log("Category ID:", categoryId);
-      console.log("Selected Pickup Point:", selectedPickupPoint);
-      console.log("Selected Pickup Point ID:", selectedPickupPointId);
-      console.log("Price:", price);
-      console.log("Vehicle Type:", vehicleType);
-      console.log("Child With Seat Price:", childWithSeatP);
-      console.log("Child Without Seat Price:", childWithoutSeatP);
-      console.log("Trip Date:", selectedDate);
-      console.log("Trip ID:", tripId);
-      console.log("Tour Name:", tourName);
-      console.log("Selected Seats:", selectedSeats);
-  
-      // Navigate to the Book page with all params
-      navigation.navigate("Book", {
-        ...route.params,
-        selectedSeats: selectedSeats,
-        tripId: tripId,
-      });
-    } else {
+    if (selectedSeats.length === 0) {
       alert("Please select at least one seat");
+      return;
     }
+
+    navigation.navigate("Book", {
+      ...restParams,
+      selectedSeats,
+      tripId,
+    });
+  };
+
+  const renderFlatSeat = ({ item }) => {
+    const isSelected = selectedSeats.includes(item.seatNumber);
+    const isBooked = item.status === "booked";
+    const seatStyle = isBooked
+      ? styles.bookedSeat
+      : isSelected
+      ? styles.selectedSeat
+      : styles.availableSeat;
+
+    return (
+      <TouchableOpacity
+        style={[styles.seatBox, seatStyle]}
+        disabled={isBooked}
+        onPress={() => toggleSeat(item.seatNumber)}
+      >
+        <Text style={styles.seatText}>{item.seatNumber.replace("S", "")}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderMatrixSeats = () => {
+    return seats.map((row, rowIndex) => {
+      return (
+        <View key={rowIndex} style={styles.row}>
+          {row.map((seat, colIndex) => {
+            if (seat === null && seats.length === 6) {
+              return <View key={colIndex} style={styles.emptySeat1} />;
+            }
+            if (seat === null && seats.length === 8) {
+              return <View key={colIndex} style={styles.emptySeat} />;
+            }
+            const isSelected = selectedSeats.includes(seat.seatNumber);
+            const isBooked = seat.status === "booked";
+            const seatStyle = isBooked
+              ? styles.bookedSeat
+              : isSelected
+              ? styles.selectedSeat
+              : styles.availableSeat;
+  
+            // 🟦 Logic for 17-seat layout
+            if (seats.length === 6 && (seats[0].length === 3 || seats[0].length === 4)) {
+              // 17-seat: insert aisle (gap) after 1st column in rows 1–5
+              const insertAisle = colIndex === 1 && rowIndex < 5;
+              return (
+                <React.Fragment key={colIndex}>
+                  {insertAisle && <View style={{ width: 30 }} />} {/* aisle */}
+                  <TouchableOpacity
+                    style={[styles.seatBox, seatStyle]}
+                    disabled={isBooked}
+                    onPress={() => toggleSeat(seat.seatNumber)}
+                  >
+                    <Text style={styles.seatText}>
+                      {seat.seatNumber.replace("S", "")}
+                    </Text>
+                  </TouchableOpacity>
+                </React.Fragment>
+              );
+            }
+  
+            // 🟦 Logic for 32-seat layout
+            if (seats.length === 8 && (seats[0].length === 4 || seats[0].length === 5)) {
+              // 32-seat: insert aisle after second column (between left 2 & right 2)
+              const insertAisle = colIndex === 1 && row.length === 4;
+              return (
+                <TouchableOpacity
+                  key={colIndex}
+                  style={[
+                    styles.seatBox,
+                    seatStyle,
+                    insertAisle ? { marginRight: 55 } : {},
+                  ]}
+                  disabled={isBooked}
+                  onPress={() => toggleSeat(seat.seatNumber)}
+                >
+                  <Text style={styles.seatText}>
+                    {seat.seatNumber.replace("S", "")}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }           
+            if (seats.length === 8 && (seats[0].length === 4 || seats[0].length === 5)) {
+              // 32-seat: insert aisle after second column (between left 2 & right 2)
+              const insertAisle = colIndex === 1 && row.length === 4;
+              return (
+                <TouchableOpacity
+                  key={colIndex}
+                  style={[
+                    styles.seatBox,
+                    seatStyle,
+                    insertAisle ? { marginRight: 55 } : {},
+                  ]}
+                  disabled={isBooked}
+                  onPress={() => toggleSeat(seat.seatNumber)}
+                >
+                  <Text style={styles.seatText}>
+                    {seat.seatNumber.replace("S", "")}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }   
+             if (seats.length === 11 && (seats[0].length === 4 || seats[0].length === 5)) {
+              // 32-seat: insert aisle after second column (between left 2 & right 2)
+              const insertAisle = colIndex === 1 && row.length === 4;
+              return (
+                <TouchableOpacity
+                  key={colIndex}
+                  style={[
+                    styles.seatBox,
+                    seatStyle,
+                    insertAisle ? { marginRight: 55 } : {},
+                    seats.length === 11 && seats[0].length === 4 ? styles.smallSeat : {}, // 👈 new condition
+                  ]}
+                  disabled={isBooked}
+                  onPress={() => toggleSeat(seat.seatNumber)}
+                >
+                  <Text style={styles.seatText}>
+                    {seat.seatNumber.replace("S", "")}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }  
+            // 🟦 Fallback (in case no specific layout matched)
+            // return (
+            //   <TouchableOpacity
+            //     key={colIndex}
+            //     style={[styles.seatBox, seatStyle]}
+            //     disabled={isBooked}
+            //     onPress={() => toggleSeat(seat.seatNumber)}
+            //   >
+            //     <Text style={styles.seatText}>
+            //       {seat.seatNumber.replace("S", "")}
+            //     </Text>
+            //   </TouchableOpacity>
+            // );
+          })}
+        </View>
+      );
+    });
   };
   
-
-  const renderSeat = ({ item, index }) => {
-    const isSelected = selectedSeats.includes(item.seatNumber);
-    let seatStyle = styles.availableSeat;
-  
-    if (isSelected) {
-      seatStyle = styles.selectedSeat;
-    } else if (item.status === "booked") {
-      seatStyle = styles.bookedSeat;
-    }
-  
-    const isLastRow = index >= 44; // Last 5 seats (41-45) start from index 40
-  
-    // Apply different styles for the last row
-    const marginStyle = isLastRow
-      ? styles.lastRowSeat // Apply the reduced size and specific margin style for the last row
-      : index % 4 === 0 || index % 4 === 1
-      ? { marginRight: 25 } // First 2 seats in a row
-      : index % 4 === 2 || index % 4 === 3
-      ? { marginLeft: 30 } // Last 2 seats in a row
-      : {};
-    
   
   
-  return (
-      <TouchableOpacity
-      key={index}
-      style={[styles.seat, seatStyle, marginStyle]}
-      disabled={item.status === "booked"}
-      onPress={() => toggleSeat(index)}
-      >
-      <Text style={styles.seatText}>{item.seatNumber}</Text>
-      </TouchableOpacity>
-      );
-    };
+  
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Select Seats for Date: {selectedDate}</Text>
+      <Text style={styles.title}>Select Seats for {selectedDate}</Text>
 
       <View style={styles.legendContainer}>
         <View style={styles.legendItem}>
@@ -225,21 +325,30 @@ const generateSeatsLayout = (totalSeats, bookedSeats) => {
           <Text>Selected</Text>
         </View>
       </View>
-     
-       <FlatList
-        data={seats}
-        renderItem={renderSeat}
-        keyExtractor={(item, index) => index.toString()}
-        numColumns={4} // Rendering 4 columns for most rows
-        contentContainerStyle={styles.seatMap}
-       />
+
+      <ScrollView contentContainerStyle={{ alignItems: "center" }}>
+        {Array.isArray(seats[0]) ? (
+          renderMatrixSeats()
+        ) : (
+          <FlatList
+            data={seats}
+            renderItem={renderFlatSeat}
+            keyExtractor={(item, index) => index.toString()}
+            numColumns={4}
+            contentContainerStyle={{ alignItems: "center" }}
+          />
+        )}
+      </ScrollView>
+
       <TouchableOpacity
         style={[
           styles.nextButton,
-          { backgroundColor: selectedSeats.length > 0 ? "#FF5722" : "#e0e0e0" },
+          {
+            backgroundColor:
+              selectedSeats.length > 0 ? "#FF5722" : "#e0e0e0",
+          },
         ]}
         onPress={handleNextPress}
-        disabled={selectedSeats.length === 0}
       >
         <Text style={styles.nextButtonText}>Next</Text>
       </TouchableOpacity>
@@ -250,21 +359,20 @@ const generateSeatsLayout = (totalSeats, bookedSeats) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    marginTop: 30,
     padding: 16,
+    marginTop:45,
+    backgroundColor: "#fff",
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20,
     textAlign: "center",
-    marginTop: 20,
+    marginBottom: 16,
   },
   legendContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: 30,
   },
   legendItem: {
     flexDirection: "row",
@@ -274,33 +382,24 @@ const styles = StyleSheet.create({
   legendColor: {
     width: 20,
     height: 20,
-    borderRadius: 5,
+    borderRadius: 4,
     marginRight: 5,
   },
-  seatMap: {
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
+  smallSeat: {
+    width: 36,
+    height: 36,
   },
-  lastRowSeat: {
-    height: 40, // Reduced size for last row
-    width: 45,
-    // marginHorizontal: -20, // Spacing between the 5 seats
-    // marginLeft:0,
-    marginRight:10,
-    marginVertical:-45,
-  },
-  seat: {
-    height: 40,
-    width: 50,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    margin: 5,
   
+  seatBox: {
+    width: 44,
+    height: 44,
+    margin: 5,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
   },
   availableSeat: {
-    backgroundColor: "#FF5722",
+    backgroundColor: "#FF9800",
   },
   bookedSeat: {
     backgroundColor: "#B0BEC5",
@@ -312,26 +411,35 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
   },
+  emptySeat: {
+    width: 67,
+    height: 44,
+    margin: 5,
+    backgroundColor: "transparent",
+  },
+  emptySeat1: {
+    width: 44,
+    height: 44,
+    margin: 5,
+    backgroundColor: "transparent",
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "center",
+  },
   nextButton: {
-    // paddingVertical: 13,
-    // // paddingHorizontal: 10,
-    // borderRadius: 8,
-    // alignItems: "center",
-    // // marginTop: 20,
-    position: 'absolute',
-    bottom: 50,
+    position: "absolute",
+    bottom: 40,
     left: 30,
     right: 30,
-    backgroundColor: '#FF5722',
-    borderRadius: 5,
-    paddingVertical: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: "center",
   },
   nextButtonText: {
     color: "#fff",
     fontSize: 18,
+    fontWeight: "bold",
   },
 });
 
