@@ -53,6 +53,7 @@ const CarBook = () => {
     cityName = "",
     status = "Confirmed",
     vehicleType = "",
+    carTotalSeat = 5,
 
   } = bookingData;
 
@@ -71,7 +72,7 @@ const CarBook = () => {
   } = route.params || {};
 
   // Total seats based on car type
-  const totalSeats = 5;
+  const totalSeats = bookingData.carTotalSeat || route.params?.carTotalSeat || 5;
   const carTypesss = carType;
   // State for user data
   const [user, setUser] = useState(null);

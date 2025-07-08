@@ -34,6 +34,7 @@ const CarType = () => {
     cityId,
     cityName,
     carType,
+    carTotalSeat, // <-- add this line
   } = route.params || {};
 
   const [date, setDate] = useState(new Date());
@@ -46,6 +47,8 @@ const CarType = () => {
       navigation.goBack();
       return true;
     });
+    // Debug log for carTotalSeat
+    console.log('CarType screen received carTotalSeat:', carTotalSeat);
     return () => backHandler.remove();
   }, []);
 
@@ -102,6 +105,7 @@ const CarType = () => {
       cityId,
       cityName,
       status: 'Confirmed',
+      carTotalSeat // <-- add this line
     };
     
     console.log("=== CarType - Booking Data ===");
@@ -114,6 +118,7 @@ const CarType = () => {
     navigation.navigate('CarBook', {
       ...route.params,
       bookingData,
+      carTotalSeat // <-- add this line
     });
   };
 
@@ -136,6 +141,8 @@ const CarType = () => {
 
           <Text style={styles.subheading}>Selected Car Type</Text>
           <Text style={styles.carType}>{carType || 'N/A'}</Text>
+          <Text style={styles.subheading}>Car Total Seats</Text>
+          <Text style={styles.carType}>{carTotalSeat || 'N/A'}</Text>
 
           <Text style={styles.subheading}>Select Date</Text>
           <TouchableOpacity style={styles.inputGroup} onPress={() => setShowDatePicker(true)}>

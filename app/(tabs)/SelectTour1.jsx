@@ -17,6 +17,7 @@ const SelectTour = () => {
     const [childWithoutSeatP, setChildWithoutSeatP] = useState(0);
     const [price, setPrice] = useState(0);
     const [withoutBookingAmount, setWithoutBookingAmount] = useState(0);
+    const [carTotalSeat, setCarTotalSeat] = useState(0);
 
     const navigation = useNavigation();
     const route = useRoute();
@@ -107,6 +108,7 @@ const SelectTour = () => {
             setChildWithoutSeatP(0);
             setPrice(0);
             setWithoutBookingAmount(0);
+            setCarTotalSeat(0);
             console.log('Category deselected:', item.categoryId, item.categoryName);
             return;
         }
@@ -121,6 +123,7 @@ const SelectTour = () => {
         setChildWithoutSeatP(0);
         setPrice(0);
         setWithoutBookingAmount(0);
+        setCarTotalSeat(0);
         console.log('Selected category:', item.categoryId, item.categoryName);
         fetchPackages(item.categoryId);
     };
@@ -134,6 +137,7 @@ const SelectTour = () => {
             setChildWithoutSeatP(0);
             setPrice(0);
             setWithoutBookingAmount(0);
+            setCarTotalSeat(0); // Reset carTotalSeat
             console.log('Package deselected:', item.packageId, item.packageName);
             return;
         }
@@ -149,7 +153,6 @@ const SelectTour = () => {
         } else {
             setPrice(parseInt(item.carPackagePrice, 10) || 0);
         }
-        
         // Set withoutBookingAmount if selectedBus is false and the parameter exists
         if (selectedBus === false && item.withoutBookingAmount !== undefined) {
             setWithoutBookingAmount(parseInt(item.withoutBookingAmount, 10) || 0);
@@ -157,7 +160,12 @@ const SelectTour = () => {
         } else {
             setWithoutBookingAmount(0);
         }
-        
+        // Set carTotalSeat if selectedBus is false
+        if (selectedBus === false && item.carTotalSeat !== undefined) {
+            setCarTotalSeat(parseInt(item.carTotalSeat, 10) || 0);
+        } else {
+            setCarTotalSeat(0);
+        }
         console.log('Selected package:', item.packageId, item.packageName);
         console.log('Package details:', {
             packageId: item.packageId,
@@ -166,6 +174,7 @@ const SelectTour = () => {
             childWithSeat: item.child3To8YrswithSeat,
             childWithoutSeat: item.child3To8YrsWithoutSeat,
             withoutBookingAmount: item.withoutBookingAmount,
+            carTotalSeat: item.carTotalSeat,
             selectedBus: selectedBus
         });
     };
@@ -181,13 +190,13 @@ const SelectTour = () => {
             console.log('Child Without Seat Price:', childWithoutSeatP);
             console.log('Adult Price:', price);
             console.log('extra seat charges:', withoutBookingAmount);
+            console.log('Car Total Seat:', carTotalSeat);
             console.log('Complete parameter object:', {
                 selectedCategory,
                 selectedCategoryName,
                 selectedPackage,
                 selectedPackageName,
                 selectedCityId,
-                withoutBookingAmount,
                 withoutBookingAmount,
                 selectedCityName,
                 destinationId,
@@ -199,6 +208,7 @@ const SelectTour = () => {
                 childWithoutSeatP,
                 price,
                 tuljapur,
+                carTotalSeat,
                 ...(selectedBus === false && selectedPackage && packages.find(p => p.packageId === selectedPackage)?.carType ? { carType: packages.find(p => p.packageId === selectedPackage).carType } : {})
             });
             console.log('=== End SelectTour1 Parameters ===');
@@ -220,6 +230,7 @@ const SelectTour = () => {
                 price,
                 withoutBookingAmount,
                 tuljapur,
+                carTotalSeat,
                 ...(selectedBus === false && selectedPackage && packages.find(p => p.packageId === selectedPackage)?.carType ? { carType: packages.find(p => p.packageId === selectedPackage).carType } : {})
             });
         } else {

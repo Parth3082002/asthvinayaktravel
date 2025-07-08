@@ -39,6 +39,7 @@ const PackageDetails = ({ route: propRoute }) => {
     price,
     withoutBookingAmount,
     tuljapur,
+    carTotalSeat,
     carPackagePrice
   } = route.params || {};
   const categoryId = propRoute?.categoryId || routeParams.categoryId;
@@ -232,7 +233,7 @@ const PackageDetails = ({ route: propRoute }) => {
         destinationName: destinationName,
         tuljapur: tuljapur,
         carType: route.params?.carType,
-        carPackagePrice: packageData.carPackagePrice
+        carTotalSeat: carTotalSeat
       });
       console.log('=== End Standardpu12 Parameters (CAR) ===');
       
@@ -255,7 +256,8 @@ const PackageDetails = ({ route: propRoute }) => {
         destinationId: destinationId,
         destinationName: destinationName,
         tuljapur: tuljapur,
-        carType: route.params?.carType
+        carType: route.params?.carType,
+        carTotalSeat: carTotalSeat
       });
     }
   };
