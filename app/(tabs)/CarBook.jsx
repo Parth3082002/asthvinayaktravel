@@ -15,6 +15,8 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute, useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { CommonActions } from "@react-navigation/native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import RazorpayCheckout from 'react-native-razorpay';
@@ -140,19 +142,35 @@ const CarBook = () => {
   }, [date, time, packageId, packageName, categoryId, categoryName, withoutBookingAmount, routeWithoutBookingAmount, selectedBus]);
 
   // Handle hardware back button
-  useEffect(() => {
-    const backAction = () => {
-      handleBackNavigation();
-      return true;
-    };
+  useFocusEffect(
+    useCallback(() => {
+      const backAction = () => {
+        navigation.navigate('CarType', {
+          selectedPickupPointId,
+          selectedPickupPoint,
+          price,
+          vehicleType,
+          childWithSeatP,
+          childWithoutSeatP,
+          withoutBookingAmount,
+          cityId,
+          cityName,
+          carType,
+          carTotalSeat,
+          // Add any other parameters you want to preserve from route.params
+          ...route.params,
+        });
+        return true;
+      };
 
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction
-    );
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        backAction
+      );
 
-    return () => backHandler.remove();
-  }, [navigation]);
+      return () => backHandler.remove();
+    }, [navigation, route, selectedPickupPointId, selectedPickupPoint, price, vehicleType, childWithSeatP, childWithoutSeatP, withoutBookingAmount, cityId, cityName, carType, carTotalSeat])
+  );
 
   // Function to handle back navigation and clear states
   const handleBackNavigation = () => {

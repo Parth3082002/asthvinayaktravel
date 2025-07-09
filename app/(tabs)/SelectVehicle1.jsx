@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useNavigation } from "@react-navigation/native";
+import { CommonActions } from '@react-navigation/native';
 
 // Images
 import BusImage from "@/assets/images/bus1.png";
@@ -61,7 +62,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const backAction = () => {
-      navigation.goBack();
+      BackHandler.exitApp();
       return true;
     };
 
@@ -71,7 +72,7 @@ const Dashboard = () => {
     );
 
     return () => backHandler.remove();
-  }, [navigation]);
+  }, []);
 
   const handleLogout = async () => {
     try {

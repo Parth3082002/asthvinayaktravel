@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -42,25 +42,64 @@ const CarType = () => {
   const [time, setTime] = useState('');
   const [showTimePicker, setShowTimePicker] = useState(false);
 
+  useFocusEffect(
+    useCallback(() => {
+      const backAction = () => {
+        navigation.navigate("Standardpu12", {
+          selectedCategory: route.params?.selectedCategory,
+          selectedCategoryName: route.params?.selectedCategoryName,
+          selectedPackage: route.params?.selectedPackage,
+          selectedPackageName: route.params?.selectedPackageName,
+          selectedCityId: route.params?.selectedCityId,
+          selectedCityName: route.params?.selectedCityName,
+          destinationId: route.params?.destinationId,
+          destinationName: route.params?.destinationName,
+          vehicleType: route.params?.vehicleType,
+          selectedVehicleId: route.params?.selectedVehicleId,
+          selectedBus: route.params?.selectedBus,
+          childWithSeatP: route.params?.childWithSeatP,
+          childWithoutSeatP: route.params?.childWithoutSeatP,
+          withoutBookingAmount: route.params?.withoutBookingAmount,
+          tuljapur: route.params?.tuljapur,
+          carTotalSeat: route.params?.carTotalSeat,
+          userName: route.params?.userName,
+          carType: route.params?.carType,
+          price:price
+        });
+        return true;
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+
+      return () => backHandler.remove();
+    }, [navigation])
+  );
+
+  // Debug log for carTotalSeat
   useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      navigation.goBack();
-      return true;
-    });
-    // Debug log for carTotalSeat
     console.log('CarType screen received carTotalSeat:', carTotalSeat);
-    return () => backHandler.remove();
-  }, []);
+  }, [carTotalSeat]);
 
   const handleBooking = () => {
     if (!carType) {
       alert('Please select a car type');
       return;
     }
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      alert('Please select a date');
+      return;
+    }
+    if (!time) {
+      alert('Please select a time');
+      return;
+    }
 
     // Format date as "2025-07-05" (YYYY-MM-DD)
     const formattedDate = date.toISOString().split('T')[0];
-    
+
     // Format time as "2025-07-05T10:30:00" (YYYY-MM-DDTHH:MM:SS)
     let formattedTime;
     if (time) {
@@ -107,14 +146,14 @@ const CarType = () => {
       status: 'Confirmed',
       carTotalSeat // <-- add this line
     };
-    
+
     console.log("=== CarType - Booking Data ===");
     console.log("Formatted Date:", formattedDate);
     console.log("Formatted Time:", formattedTime);
     console.log("Original Date Object:", date);
     console.log("Original Time String:", time);
     console.log("=== End Booking Data ===");
-    
+
     navigation.navigate('CarBook', {
       ...route.params,
       bookingData,

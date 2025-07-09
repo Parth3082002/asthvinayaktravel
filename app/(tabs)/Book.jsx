@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Alert,
   View,
@@ -9,11 +9,12 @@ import {
   ScrollView,
   Image,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  BackHandler
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { Picker } from "@react-native-picker/picker";
-import { useNavigation, useRoute, CommonActions } from '@react-navigation/native';
+import { useNavigation, useRoute, CommonActions, useFocusEffect } from '@react-navigation/native';
 import Icon from "react-native-vector-icons/Ionicons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RazorpayCheckout from 'react-native-razorpay';
@@ -49,6 +50,7 @@ const Book = () => {
     tripDate = selectedDate,
     tripId = 0,
     tourName = "",
+    userName,
     selectedSeats = [],
     selectedDate
   } = route.params || {};
@@ -105,6 +107,45 @@ const Book = () => {
     };
     fetchUserData();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const backAction = () => {
+        navigation.navigate("SelectSeats", {
+          cityName,
+          cityId,
+          packageName,
+          packageId,
+          categoryName,
+          categoryId,
+          selectedPickupPoint,
+          selectedPickupPointId,
+          price,
+          vehicleType,
+          selectedVehicleId,
+          selectedBus,
+          childWithSeatP,
+          childWithoutSeatP,
+          destinationId,
+          destinationName,
+          tuljapur,
+          userName,
+          selectedDate,
+          tripId,
+          tourName,
+          totalBusSeats: selectedSeats.length
+        });
+        return true;
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+
+      return () => backHandler.remove();
+    }, [navigation])
+  );
 
   // Check if total persons exceed booked seats
   useEffect(() => {
@@ -332,7 +373,32 @@ const Book = () => {
       {/* Header with Back Arrow */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={() => 
+            navigation.navigate("SelectSeats", {
+              cityName,
+              cityId,
+              packageName,
+              packageId,
+              categoryName,
+              categoryId,
+              selectedPickupPoint,
+              selectedPickupPointId,
+              price,
+              vehicleType,
+              selectedVehicleId,
+              selectedBus,
+              childWithSeatP,
+              childWithoutSeatP,
+              destinationId,
+              destinationName,
+              tuljapur,
+              userName,
+              selectedDate,
+              tripId,
+              tourName,
+              totalBusSeats: selectedSeats.length
+            })
+          }
           style={styles.backButtonContainer}
         >
           <View style={styles.backButtonCircle}>
@@ -656,7 +722,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   picker: {
-    height: 48,
+    height: 55,
   },
   datePicker: {
     backgroundColor: "#F3F4F6",

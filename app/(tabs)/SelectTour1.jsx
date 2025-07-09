@@ -30,6 +30,7 @@ const SelectTour = () => {
         selectedCityName,
         destinationId,
         destinationName,
+        userName,
         vehicleType,
         selectedVehicleId,
         selectedBus,
@@ -41,15 +42,22 @@ const SelectTour = () => {
             setSelectedCategory(null);
         }, [])
     );
-    useEffect(() => {
-        const backAction = () => {
-            navigation.goBack();
-            return true;
-        };
 
-        const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
-        return () => backHandler.remove();
-    }, [navigation]);
+    useFocusEffect(
+        React.useCallback(() => {
+            const backAction = () => {
+                navigation.navigate("Home",{userName,selectedBus,selectedVehicleId});
+                return true;
+            };
+
+            const backHandler = BackHandler.addEventListener(
+                "hardwareBackPress",
+                backAction
+            );
+
+            return () => backHandler.remove();
+        }, [navigation])
+    );
     useEffect(() => {
         fetchCategories();
     }, [selectedCityId, tuljapur]);
@@ -231,6 +239,7 @@ const SelectTour = () => {
                 withoutBookingAmount,
                 tuljapur,
                 carTotalSeat,
+                userName,
                 ...(selectedBus === false && selectedPackage && packages.find(p => p.packageId === selectedPackage)?.carType ? { carType: packages.find(p => p.packageId === selectedPackage).carType } : {})
             });
         } else {
@@ -241,7 +250,7 @@ const SelectTour = () => {
         <View style={styles.container}>
             {/* Header with Back Button */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.navigate("SelectVehicle1")} style={styles.backButtonContainer}>
+                <TouchableOpacity onPress={() => navigation.navigate("Home",{userName,selectedBus,selectedVehicleId})} style={styles.backButtonContainer}>
                     <View style={styles.backButtonCircle}>
                         <Text style={styles.backButton}>{'<'}</Text>
                     </View>

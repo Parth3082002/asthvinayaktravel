@@ -36,6 +36,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
     destinationId,
     destinationName,
     tuljapur,
+    userName,
   } = routeParams;
 
   useEffect(() => {
@@ -77,9 +78,23 @@ const SelectDateScreen = ({ route: propRoute }) => {
 
   useEffect(() => {
     const backAction = () => {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'SelectVehicle1' }],
+      navigation.navigate('Standardpu12',{
+        selectedCategory: categoryId,
+        selectedCategoryName: categoryName,
+        selectedPackage: packageId,
+        selectedPackageName: packageName,
+        selectedCityId: cityId,
+        selectedCityName: cityName,
+        destinationId,
+        destinationName,
+        vehicleType,
+        selectedVehicleId,
+        selectedBus,
+        childWithSeatP,
+        childWithoutSeatP,
+        price,
+        tuljapur,
+        userName
       });
       return true;
     };
@@ -103,7 +118,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
       alert("Please select a date");
       return;
     }
-
+console.log("selectedDate-----------------",selectedDate.tripDate);
     navigation.navigate("SelectSeats", {
       cityName,
       cityId,
@@ -122,6 +137,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
       destinationId,
       destinationName,
       tuljapur,
+      userName,
       selectedDate: selectedDate.tripDate,
       tripId: selectedDate.tripId,
       tourName: selectedDate.tourName,
@@ -167,9 +183,23 @@ const SelectDateScreen = ({ route: propRoute }) => {
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'SelectVehicle1' }],
+            navigation.navigate('Standardpu12',{
+              selectedCategory: categoryId,
+              selectedCategoryName: categoryName,
+              selectedPackage: packageId,
+              selectedPackageName: packageName,
+              selectedCityId: cityId,
+              selectedCityName: cityName,
+              destinationId,
+              destinationName,
+              vehicleType,
+              selectedVehicleId,
+              selectedBus,
+              childWithSeatP,
+              childWithoutSeatP,
+              price,
+              tuljapur,
+              userName
             });
           }}
           style={styles.backButtonContainer}
@@ -350,7 +380,7 @@ const styles = StyleSheet.create({
     left: 30,
     right: 30,
     backgroundColor: "#FF5722",
-    borderRadius: 50,
+    borderRadius: 8,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",

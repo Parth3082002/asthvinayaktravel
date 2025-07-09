@@ -40,6 +40,7 @@ const PackageDetails = ({ route: propRoute }) => {
     withoutBookingAmount,
     tuljapur,
     carTotalSeat,
+    userName,
     carPackagePrice
   } = route.params || {};
   const categoryId = propRoute?.categoryId || routeParams.categoryId;
@@ -77,7 +78,17 @@ const PackageDetails = ({ route: propRoute }) => {
     React.useCallback(() => {
       const backAction = () => {
         clearAllState();
-        navigation.navigate('SelectVehicle1');
+        navigation.navigate('SelectTour1',{
+          selectedCityId,
+          selectedCityName,
+          destinationId,
+          destinationName,
+          vehicleType,
+          selectedVehicleId,
+          selectedBus,
+          userName,
+          tuljapur
+        });
         return true;
       };
       const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
@@ -210,6 +221,7 @@ const PackageDetails = ({ route: propRoute }) => {
         destinationId: destinationId,
         destinationName: destinationName,
         tuljapur: tuljapur,
+        userName
       });
     } else if (!selectedBus) {
       console.log('=== Standardpu12 - Navigating to CarType (CAR) ===');

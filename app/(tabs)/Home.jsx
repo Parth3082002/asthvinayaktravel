@@ -72,13 +72,24 @@ const Home = () => {
     fetchVehicleType();
   }, []);
 
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
-      navigation.navigate("SelectVehicle1");
-      return true;
-    });
-    return () => backHandler.remove();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const backAction = () => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "SelectVehicle1" }],
+        });
+        return true;
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+
+      return () => backHandler.remove();
+    }, [navigation])
+  );
 
   const storeCityData = async (cityId, cityName) => {
     try {
@@ -100,6 +111,7 @@ const Home = () => {
       vehicleType,
       selectedVehicleId,
       selectedBus,
+      userName,
       tuljapur: isTuljapur,
     });
   };
