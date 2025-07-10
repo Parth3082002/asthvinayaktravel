@@ -31,10 +31,19 @@ const dismissKeyboard = () => {
 const Otp = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const otpRefs = useRef([]);
+  const hiddenInputRef = useRef();
   const navigation = useNavigation();
   const route = useRoute();
   const { mobileNo } = route.params || {};
   const [loading, setLoading] = useState(false);
+
+  // Handler for hidden input autofill
+  const handleHiddenInputChange = (text) => {
+    if (text.length === 6 && /^[0-9]{6}$/.test(text)) {
+      setOtp(text.split(""));
+      hiddenInputRef.current?.blur();
+    }
+  };
 
   useFocusEffect(
     React.useCallback(() => {
@@ -158,51 +167,67 @@ const Otp = () => {
 
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
-      <KeyboardAwareScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-        enableOnAndroid={true}
-        extraScrollHeight={20}
-      >
-        <View style={styles.container}>
-          <View style={styles.logoContainer}>
-            <Image source={require("@/assets/images/Verify.png")} style={styles.image} />
+      <View style={{ flex: 1 }}>
+        {/* Hidden input for Android autofill popup */}
+        <TextInput
+          ref={hiddenInputRef}
+          style={{ position: "absolute", opacity: 0, height: 0, width: 0 }}
+          value={otp.join("")}
+          onChangeText={handleHiddenInputChange}
+          autoComplete="one-time-code"
+          textContentType="oneTimeCode"
+          keyboardType="numeric"
+          maxLength={6}
+          importantForAutofill="yes"
+          returnKeyType="done"
+          blurOnSubmit={true}
+        />
+        <KeyboardAwareScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          enableOnAndroid={true}
+          extraScrollHeight={20}
+        >
+          <View style={styles.container}>
+            <View style={styles.logoContainer}>
+              <Image source={require("@/assets/images/Verify.png")} style={styles.image} />
+            </View>
+
+            <Text style={styles.verificationHeading}>OTP Verification</Text>
+            <Text style={styles.title}>Check your phone for the OTP</Text>
+            <Text style={styles.subtitle}>Sent to: {mobileNo}</Text>
+
+            <View style={styles.otpContainer}>
+              {otp.map((digit, index) => (
+                <TextInput
+                  key={index}
+                  ref={(ref) => (otpRefs.current[index] = ref)}
+                  style={styles.otpInput}
+                  value={digit}
+                  onChangeText={(text) => handleInputChange(text, index)}
+                  keyboardType="numeric"
+                  maxLength={1}
+                  onKeyPress={({ nativeEvent }) => {
+                    if (nativeEvent.key === "Backspace" && index > 0 && !otp[index]) {
+                      otpRefs.current[index - 1]?.focus();
+                    }
+                  }}
+                />
+              ))}
+            </View>
+
+            <Text style={styles.notReceivedText}>Not received yet? Resend it</Text>
+
+            <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp} disabled={loading}>
+              <Text style={styles.resendText}>Resend Code</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.nextButton} onPress={verifyOtp} disabled={loading}>
+              {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.nextText}>Verify OTP</Text>}
+            </TouchableOpacity>
           </View>
-
-          <Text style={styles.verificationHeading}>OTP Verification</Text>
-          <Text style={styles.title}>Check your phone for the OTP</Text>
-          <Text style={styles.subtitle}>Sent to: {mobileNo}</Text>
-
-          <View style={styles.otpContainer}>
-            {otp.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={(ref) => (otpRefs.current[index] = ref)}
-                style={styles.otpInput}
-                value={digit}
-                onChangeText={(text) => handleInputChange(text, index)}
-                keyboardType="numeric"
-                maxLength={1}
-                onKeyPress={({ nativeEvent }) => {
-                  if (nativeEvent.key === "Backspace" && index > 0 && !otp[index]) {
-                    otpRefs.current[index - 1]?.focus();
-                  }
-                }}
-              />
-            ))}
-          </View>
-
-          <Text style={styles.notReceivedText}>Not received yet? Resend it</Text>
-
-          <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp} disabled={loading}>
-            <Text style={styles.resendText}>Resend Code</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.nextButton} onPress={verifyOtp} disabled={loading}>
-            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.nextText}>Verify OTP</Text>}
-          </TouchableOpacity>
-        </View>
-      </KeyboardAwareScrollView>
+        </KeyboardAwareScrollView>
+      </View>
     </TouchableWithoutFeedback>
   );
 };
