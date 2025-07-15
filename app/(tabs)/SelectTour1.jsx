@@ -65,7 +65,7 @@ const SelectTour = () => {
     const fetchCategories = async () => {
         try {
             // Use the new API with cityId and tuljapur parameters
-            const url = `https://newenglishschool-001-site1.ktempurl.com/api/Categorys/GetCategories?cityid=${selectedCityId}&isTulsapur=${tuljapur}`;
+            const url = `https://ashtavinayak.itastourism.com/api/Categorys/GetCategories?cityid=${selectedCityId}&isTulsapur=${tuljapur}`;
             console.log('Fetching categories from:', url);
             
             const response = await fetch(url);
@@ -88,7 +88,7 @@ const SelectTour = () => {
         try {
             // Determine isCarType based on selectedBus
             const isCarType = selectedBus ? false : true;
-            const url = `https://newenglishschool-001-site1.ktempurl.com/api/package/GetPackageByCateGoryId?id=${categoryId}&isCarType=${isCarType}`;
+            const url = `https://ashtavinayak.itastourism.com/api/package/GetPackageByCateGoryId?id=${categoryId}&isCarType=${isCarType}`;
             console.log('Fetching packages from:', url);
             
             const response = await fetch(url);

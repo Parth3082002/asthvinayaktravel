@@ -49,7 +49,7 @@ const SelectDateScreen = ({ route: propRoute }) => {
 
       try {
         const response = await fetch(
-          `https://newenglishschool-001-site1.ktempurl.com/api/Trip/TripsByPackage/${packageId}`
+          `https://ashtavinayak.itastourism.com/api/Trip/TripsByPackage/${packageId}`
         );
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);

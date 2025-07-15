@@ -76,7 +76,7 @@ const SelectSeats = () => {
   const fetchSeatData = async () => {
     try {
       const bookedSeatsResponse = await fetch(
-        `https://newenglishschool-001-site1.ktempurl.com/api/BookingSeat/ByTrip/${tripId}`
+        `https://ashtavinayak.itastourism.com/api/BookingSeat/ByTrip/${tripId}`
       );
 
       let bookedSeats = [];

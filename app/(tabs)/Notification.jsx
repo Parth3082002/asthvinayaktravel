@@ -41,7 +41,7 @@ const NotificationsScreen = () => {
       if (!userId) return;
 
       try {
-        const response = await fetch(`https://newenglishschool-001-site1.ktempurl.com/api/Notification/GetUserNotifications/${userId}`);
+        const response = await fetch(`https://ashtavinayak.itastourism.com/api/Notification/GetUserNotifications/${userId}`);
         const data = await response.json();
 
         if (response.ok) {

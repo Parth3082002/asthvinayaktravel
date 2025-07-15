@@ -113,7 +113,7 @@ const PackageDetails = ({ route: propRoute }) => {
       setLoading(true);
       setError(null);
       const encodedPackageId = encodeURIComponent(packageId);
-      const apiUrl = `https://newenglishschool-001-site1.ktempurl.com/api/Package/GetPackagePrice/${cityId}/${categoryId}/${encodedPackageId}`;
+      const apiUrl = `https://ashtavinayak.itastourism.com/api/Package/GetPackagePrice/${cityId}/${categoryId}/${encodedPackageId}`;
 
       const response = await fetch(apiUrl);
       if (!response.ok) {
@@ -143,7 +143,7 @@ const PackageDetails = ({ route: propRoute }) => {
 
     try {
       console.log('=== Using API for pickup points (BUS/selectedBus=true) ===');
-      const apiUrl = `https://newenglishschool-001-site1.ktempurl.com/api/Pickup/City/${cityId}`;
+      const apiUrl = `https://ashtavinayak.itastourism.com/api/Pickup/City/${cityId}`;
       const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch pickup points');

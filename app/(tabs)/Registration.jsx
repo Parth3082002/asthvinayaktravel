@@ -58,7 +58,7 @@ const Registration = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        "https://newenglishschool-001-site1.ktempurl.com/api/User/Register",
+        "https://ashtavinayak.itastourism.com/api/User/Register",
         {
           UserName: userName,
           Email: email,

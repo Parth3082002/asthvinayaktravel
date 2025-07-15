@@ -74,10 +74,10 @@ const History = () => {
     setLoading(true);
     try {
       const busRes = await fetch(
-        `https://newenglishschool-001-site1.ktempurl.com/api/Booking/HistoryByUser/${userId}`
+        `https://ashtavinayak.itastourism.com/api/Booking/HistoryByUser/${userId}`
       );
       const carRes = await fetch(
-        `https://newenglishschool-001-site1.ktempurl.com/api/Booking/FamilyBookingHistory/${userId}`
+        `https://ashtavinayak.itastourism.com/api/Booking/FamilyBookingHistory/${userId}`
       );
       const busData = await busRes.json();
       const carData = await carRes.json();

@@ -39,7 +39,7 @@ const Home = () => {
     useCallback(() => {
       const fetchCities = () => {
         setLoading(true);
-        fetch("https://newenglishschool-001-site1.ktempurl.com/api/City/")
+        fetch("https://ashtavinayak.itastourism.com/api/City/")
           .then((res) => res.json())
           .then((data) => {
             setCities(data);

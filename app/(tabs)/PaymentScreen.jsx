@@ -83,7 +83,7 @@ export default function PaymentScreen() {
           transactionReference: paymentId
         };
         const response = await axios.post(
-          "https://newenglishschool-001-site1.ktempurl.com/api/Booking/UpdatePayment",
+          "https://ashtavinayak.itastourism.com/api/Booking/UpdatePayment",
           remainingPaymentBody,
           {
             headers: {
@@ -164,7 +164,7 @@ export default function PaymentScreen() {
         };
         console.log("Car Booking : ", carBookingBody);
         const response = await axios.post(
-          "https://newenglishschool-001-site1.ktempurl.com/api/Booking/BookCar",
+          "https://ashtavinayak.itastourism.com/api/Booking/BookCar",
           carBookingBody,
           {
             headers: {
@@ -215,7 +215,7 @@ export default function PaymentScreen() {
         };
         console.log("Bus Booking : ",seatBookingBody);
         const response = await axios.post(
-          "https://newenglishschool-001-site1.ktempurl.com/api/Booking/CreateBookingWithSeats",
+          "https://ashtavinayak.itastourism.com/api/Booking/CreateBookingWithSeats",
           seatBookingBody,
           {
             headers: {
