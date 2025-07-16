@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "AshtavinayakApp",
-    "slug": "astavinayakapkk",
+    "slug": "ashtavinayak",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Bappa.png",
@@ -52,10 +52,10 @@
         "origin": false
       },
       "eas": {
-        "projectId": "e1040a26-c62c-4244-9c21-455b0fc00f5a"
+        "projectId": "9ded0311-bd42-49ba-aae7-954e89edefe5"
       }
     },
-    "owner": "parthsalunkhe1234",
+    "owner": "parth123salunkhe",
     "updates": {
       "url": "https://u.expo.dev/e1040a26-c62c-4244-9c21-455b0fc00f5a"
     }
