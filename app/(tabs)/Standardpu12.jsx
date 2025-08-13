@@ -4,9 +4,10 @@ import {
   ScrollView, Image, ImageBackground, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, BackHandler,
   Platform,
 } from "react-native";
-import { useRoute, useFocusEffect } from "@react-navigation/native";
+import { useRoute, useFocusEffect, CommonActions } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 import Svg, { Line, Circle } from 'react-native-svg';
@@ -41,7 +42,9 @@ const PackageDetails = ({ route: propRoute }) => {
     tuljapur,
     carTotalSeat,
     userName,
-    carPackagePrice
+    carPackagePrice,
+    extraAdultPrice,
+    pkgPersonCount
   } = route.params || {};
   const categoryId = propRoute?.categoryId || routeParams.categoryId;
   const packageId = propRoute?.packageId || routeParams.packageId;
@@ -112,10 +115,45 @@ const PackageDetails = ({ route: propRoute }) => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Get authorization token from AsyncStorage
+      let authToken = null;
+      try {
+        authToken = await AsyncStorage.getItem("token");
+        console.log("Auth token retrieved for package details:", authToken ? "Token found" : "No token found");
+      } catch (err) {
+        console.error("Error retrieving auth token:", err);
+      }
+      
       const encodedPackageId = encodeURIComponent(packageId);
       const apiUrl = `https://ashtavinayak.itastourism.com/api/Package/GetPackagePrice/${cityId}/${categoryId}/${encodedPackageId}`;
 
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+        }
+      });
+      
+      console.log('Package Details API Response status:', response.status);
+      
+      // Handle 401 Unauthorized error
+      if (response.status === 401) {
+        console.log("Package Details API returned 401 - Unauthorized. Navigating to Login.");
+        // Clear stored authentication data
+        await AsyncStorage.multiRemove(["token", "mobileNo", "user"]);
+        
+        // Navigate to Login and reset navigation stack
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: "Login" }],
+          })
+        );
+        return; // Exit the function
+      }
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch data. Status: ${response.status}`);
       }
@@ -126,6 +164,7 @@ const PackageDetails = ({ route: propRoute }) => {
       const fetchedCategoryId = data?.categoryId || categoryId; // Fallback to the original categoryId if not in response
       setPackageData({ ...data, categoryId: fetchedCategoryId });
     } catch (error) {
+      console.error('Error fetching package details:', error);
       setError('Something went wrong. Please try again later.');
     } finally {
       setLoading(false);
@@ -143,8 +182,43 @@ const PackageDetails = ({ route: propRoute }) => {
 
     try {
       console.log('=== Using API for pickup points (BUS/selectedBus=true) ===');
+      
+      // Get authorization token from AsyncStorage
+      let authToken = null;
+      try {
+        authToken = await AsyncStorage.getItem("token");
+        console.log("Auth token retrieved for pickup points:", authToken ? "Token found" : "No token found");
+      } catch (err) {
+        console.error("Error retrieving auth token:", err);
+      }
+      
       const apiUrl = `https://ashtavinayak.itastourism.com/api/Pickup/City/${cityId}`;
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+        }
+      });
+      
+      console.log('Pickup Points API Response status:', response.status);
+      
+      // Handle 401 Unauthorized error
+      if (response.status === 401) {
+        console.log("Pickup Points API returned 401 - Unauthorized. Navigating to Login.");
+        // Clear stored authentication data
+        await AsyncStorage.multiRemove(["token", "mobileNo", "user"]);
+        
+        // Navigate to Login and reset navigation stack
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: "Login" }],
+          })
+        );
+        return; // Exit the function
+      }
+      
       if (!response.ok) {
         throw new Error('Failed to fetch pickup points');
       }
@@ -245,7 +319,8 @@ const PackageDetails = ({ route: propRoute }) => {
         destinationName: destinationName,
         tuljapur: tuljapur,
         carType: route.params?.carType,
-        carTotalSeat: carTotalSeat
+        carTotalSeat: carTotalSeat,
+        pkgPersonCount
       });
       console.log('=== End Standardpu12 Parameters (CAR) ===');
       
@@ -269,7 +344,9 @@ const PackageDetails = ({ route: propRoute }) => {
         destinationName: destinationName,
         tuljapur: tuljapur,
         carType: route.params?.carType,
-        carTotalSeat: carTotalSeat
+        carTotalSeat: carTotalSeat,
+        extraAdultPrice: extraAdultPrice,
+        pkgPersonCount: pkgPersonCount
       });
     }
   };

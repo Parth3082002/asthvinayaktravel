@@ -45,6 +45,8 @@ const CarBook = () => {
     acType = "",
     childWithSeatP = 0,
     childWithoutSeatP = 0,
+    extraAdultPrice = 0,
+    pkgPersonCount = 0,
     withoutBookingAmount = 0,
     price,
     date = new Date().toISOString().split('T')[0], // Default to today if not provided
@@ -58,6 +60,9 @@ const CarBook = () => {
     carTotalSeat = 5,
 
   } = bookingData;
+
+  // Set pkgPersonCount to 2 for now
+  const finalPkgPersonCount = 2;
 
   // Extract additional parameters from route.params
   const {
@@ -214,10 +219,10 @@ const CarBook = () => {
     const numChildWithSeat = parseInt(childWithSeat) || 0;
     const numChildWithoutSeat = parseInt(childWithoutSeat) || 0;
   
-    const totalSeatUsers = numAdults + numChildWithSeat;
-    const totalPersonsCount = totalSeatUsers + numChildWithoutSeat;
-    const childWithoutSeatCost = numChildWithoutSeat * childWithoutSeatP;
+    // Calculate total persons including package person count
+    const totalPersonsCount = pkgPersonCount + numAdults + numChildWithSeat + numChildWithoutSeat;
   
+    // Check if total persons exceed total seats
     if (totalPersonsCount > totalSeats) {
       alert("Total passengers cannot exceed total seats.");
       return;
@@ -225,17 +230,24 @@ const CarBook = () => {
   
     setTotalPersons(totalPersonsCount);
   
-    // Base price covers up to 2 seated passengers (adult + childWithSeat)
-    let finalPrice = price + childWithoutSeatCost;
-    if (totalSeatUsers > 2) {
-     
-      const extraSeats = totalSeatUsers - 2;
-      finalPrice += extraSeats * withoutBookingAmount;
+    // Base price is for package person count (2 persons)
+    let finalPrice = price;
+    
+    // Add extra charges for additional persons
+    if (numAdults > 0) {
+      finalPrice += numAdults * extraAdultPrice;
+    }
+    
+    if (numChildWithSeat > 0) {
+      finalPrice += numChildWithSeat * childWithSeatP;
+    }
+    
+    if (numChildWithoutSeat > 0) {
+      finalPrice += numChildWithoutSeat * childWithoutSeatP;
     }
   
     setTotalAmount(finalPrice);
     setAdvanceAmount(Math.ceil(finalPrice / 2));
-    // setRoomType("shared");
   };
   
 
@@ -248,33 +260,42 @@ const CarBook = () => {
   useEffect(() => {
     const numAdults = parseInt(adults) || 0;
     const numChildWithSeat = parseInt(childWithSeat) || 0;
-    const totalBookedPersons = numAdults + numChildWithSeat;
+    const numChildWithoutSeat = parseInt(childWithoutSeat) || 0;
+    const totalBookedPersons = pkgPersonCount + numAdults + numChildWithSeat + numChildWithoutSeat;
   
     if (totalBookedPersons > totalSeats) {
       Alert.alert("Warning", "Total persons exceed booked seats.", [
         {
           text: "OK",
           onPress: () => {
-            if (numAdults > totalSeats) {
+            if (numAdults > 0) {
               setAdults("");
-            } else {
+            } else if (numChildWithSeat > 0) {
               setChildWithSeat("");
+            } else if (numChildWithoutSeat > 0) {
+              setChildWithoutSeat("");
             }
           },
         },
       ]);
     }
 
-  }, [adults, childWithSeat, totalSeats]);
+  }, [adults, childWithSeat, childWithoutSeat, totalSeats]);
 
   // Validate all inputs before payment/booking
   const validateInputs = () => {
     console.log("=== Validating Inputs ===");
     const newErrors = {};
     
-    if (!adults && !childWithSeat) {
-      newErrors.seatCount = "Please enter at least one adult or child with seat";
-      console.log("❌ Validation failed: No adults or children with seat");
+    // Check if at least one extra person is added (package already includes 2 persons)
+    const numAdults = parseInt(adults) || 0;
+    const numChildWithSeat = parseInt(childWithSeat) || 0;
+    const numChildWithoutSeat = parseInt(childWithoutSeat) || 0;
+    const totalExtraPersons = numAdults + numChildWithSeat + numChildWithoutSeat;
+    
+    if (totalExtraPersons === 0) {
+      newErrors.seatCount = "Please enter at least one extra person (adult, child with seat, or child without seat)";
+      console.log("❌ Validation failed: No extra persons added");
     }
     
     if (!droppoint) {
@@ -485,10 +506,22 @@ const CarBook = () => {
             />
           </View>
 
+          <View style={styles.inputFieldContainer}>
+            <Text style={styles.label}>Package Person Count</Text>
+            <TextInput
+              style={[styles.input, !isEditable && styles.nonEditableInput]}
+              placeholder="pkgpersoncount"
+              keyboardType="numeric"
+              placeholderTextColor="#aaa"
+              value={pkgPersonCount.toString()}
+              editable={false}
+            />
+          </View>
+
           {/* Seat Selection */}
           <View style={styles.row}>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Available Seats</Text>
+              <Text style={styles.label}>Total Seats</Text>
               <TextInput
                 style={[styles.input, !isEditable && styles.nonEditableInput]}
                 value={totalSeats.toString()}
@@ -496,7 +529,7 @@ const CarBook = () => {
               />
             </View>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Passengers</Text>
+              <Text style={styles.label}>Extra Adult</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
@@ -508,10 +541,10 @@ const CarBook = () => {
               )}
             </View>
           </View>
-{/* 
+{  
           <View style={styles.row}>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Child (With Seat)</Text>
+              <Text style={styles.label}>Extra Child (With Seat)</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
@@ -520,7 +553,7 @@ const CarBook = () => {
               />
             </View>
             <View style={styles.halfWidth}>
-              <Text style={styles.label}>Child (Without Seat)</Text>
+              <Text style={styles.label}>Extra Child (Without Seat)</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
@@ -528,10 +561,10 @@ const CarBook = () => {
                 onChangeText={handleTextChange}
               />
             </View>
-          </View> */}
+          </View> }
 
           {/* Room Type Selection */}
-          <View style={{ marginBottom: 18 }}>
+          {/* <View style={{ marginBottom: 18 }}>
             <Text style={styles.label}>Room Type</Text>
             <View style={[styles.inputWithIcon, !isEditable && styles.nonEditableInput]}>
               <Icon name="bed-outline" size={20} color="#555" />
@@ -546,7 +579,7 @@ const CarBook = () => {
                 ))}
               </Picker>
             </View>
-          </View>
+          </View> */}
 
           {/* Locations */}
           {/* Pickup Location Field */}
@@ -723,7 +756,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: "#333",
     marginBottom: 5,

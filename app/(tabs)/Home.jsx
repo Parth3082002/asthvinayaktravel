@@ -12,7 +12,7 @@ import {
   useWindowDimensions,
   ImageBackground,
 } from "react-native";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect, CommonActions } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
 import LottieView from "lottie-react-native";
@@ -27,6 +27,7 @@ const Home = () => {
   const { width: screenWidth } = useWindowDimensions();
 
   const [cities, setCities] = useState([]);
+  const [destinations, setDestinations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [vehicleType, setVehicleType] = useState(null);
   const [selectedCityId, setSelectedCityId] = useState();
@@ -37,21 +38,154 @@ const Home = () => {
 
   useFocusEffect(
     useCallback(() => {
-      const fetchCities = () => {
+      const fetchData = async () => {
         setLoading(true);
-        fetch("https://ashtavinayak.itastourism.com/api/City/")
-          .then((res) => res.json())
-          .then((data) => {
-            setCities(data);
-            setLoading(false);
+        
+        // Get authorization token from AsyncStorage
+        let authToken = null;
+        try {
+          authToken = await AsyncStorage.getItem("token");
+          console.log("Auth token retrieved:", authToken ? authToken : "No token found");
+        } catch (err) {
+          console.error("Error retrieving auth token:", err);
+        }
+        
+        // Fetch cities with authorization header
+        const fetchCities = fetch("https://ashtavinayak.itastourism.com/api/City/", {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          }
+        })
+          .then((res) => {
+            console.log("Cities API response status:", res.status);
+            
+            // Handle 401 Unauthorized error
+            if (res.status === 401) {
+              console.log("Cities API returned 401 - Unauthorized. Navigating to Login.");
+              // Clear stored authentication data
+              AsyncStorage.multiRemove(["token", "mobileNo", "user"]).catch(err => {
+                console.error("Error clearing auth data:", err);
+              });
+              
+              // Navigate to Login and reset navigation stack
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: "Login" }],
+                })
+              );
+              throw new Error("Unauthorized - Redirecting to Login");
+            }
+            
+            if (!res.ok) {
+              throw new Error(`Cities API failed with status: ${res.status}`);
+            }
+            return res.text().then(text => {
+              console.log("Cities API raw response:", text);
+              if (!text) {
+                console.log("Cities API returned empty response");
+                return [];
+              }
+              try {
+                return JSON.parse(text);
+              } catch (e) {
+                console.error("Cities API JSON parse error:", e);
+                return [];
+              }
+            });
           })
           .catch((err) => {
             console.error("Error fetching cities:", err);
+            // Don't return empty array for 401 errors as we're navigating away
+            if (err.message.includes("Unauthorized")) {
+              return null; // This will be handled in the Promise.all
+            }
+            return [];
+          });
+
+        // Fetch destinations with authorization header
+        const fetchDestinations = fetch("https://ashtavinayak.itastourism.com/api/TourDestinationApi/GetTourDestinationList", {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          }
+        })
+          .then((res) => {
+            console.log("Destinations API response status:", res.status);
+            
+            // Handle 401 Unauthorized error
+            if (res.status === 401) {
+              console.log("Destinations API returned 401 - Unauthorized. Navigating to Login.");
+              // Clear stored authentication data
+              AsyncStorage.multiRemove(["token", "mobileNo", "user"]).catch(err => {
+                console.error("Error clearing auth data:", err);
+              });
+              
+              // Navigate to Login and reset navigation stack
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [{ name: "Login" }],
+                })
+              );
+              throw new Error("Unauthorized - Redirecting to Login");
+            }
+            
+            if (!res.ok) {
+              throw new Error(`Destinations API failed with status: ${res.status}`);
+            }
+            return res.text().then(text => {
+              console.log("Destinations API raw response:", text);
+              if (!text) {
+                console.log("Destinations API returned empty response");
+                return [];
+              }
+              try {
+                return JSON.parse(text);
+              } catch (e) {
+                console.error("Destinations API JSON parse error:", e);
+                return [];
+              }
+            });
+          })
+          .catch((err) => {
+            console.error("Error fetching destinations:", err);
+            // Don't return empty array for 401 errors as we're navigating away
+            if (err.message.includes("Unauthorized")) {
+              return null; // This will be handled in the Promise.all
+            }
+            return [];
+          });
+
+        // Wait for both API calls to complete
+        Promise.all([fetchCities, fetchDestinations])
+          .then(([citiesData, destinationsData]) => {
+            console.log("Final cities data:", citiesData);
+            console.log("Final destinations data:", destinationsData);
+            
+            // Check if either API returned null (401 error occurred)
+            if (citiesData === null || destinationsData === null) {
+              console.log("One of the APIs returned null due to 401 error - navigation already handled");
+              return; // Don't update state as we're navigating away
+            }
+            
+            setCities(citiesData || []);
+            setDestinations(destinationsData || []);
             setLoading(false);
+          })
+          .catch((err) => {
+            console.error("Error fetching data:", err);
+            // Don't set loading to false if it's a 401 error as we're navigating away
+            if (!err.message.includes("Unauthorized")) {
+              setLoading(false);
+            }
           });
       };
 
-      fetchCities();
+      fetchData();
 
       return () => {
         setSelectedCityId(undefined);
@@ -102,12 +236,12 @@ const Home = () => {
 
   const handlePress = async (cityId, cityName, destinationId, destinationName) => {
     await storeCityData(cityId, cityName);
-    const isTuljapur = destinationId === "tuljapur";
+    const isTuljapur = destinationName.toLowerCase() === "tuljapur";
     navigation.navigate("SelectTour1", {
       selectedCityId: cityId,
       selectedCityName: cityName,
-      destinationId,
-      destinationName,
+      destinationId: destinationId,
+      destinationName: destinationName,
       vehicleType,
       selectedVehicleId,
       selectedBus,
@@ -166,8 +300,13 @@ const Home = () => {
                 dropdownIconColor="#FF5722"
               >
                 <Picker.Item label="Select a destination..." value={undefined} />
-                <Picker.Item label="Ashtavinayak" value="ashtavinayak" />
-                <Picker.Item label="Tuljapur" value="tuljapur" />
+                {destinations.map((destination) => (
+                  <Picker.Item 
+                    key={destination.id} 
+                    label={destination.destinationName} 
+                    value={destination.id} 
+                  />
+                ))}
               </Picker>
             </View>
 
@@ -179,9 +318,8 @@ const Home = () => {
                   return;
                 }
                 const city = cities.find((c) => c.cityId === selectedCityId);
-                const destName =
-                  selectedDestination === "ashtavinayak" ? "Ashtavinayak" : "Tuljapur";
-                handlePress(city.cityId, city.cityName, selectedDestination, destName);
+                const destination = destinations.find((d) => d.id === selectedDestination);
+                handlePress(city.cityId, city.cityName, destination.id, destination.destinationName);
               }}
             >
               <Text style={styles.nextButtonText}>Next</Text>

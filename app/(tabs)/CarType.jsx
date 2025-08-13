@@ -34,7 +34,9 @@ const CarType = () => {
     cityId,
     cityName,
     carType,
-    carTotalSeat, // <-- add this line
+    carTotalSeat,
+    extraAdultPrice,
+    pkgPersonCount
   } = route.params || {};
 
   const [date, setDate] = useState(new Date());
@@ -144,7 +146,9 @@ const CarType = () => {
       cityId,
       cityName,
       status: 'Confirmed',
-      carTotalSeat // <-- add this line
+      carTotalSeat,
+      extraAdultPrice,
+      pkgPersonCount
     };
 
     console.log("=== CarType - Booking Data ===");
@@ -152,12 +156,14 @@ const CarType = () => {
     console.log("Formatted Time:", formattedTime);
     console.log("Original Date Object:", date);
     console.log("Original Time String:", time);
+    console.log("pkgperson:", pkgPersonCount);
     console.log("=== End Booking Data ===");
 
     navigation.navigate('CarBook', {
       ...route.params,
       bookingData,
-      carTotalSeat // <-- add this line
+      carTotalSeat,
+      extraAdultPrice
     });
   };
 
@@ -183,7 +189,7 @@ const CarType = () => {
           <Text style={styles.subheading}>Car Total Seats</Text>
           <Text style={styles.carType}>{carTotalSeat || 'N/A'}</Text>
 
-          <Text style={styles.subheading}>Select Date</Text>
+          <Text style={styles.subheading}>Select Pickup Date</Text>
           <TouchableOpacity style={styles.inputGroup} onPress={() => setShowDatePicker(true)}>
             <Icon name="calendar-outline" size={22} color="#444" />
             <Text style={styles.inputText}>{date.toDateString()}</Text>
@@ -200,14 +206,14 @@ const CarType = () => {
             />
           )}
 
-          <Text style={styles.subheading}>Enter Time (HH:MM)</Text>
+          <Text style={styles.subheading}>Select Pickup Time (HH:MM)</Text>
           <TouchableOpacity style={styles.inputGroup} onPress={() => setShowTimePicker(true)}>
             <Icon name="time-outline" size={22} color="#444" />
             <Text style={styles.inputText}>{time || 'Tap to select time'}</Text>
           </TouchableOpacity>
           {showTimePicker && (
             <DateTimePicker
-              value={new Date(0, 0, 0, parseInt(time.split(':')[0] || 0), parseInt(time.split(':')[1] || 0))}
+              value={new Date()}
               mode="time"
               display="default"
               onChange={(event, selectedTime) => {

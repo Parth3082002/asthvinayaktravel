@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
     View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, BackHandler, Platform
 } from 'react-native';
-import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect, CommonActions } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SelectTour = () => {
     const [categories, setCategories] = useState([]);
@@ -16,6 +17,8 @@ const SelectTour = () => {
     const [childWithSeatP, setChildWithSeatP] = useState(0);
     const [childWithoutSeatP, setChildWithoutSeatP] = useState(0);
     const [price, setPrice] = useState(0);
+    const [pkgPersonCount, setPkgPersonCount] = useState(0);
+    const [extraAdultPrice, setAdultPrice] = useState(0);
     const [withoutBookingAmount, setWithoutBookingAmount] = useState(0);
     const [carTotalSeat, setCarTotalSeat] = useState(0);
 
@@ -59,22 +62,104 @@ const SelectTour = () => {
         }, [navigation])
     );
     useEffect(() => {
-        fetchCategories();
-    }, [selectedCityId, tuljapur]);
+        if (selectedBus === false) {
+            // For cars, directly fetch packages with categoryId = 2
+            fetchPackages(2);
+            setSelectedCategory(2);
+            setSelectedCategoryName('Car Package');
+        } else {
+            // For buses, fetch categories first
+            fetchCategories();
+        }
+    }, [selectedCityId, tuljapur, selectedBus]);
 
     const fetchCategories = async () => {
         try {
-            // Use the new API with cityId and tuljapur parameters
-            const url = `https://ashtavinayak.itastourism.com/api/Categorys/GetCategories?cityid=${selectedCityId}&isTulsapur=${tuljapur}`;
-            console.log('Fetching categories from:', url);
+            console.log('=== fetchCategories Debug Info ===');
+            console.log('selectedCityId:', selectedCityId);
+            console.log('destinationId:', destinationId);
+            console.log('destinationName:', destinationName);
+            console.log('tuljapur:', tuljapur);
             
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-            const result = await response.json();
-            console.log('Categories API response:', result);
+            // Check if required parameters are available
+            if (!selectedCityId) {
+                console.error('selectedCityId is missing');
+                setCategories([]);
+                setLoading(false);
+                return;
+            }
+            
+            if (!destinationId) {
+                console.error('destinationId is missing');
+                setCategories([]);
+                setLoading(false);
+                return;
+            }
+            
+            // Get authorization token from AsyncStorage
+            let authToken = null;
+            try {
+                authToken = await AsyncStorage.getItem("token");
+                console.log("Auth token retrieved:", authToken ? "Token found" : "No token found");
+            } catch (err) {
+                console.error("Error retrieving auth token:", err);
+            }
+            
+            // Use the new API with cityId and destinationId parameters
+            const url = `https://ashtavinayak.itastourism.com/api/Categorys/GetCategories?cityid=${selectedCityId}&tourDestinationId=${destinationId}`;
+            console.log('Fetching categories from URL:', url);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                }
+            });
+            console.log('API Response status:', response.status);
+            console.log('API Response headers:', response.headers);
+            
+            // Handle 401 Unauthorized error
+            if (response.status === 401) {
+                console.log("Categories API returned 401 - Unauthorized. Navigating to Login.");
+                // Clear stored authentication data
+                await AsyncStorage.multiRemove(["token", "mobileNo", "user"]);
+                
+                // Navigate to Login and reset navigation stack
+                navigation.dispatch(
+                    CommonActions.reset({
+                        index: 0,
+                        routes: [{ name: "Login" }],
+                    })
+                );
+                return; // Exit the function
+            }
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                throw new Error(`HTTP error! Status: ${response.status}, Response: ${errorText}`);
+            }
+            
+            const responseText = await response.text();
+            console.log('API Raw Response:', responseText);
+            
+            if (!responseText) {
+                console.log('API returned empty response');
+                setCategories([]);
+                setLoading(false);
+                return;
+            }
+            
+            const result = JSON.parse(responseText);
+            console.log('Categories API parsed response:', result);
             setCategories(result || []);
         } catch (error) {
             console.error('Error fetching categories:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
             setCategories([]);
         } finally {
             setLoading(false);
@@ -86,12 +171,46 @@ const SelectTour = () => {
 
         setPackageLoading(true);
         try {
+            // Get authorization token from AsyncStorage
+            let authToken = null;
+            try {
+                authToken = await AsyncStorage.getItem("token");
+                console.log("Auth token retrieved for packages:", authToken ? "Token found" : "No token found");
+            } catch (err) {
+                console.error("Error retrieving auth token:", err);
+            }
+
             // Determine isCarType based on selectedBus
             const isCarType = selectedBus ? false : true;
             const url = `https://ashtavinayak.itastourism.com/api/package/GetPackageByCateGoryId?id=${categoryId}&isCarType=${isCarType}`;
             console.log('Fetching packages from:', url);
             
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+                }
+            });
+            
+            console.log('Packages API Response status:', response.status);
+            
+            // Handle 401 Unauthorized error
+            if (response.status === 401) {
+                console.log("Packages API returned 401 - Unauthorized. Navigating to Login.");
+                // Clear stored authentication data
+                await AsyncStorage.multiRemove(["token", "mobileNo", "user"]);
+                
+                // Navigate to Login and reset navigation stack
+                navigation.dispatch(
+                    CommonActions.reset({
+                        index: 0,
+                        routes: [{ name: "Login" }],
+                    })
+                );
+                return; // Exit the function
+            }
+            
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
             const result = await response.json();
             console.log('Packages API response:', result);
@@ -155,6 +274,8 @@ const SelectTour = () => {
         setSelectedPackageName(item.packageName);
         setChildWithSeatP(parseInt(item.child3To8YrswithSeat, 10) || 0);
         setChildWithoutSeatP(parseInt(item.child3To8YrsWithoutSeat, 10) || 0);
+        setAdultPrice(parseInt(item.adultPrice, 10) || 0);
+        setPkgPersonCount(parseInt(item.pkgPersonCount, 10) || 0);
         // Set price based on selectedBus
         if (selectedBus === true) {
             setPrice(parseInt(item.adultPrice, 10) || 0);
@@ -197,10 +318,12 @@ const SelectTour = () => {
             console.log('Child With Seat Price:', childWithSeatP);
             console.log('Child Without Seat Price:', childWithoutSeatP);
             console.log('Adult Price:', price);
+            console.log('extra Adult Price:', extraAdultPrice);
             console.log('extra seat charges:', withoutBookingAmount);
             console.log('Car Total Seat:', carTotalSeat);
             console.log('Complete parameter object:', {
                 selectedCategory,
+                pkgPersonCount,
                 selectedCategoryName,
                 selectedPackage,
                 selectedPackageName,
@@ -240,10 +363,16 @@ const SelectTour = () => {
                 tuljapur,
                 carTotalSeat,
                 userName,
+                pkgPersonCount,
+                extraAdultPrice, // Extra adult price ₹3000
                 ...(selectedBus === false && selectedPackage && packages.find(p => p.packageId === selectedPackage)?.carType ? { carType: packages.find(p => p.packageId === selectedPackage).carType } : {})
             });
         } else {
-            alert('Please select both category and package!');
+            if (selectedBus === false) {
+                alert('Please select a package!');
+            } else {
+                alert('Please select both category and package!');
+            }
         }
     };
     return (
@@ -260,28 +389,33 @@ const SelectTour = () => {
 
             {/* Scrollable Content Below Header & Above Button */}
             <ScrollView contentContainerStyle={styles.scrollContainer}>
-                {/* Select Category */}
-                <Text style={styles.sectionTitle}>Select Category</Text>
-                {loading ? (
-                    <ActivityIndicator size="large" color="#FF5722" />
-                ) : (
-                    categories.map((item) => (
-                        <TouchableOpacity
-                            key={item.categoryId}
-                            style={[
-                                styles.categoryItem,
-                                selectedCategory === item.categoryId && styles.selectedCategory
-                            ]}
-                            onPress={() => {
-                                handleCategorySelection(item);
-                            }}
-                        >
-                            <Text style={styles.categoryText}>{item.categoryName}</Text>
-                        </TouchableOpacity>
-                    ))
+                {/* Select Category - Only show for buses */}
+                {selectedBus !== false && (
+                    <>
+                        <Text style={styles.sectionTitle}>Select Category</Text>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#FF5722" />
+                        ) : (
+                            categories.map((item) => (
+                                <TouchableOpacity
+                                    key={item.categoryId}
+                                    style={[
+                                        styles.categoryItem,
+                                        selectedCategory === item.categoryId && styles.selectedCategory
+                                    ]}
+                                    onPress={() => {
+                                        handleCategorySelection(item);
+                                    }}
+                                >
+                                    <Text style={styles.categoryText}>{item.categoryName}</Text>
+                                </TouchableOpacity>
+                            ))
+                        )}
+                    </>
                 )}
 
-                {selectedCategory && (
+                {/* Show package selection for cars or when category is selected for buses */}
+                {(selectedBus === false || selectedCategory) && (
                     <>
                         <Text style={packages.length > 0 ? styles.sectionTitle1 : styles.noPackageText}>
                             {packages.length > 0 ? "Select Package" : "No packages available"}
@@ -311,14 +445,33 @@ const SelectTour = () => {
                                             ) : (
                                                 <Text style={styles.priceText}>₹{item.adultPrice}</Text>
                                             )}
+                                            <Text style={styles.personCountText}>Fare for {item.pkgPersonCount} persons</Text>
                                         </View>
                                     </View>
                                     {/* Show carType and carTotalSeat if selectedBus is false and carType exists */}
                                     {selectedBus === false && item.carType && (
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, marginBottom: 4 }}>
-                                            <Text style={{ color: '#007AFF', fontWeight: 'bold' }}>Car Type : {item.carType}</Text>
-                                            <Text style={{ color: '#007AFF', fontWeight: 'bold', marginLeft: 10 }}>Seats: {item.carTotalSeat}</Text>
-                                        </View>
+                                        <>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, marginBottom: 4 }}>
+                                                <Text style={{ color: '#007AFF', fontWeight: 'bold' }}>Car Type : {item.carType}</Text>
+                                                <Text style={{ color: '#007AFF', fontWeight: 'bold', marginLeft: 10 }}>Seats: {item.carTotalSeat}</Text>
+                                            </View>
+                                            {/* Additional Charges Section */}
+                                            <View style={styles.additionalChargesSection}>
+                                                <Text style={styles.additionalChargesTitle}>Additional Charges</Text>
+                                                <View style={styles.chargeItem}>
+                                                    <Text style={styles.chargeLabel}>Extra Adult</Text>
+                                                    <Text style={styles.chargeAmount}>₹{item.adultPrice}</Text>
+                                                </View>
+                                                <View style={styles.chargeItem}>
+                                                    <Text style={styles.chargeLabel}>Extra Kid (3-8yr) with seat</Text>
+                                                    <Text style={styles.chargeAmount}>₹{item.child3To8YrswithSeat}</Text>
+                                                </View>
+                                                <View style={styles.chargeItem}>
+                                                    <Text style={styles.chargeLabel}>Extra Seat(3-8yr) without seat</Text>
+                                                    <Text style={styles.chargeAmount}>₹{item.child3To8YrsWithoutSeat}</Text>
+                                                </View>
+                                            </View>
+                                        </>
                                     )}
                                     {/* Pricing Cards: Only show if selectedBus is true */}
                                     {selectedBus !== false && (
@@ -355,6 +508,12 @@ const SelectTour = () => {
                                             <Text style={styles.detailTitle}>❌ Exclusions:</Text>
                                             <Text style={styles.detailText}>{item.exclusions}</Text>
                                         </View>
+                                        {item.itinerary && (
+                                            <View style={styles.detailSection}>
+                                                <Text style={styles.detailTitle}>🗺️ Itinerary:</Text>
+                                                <Text style={styles.detailText}>{item.itinerary}</Text>
+                                            </View>
+                                        )}
                                     </View>
                                 </TouchableOpacity>
                             ))
@@ -554,6 +713,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#FF5722',
     },
+    personCountText: {
+        fontSize: 12,
+        color: '#666',
+        marginTop: 2,
+        textAlign: 'right',
+    },
     pricingSection: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -632,6 +797,37 @@ const styles = StyleSheet.create({
     },
     extraChargesAmount: {
         fontSize: 16,
+        fontWeight: 'bold',
+        color: '#FF5722',
+    },
+    additionalChargesSection: {
+        backgroundColor: '#FFF8DC',
+        padding: 12,
+        borderRadius: 8,
+        marginVertical: 8,
+        borderWidth: 1,
+        borderColor: '#FFD700',
+    },
+    additionalChargesTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    chargeItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 6,
+    },
+    chargeLabel: {
+        fontSize: 13,
+        color: '#333',
+        flex: 1,
+    },
+    chargeAmount: {
+        fontSize: 14,
         fontWeight: 'bold',
         color: '#FF5722',
     },
