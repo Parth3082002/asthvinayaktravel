@@ -40,7 +40,7 @@ const CarBook = () => {
 
   // Extract all values from bookingData
   const {
-    carType ,
+    carType,
     carTypeLabel = carType,
     acType = "",
     childWithSeatP = 0,
@@ -139,7 +139,7 @@ const CarBook = () => {
     console.log("PackageName:", packageName);
     console.log("CategoryId:", categoryId);
     console.log("CategoryName:", categoryName);
-    console.log("price: ",price)
+    console.log("price: ", price)
     console.log("withoutBookingAmount from bookingData:", withoutBookingAmount);
     console.log("withoutBookingAmount from route.params:", routeWithoutBookingAmount);
     console.log("selectedBus:", selectedBus);
@@ -181,7 +181,7 @@ const CarBook = () => {
   const handleBackNavigation = () => {
     console.log("=== CarBook - Back Navigation ===");
     console.log("Navigating back to SelectVehicle1 and clearing states");
-    
+
     // Clear all local states
     setAdults("");
     setChildWithSeat("");
@@ -198,10 +198,10 @@ const CarBook = () => {
     setErrors({});
     setIsAlertShown(false);
     setAvailableRoomTypes(["shared"]);
-    
+
     console.log("All states cleared");
     console.log("=== End Back Navigation ===");
-    
+
     // Navigate to SelectVehicle1 and reset the navigation stack
     navigation.dispatch(
       CommonActions.reset({
@@ -213,43 +213,55 @@ const CarBook = () => {
 
   // Calculate price based on inputs
 
+  const [billBreakdown, setBillBreakdown] = useState({
+    baseFare: 0,
+    extraAdult: { count: 0, amount: 0 },
+    extraChildWithSeat: { count: 0, amount: 0 },
+    extraChildWithoutSeat: { count: 0, amount: 0 }
+  });
 
   const calculatePrice = () => {
     const numAdults = parseInt(adults) || 0;
     const numChildWithSeat = parseInt(childWithSeat) || 0;
     const numChildWithoutSeat = parseInt(childWithoutSeat) || 0;
-  
+
     // Calculate total persons including package person count
     const totalPersonsCount = pkgPersonCount + numAdults + numChildWithSeat + numChildWithoutSeat;
-  
+
     // Check if total persons exceed total seats
     if (totalPersonsCount > totalSeats) {
       alert("Total passengers cannot exceed total seats.");
       return;
     }
-  
+
     setTotalPersons(totalPersonsCount);
-  
+
     // Base price is for package person count (2 persons)
     let finalPrice = price;
-    
+
     // Add extra charges for additional persons
     if (numAdults > 0) {
       finalPrice += numAdults * extraAdultPrice;
     }
-    
+
     if (numChildWithSeat > 0) {
       finalPrice += numChildWithSeat * childWithSeatP;
     }
-    
+
     if (numChildWithoutSeat > 0) {
       finalPrice += numChildWithoutSeat * childWithoutSeatP;
     }
-  
+    const baseFare = price;
     setTotalAmount(finalPrice);
     setAdvanceAmount(Math.ceil(finalPrice / 2));
+    setBillBreakdown({
+      baseFare,
+      extraAdult: { count: numAdults, amount: extraAdultPrice },
+      extraChildWithSeat: { count: numChildWithSeat, amount: childWithSeatP },
+      extraChildWithoutSeat: { count: numChildWithoutSeat, amount: childWithoutSeatP }
+    });
   };
-  
+
 
   // Recalculate price when inputs change
   useEffect(() => {
@@ -262,7 +274,7 @@ const CarBook = () => {
     const numChildWithSeat = parseInt(childWithSeat) || 0;
     const numChildWithoutSeat = parseInt(childWithoutSeat) || 0;
     const totalBookedPersons = pkgPersonCount + numAdults + numChildWithSeat + numChildWithoutSeat;
-  
+
     if (totalBookedPersons > totalSeats) {
       Alert.alert("Warning", "Total persons exceed booked seats.", [
         {
@@ -286,37 +298,37 @@ const CarBook = () => {
   const validateInputs = () => {
     console.log("=== Validating Inputs ===");
     const newErrors = {};
-    
+
     // Check if at least one extra person is added (package already includes 2 persons)
     const numAdults = parseInt(adults) || 0;
     const numChildWithSeat = parseInt(childWithSeat) || 0;
     const numChildWithoutSeat = parseInt(childWithoutSeat) || 0;
     const totalExtraPersons = numAdults + numChildWithSeat + numChildWithoutSeat;
-    
+
     if (totalExtraPersons === 0) {
       newErrors.seatCount = "Please enter at least one extra person (adult, child with seat, or child without seat)";
       console.log("❌ Validation failed: No extra persons added");
     }
-    
+
     if (!droppoint) {
       newErrors.droppoint = "Please enter a drop location";
       console.log("❌ Validation failed: No drop point");
     }
-    
+
     if (!pickupLocation) {
       newErrors.pickupLocation = "Please select a pickup location";
       console.log("❌ Validation failed: No pickup location");
     }
-    
+
     if (!carTypeLabel) {
       newErrors.carType = "Please select a car type";
       console.log("❌ Validation failed: No car type");
     }
-    
+
     console.log("Validation errors:", newErrors);
     console.log("Validation passed:", Object.keys(newErrors).length === 0);
     console.log("=== End Validation ===");
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -325,7 +337,7 @@ const CarBook = () => {
   const handleAdvanceInputChange = (value) => {
     const numericValue = parseFloat(value) || 0;
     setAdvanceAmount(numericValue);
-  
+
     const minAdvance = totalAmount / 2;
     if (numericValue < minAdvance) {
       setErrorMessage(`Advance amount should be at least ₹${minAdvance}`);
@@ -333,7 +345,7 @@ const CarBook = () => {
       setErrorMessage("");
     }
   };
-  
+
   // Handle child without seat input
   const handleTextChange = (text) => {
     if (!isAlertShown && text !== "") {
@@ -351,14 +363,14 @@ const CarBook = () => {
     console.log("=== handlePayment called ===");
     console.log("Amount:", amount);
     console.log("Is Advance Payment:", isAdvancePayment);
-    
+
     // Validate fields first
     if (!validateInputs()) {
       console.log("❌ Validation failed, returning false");
       return false;
     }
     console.log("✅ Validation passed");
-  
+
     // Check if user exists
     if (!user || !user.userId || !token) {
       console.log("❌ User validation failed");
@@ -366,14 +378,14 @@ const CarBook = () => {
       return false;
     }
     console.log("✅ User validation passed");
-  
+
     setPaymentProcessing(true);
-  
+
     try {
       // Combine date and time into a valid DateTime format
       // const combinedDateTime = new Date(`${date}T${time}`);
       const carPayment = true;
-      
+
       console.log("=== CarBook - Passing Parameters to PaymentScreen ===");
       console.log("Date from CarType:", date);
       console.log("Time from CarType:", time);
@@ -386,7 +398,7 @@ const CarBook = () => {
       console.log("Child with seat:", childWithSeat);
       console.log("Child without seat:", childWithoutSeat);
       console.log("=== End Parameters ===");
-      
+
       console.log("🚀 Attempting to navigate to PaymentScreen...");
       // Navigate to PaymentScreen with all necessary props
       navigation.navigate("PaymentScreen", {
@@ -417,9 +429,9 @@ const CarBook = () => {
         childWithSeat: childWithSeat,
         childWithoutSeat: childWithoutSeat,
         razorpayKeyId: RAZORPAY_KEY_ID,
-        remainingPayment : false
+        remainingPayment: false
       });
-      
+
       return true;
     } catch (error) {
       console.error("General payment error:", error);
@@ -541,27 +553,27 @@ const CarBook = () => {
               )}
             </View>
           </View>
-{  
-          <View style={styles.row}>
-            <View style={styles.halfWidth}>
-              <Text style={styles.label}>Extra Child (With Seat)</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={childWithSeat}
-                onChangeText={setChildWithSeat}
-              />
-            </View>
-            <View style={styles.halfWidth}>
-              <Text style={styles.label}>Extra Child (Without Seat)</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={childWithoutSeat}
-                onChangeText={handleTextChange}
-              />
-            </View>
-          </View> }
+          {
+            <View style={styles.row}>
+              <View style={styles.halfWidth}>
+                <Text style={styles.label}>Extra Child (With Seat)</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={childWithSeat}
+                  onChangeText={setChildWithSeat}
+                />
+              </View>
+              <View style={styles.halfWidth}>
+                <Text style={styles.label}>Extra Child (Without Seat)</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={childWithoutSeat}
+                  onChangeText={handleTextChange}
+                />
+              </View>
+            </View>}
 
           {/* Room Type Selection */}
           {/* <View style={{ marginBottom: 18 }}>
@@ -644,6 +656,31 @@ const CarBook = () => {
             value={`₹${totalAmount.toString()}`}
             editable={false}
           />
+          <Text style={styles.label}>Total Amount</Text>
+          <TextInput
+            style={[styles.input, !isEditable && styles.nonEditableInput]}
+            value={`₹${totalAmount.toString()}`}
+            editable={false}
+          />
+
+          {/* Bill Summary */}
+          <View style={styles.billSummary}>
+            <Text style={styles.billItem}>
+              Fare for {pkgPersonCount} persons: ₹{billBreakdown.baseFare}
+            </Text>
+            <Text style={styles.billItem}>
+              Extra Adult ({billBreakdown.extraAdult.count}): ₹{billBreakdown.extraAdult.amount}
+            </Text>
+            <Text style={styles.billItem}>
+              Extra Child (With Seat) ({billBreakdown.extraChildWithSeat.count}): ₹{billBreakdown.extraChildWithSeat.amount}
+            </Text>
+            <Text style={styles.billItem}>
+              Extra Child (Without Seat) ({billBreakdown.extraChildWithoutSeat.count}): ₹{billBreakdown.extraChildWithoutSeat.amount}
+            </Text>
+            <Text style={styles.billTotal}>
+              Grand Total: ₹{totalAmount}
+            </Text>
+          </View>
 
           <TouchableOpacity
             style={styles.payButton}
@@ -800,6 +837,25 @@ const styles = StyleSheet.create({
     color: "#333",
     marginLeft: 5,
   },
+  billSummary: {
+  marginTop: 10,
+  padding: 10,
+  backgroundColor: "#f9f9f9",
+  borderRadius: 5,
+  borderWidth: 1,
+  borderColor: "#ddd"
+},
+billItem: {
+  fontSize: 14,
+  color: "#333",
+  marginBottom: 4
+},
+billTotal: {
+  fontSize: 16,
+  fontWeight: "bold",
+  color: "#D44206",
+  marginTop: 5
+},
   payButton: {
     backgroundColor: "#D44206",
     paddingVertical: 12,

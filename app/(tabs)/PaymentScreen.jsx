@@ -4,6 +4,7 @@ import { View, Text, ActivityIndicator, StyleSheet, Alert, Platform } from 'reac
 import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function PaymentScreen() {
   const params = useLocalSearchParams();
@@ -44,7 +45,7 @@ export default function PaymentScreen() {
     categoryName = "",
     cityId = "",
     cityName = "",
-    seatNumbers = "", 
+    seatNumbers = "",
     roomType = "",
     adults = "",
     childWithSeat = "",
@@ -66,14 +67,14 @@ export default function PaymentScreen() {
   const handleSuccessfulPayment = async (paymentId) => {
     try {
 
-      if(remainingPayment == "true"){
+      if (remainingPayment == "true") {
         console.log("-------remaining payment body------");
-        console.log("transactionid: ",transactionId);
+        console.log("transactionid: ", transactionId);
         console.log("bookingid:", bookingId);
-        console.log("remaining amount:",amount);
-        console.log("transactionReference:",paymentId);
-        
-        const remainingPaymentBody={
+        console.log("remaining amount:", amount);
+        console.log("transactionReference:", paymentId);
+
+        const remainingPaymentBody = {
           transactionId: transactionId,
           bookingId: bookingId,
           paymentMethod: "RazorPay",
@@ -82,17 +83,24 @@ export default function PaymentScreen() {
           userId: parseInt(userId),
           transactionReference: paymentId
         };
+        let authToken = null;
+        try {
+          authToken = await AsyncStorage.getItem("token");
+          console.log("Auth token retrieved:", authToken ? "Token found" : "No token found");
+        } catch (err) {
+          console.error("Error retrieving auth token:", err);
+        }
         const response = await axios.post(
           "https://ashtavinayak.itastourism.com/api/Booking/UpdatePayment",
           remainingPaymentBody,
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${params.token}`
+              Authorization: `Bearer ${authToken}`
             }
           }
         );
-  
+
         if (response.status === 200 || response.status === 201) {
           Alert.alert("Success", "Remaining Amount Paid Successfully!", [
             {
@@ -107,12 +115,12 @@ export default function PaymentScreen() {
         }
         return; // Exit early for remaining payment
       }
-      
+
       // Only execute this for new bookings (not remaining payments)
       const now = new Date();
       const formattedDate = new Date(bookingDate || now).toISOString();
       const formattedTime = now.toISOString();
-  
+
       const transactionData = {
         transactionId: 0,
         paymentMethod: "Razorpay",
@@ -137,7 +145,7 @@ export default function PaymentScreen() {
         console.log("ChildWithSeat:", childWithSeat);
         console.log("ChildWithoutSeat:", childWithoutSeat);
         console.log("=== End Car Booking Parameters ===");
-        
+
         const carBookingBody = {
           userId: parseInt(userId),
           tripId: parseInt(tripId) || 0,
@@ -163,17 +171,24 @@ export default function PaymentScreen() {
           transaction: transactionData
         };
         console.log("Car Booking : ", carBookingBody);
+        let authToken = null;
+        try {
+          authToken = await AsyncStorage.getItem("token");
+          console.log("Auth token retrieved for package details:", authToken ? "Token found" : "No token found");
+        } catch (err) {
+          console.error("Error retrieving auth token:", err);
+        }
         const response = await axios.post(
           "https://ashtavinayak.itastourism.com/api/Booking/BookCar",
           carBookingBody,
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${params.token}`
+              Authorization: `Bearer ${authToken}`
             }
           }
         );
-  
+
         if (response.status === 200 || response.status === 201) {
           Alert.alert("Success", "Car booking successful!", [
             {
@@ -186,7 +201,7 @@ export default function PaymentScreen() {
         } else {
           Alert.alert("Booking Failed", "Unexpected server response.");
         }
-  
+
       } else {
         // 👥 Standard Passenger Booking with Seats
         const seatBookingBody = {
@@ -213,18 +228,25 @@ export default function PaymentScreen() {
           packageId: parseInt(packageId),
           transaction: transactionData
         };
-        console.log("Bus Booking : ",seatBookingBody);
+        console.log("Bus Booking : ", seatBookingBody);
+        let authToken = null;
+        try {
+          authToken = await AsyncStorage.getItem("token");
+          console.log("Auth token retrieved for package details:", authToken ? "Token found" : "No token found");
+        } catch (err) {
+          console.error("Error retrieving auth token:", err);
+        }
         const response = await axios.post(
           "https://ashtavinayak.itastourism.com/api/Booking/CreateBookingWithSeats",
           seatBookingBody,
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${params.token}`
+              Authorization: `Bearer $authToken}`
             }
           }
         );
-  
+
         if (response.status === 200 || response.status === 201) {
           Alert.alert("Success", "Booking successful!", [
             {
@@ -238,22 +260,22 @@ export default function PaymentScreen() {
           Alert.alert("Booking Failed", "Unexpected server response.");
         }
       }
-  
+
     } catch (error) {
       console.error("Booking API Error:", error);
       Alert.alert("Error", "Failed to complete booking. Please try again.");
     }
   };
-  
+
 
   const handleMessage = (event) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      
+
       if (data.type === 'payment_success') {
         // Handle successful payment
         console.log("Payment successful:", data.paymentId);
-        
+
         // Call the function to handle successful payment
         handleSuccessfulPayment(data.paymentId);
       } else if (data.type === 'payment_cancelled') {
