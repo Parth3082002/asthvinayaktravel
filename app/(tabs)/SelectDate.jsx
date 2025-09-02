@@ -9,6 +9,7 @@ import {
   BackHandler,
 } from "react-native";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SelectDateScreen = ({ route: propRoute }) => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -48,20 +49,44 @@ const SelectDateScreen = ({ route: propRoute }) => {
       }
 
       try {
+        let authToken = null;
+        try {
+          authToken = await AsyncStorage.getItem("token");
+          // console.log("Auth token retrieved for trips:", authToken ? "Token found" : "No token found");
+        } catch (err) {
+          console.error("Error retrieving auth token:", err);
+        }
+
         const response = await fetch(
-          `https://ashtavinayak.itastourism.com/api/Trip/TripsByPackage/${packageId}`
+          `https://ashtavinayak.itastourism.com/api/Trip/TripsByPackage/${packageId}`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+            }
+          }
         );
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const result = await response.json();
         if (result && result.data) {
-          const formattedDates = result.data.map((trip) => ({
-            tripId: trip.tripId,
-            tripDate: trip.tripDate,
-            tourName: trip.tourName,
-            totalSeats: trip.totalSeats,
-          }));
+          const formattedDates = result.data.map((trip) => {
+            // Convert date into dd/mm/yyyy
+            const date = new Date(trip.tripDate);
+            const day = String(date.getDate()).padStart(2, "0");
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const year = date.getFullYear();
+            const formattedDate = `${day}/${month}/${year}`;
+          
+            return {
+              tripId: trip.tripId,
+              tripDate: formattedDate,
+              tourName: trip.tourName,
+              totalSeats: trip.totalSeats,
+            };
+          });
           setDates(formattedDates);
         } else {
           setDates([]);

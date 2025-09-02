@@ -217,50 +217,56 @@ const CarBook = () => {
     baseFare: 0,
     extraAdult: { count: 0, amount: 0 },
     extraChildWithSeat: { count: 0, amount: 0 },
-    extraChildWithoutSeat: { count: 0, amount: 0 }
+    extraChildWithoutSeat: { count: 0, amount: 0 },
+    gst: 0
   });
-
+  
   const calculatePrice = () => {
     const numAdults = parseInt(adults) || 0;
     const numChildWithSeat = parseInt(childWithSeat) || 0;
     const numChildWithoutSeat = parseInt(childWithoutSeat) || 0;
-
+  
     // Calculate total persons including package person count
     const totalPersonsCount = pkgPersonCount + numAdults + numChildWithSeat + numChildWithoutSeat;
-
-    // Check if total persons exceed total seats
+  
     if (totalPersonsCount > totalSeats) {
       alert("Total passengers cannot exceed total seats.");
       return;
     }
-
+  
     setTotalPersons(totalPersonsCount);
-
-    // Base price is for package person count (2 persons)
+  
+    // Base price is for package person count
     let finalPrice = price;
-
-    // Add extra charges for additional persons
+  
+    // Add extra charges
     if (numAdults > 0) {
       finalPrice += numAdults * extraAdultPrice;
     }
-
+  
     if (numChildWithSeat > 0) {
       finalPrice += numChildWithSeat * childWithSeatP;
     }
-
+  
     if (numChildWithoutSeat > 0) {
       finalPrice += numChildWithoutSeat * childWithoutSeatP;
     }
-    const baseFare = price;
-    setTotalAmount(finalPrice);
-    setAdvanceAmount(Math.ceil(finalPrice / 2));
+  
+    const gstAmount = Math.round(finalPrice * 0.05); // 5% GST
+    const totalWithGst = finalPrice + gstAmount;
+  
+    setTotalAmount(totalWithGst);
+    setAdvanceAmount(Math.ceil(totalWithGst / 2));
+  
     setBillBreakdown({
-      baseFare,
-      extraAdult: { count: numAdults, amount: extraAdultPrice },
-      extraChildWithSeat: { count: numChildWithSeat, amount: childWithSeatP },
-      extraChildWithoutSeat: { count: numChildWithoutSeat, amount: childWithoutSeatP }
+      baseFare: price,
+      extraAdult: { count: numAdults, amount: numAdults * extraAdultPrice },
+      extraChildWithSeat: { count: numChildWithSeat, amount: numChildWithSeat * childWithSeatP },
+      extraChildWithoutSeat: { count: numChildWithoutSeat, amount: numChildWithoutSeat * childWithoutSeatP },
+      gst: gstAmount
     });
   };
+  
 
 
   // Recalculate price when inputs change
@@ -656,12 +662,6 @@ const CarBook = () => {
             value={`₹${totalAmount.toString()}`}
             editable={false}
           />
-          <Text style={styles.label}>Total Amount</Text>
-          <TextInput
-            style={[styles.input, !isEditable && styles.nonEditableInput]}
-            value={`₹${totalAmount.toString()}`}
-            editable={false}
-          />
 
           {/* Bill Summary */}
           <View style={styles.billSummary}>
@@ -677,10 +677,17 @@ const CarBook = () => {
             <Text style={styles.billItem}>
               Extra Child (Without Seat) ({billBreakdown.extraChildWithoutSeat.count}): ₹{billBreakdown.extraChildWithoutSeat.amount}
             </Text>
+            <Text style={styles.billItem}>
+              GST (5%): ₹{billBreakdown.gst}
+            </Text>
             <Text style={styles.billTotal}>
               Grand Total: ₹{totalAmount}
             </Text>
+            <Text style={styles.gstNumber}>
+              GST No: 27CELPS3061L1ZY
+            </Text>
           </View>
+
 
           <TouchableOpacity
             style={styles.payButton}
@@ -766,6 +773,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  gstNumber: {
+    marginTop: 8,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#555",
+    textAlign: "right"
+  },
+  
   backButton: {
     fontSize: 18,
     fontWeight: "bold",

@@ -242,7 +242,7 @@ export default function PaymentScreen() {
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer $authToken}`
+              Authorization: `Bearer ${authToken}`
             }
           }
         );

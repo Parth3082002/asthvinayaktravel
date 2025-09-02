@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import * as Location from 'expo-location';
 
 import Svg, { Line, Circle } from 'react-native-svg';
 
@@ -243,6 +244,40 @@ const PackageDetails = ({ route: propRoute }) => {
     }
   };
 
+  const handleUseCurrentLocation = async () => {
+    try {
+      // Ask for permission
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+        return;
+      }
+  
+      // Get current GPS coords
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+  
+      console.log("Current GPS:", latitude, longitude);
+  
+      // Fetch address using Google Geocoding API
+      const response = await axios.get(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`
+      );
+  
+      if (response.data.results && response.data.results.length > 0) {
+        const address = response.data.results[0].formatted_address;
+        setSelectedPickupPoint(address);
+        setSearchQuery(address);
+        console.log("Resolved Address:", address);
+      } else {
+        alert("Unable to fetch address from Google");
+      }
+    } catch (error) {
+      console.error("Error getting location:", error);
+      alert("Error getting current location");
+    }
+  };
+  
   const handleBookNow = () => {
     if (!selectedPickupPoint.trim()) {
       alert("Please select a pickup location first");
@@ -533,6 +568,9 @@ const PackageDetails = ({ route: propRoute }) => {
                         ]}
                       >
                         {point.pickupPointName}
+                        <Text style={{ color: "#666", fontSize: 14 }}>
+                          ({point.time?.slice(0, 5)})
+                        </Text>
                       </Text>
                     </TouchableOpacity>
                   ))
@@ -554,13 +592,21 @@ const PackageDetails = ({ route: propRoute }) => {
                       setSearchQuery(text);
                       handleSearch(text);
                     }}
-                  />
-                </View>
+                    />
+                  </View>
+                  {/* Use Current Location Button */}
+                  <TouchableOpacity
+                    style={styles.currentLocationButton}
+                    onPress={handleUseCurrentLocation}
+                  >
+                    <Ionicons name="locate" size={20} color="#fff" />
+                    <Text style={styles.currentLocationButtonText}> Use Current Location</Text>
+                  </TouchableOpacity>
 
-                {/* Google API Predictions */}
-                {showPredictions && predictions.length > 0 && (
-                  <View style={styles.predictionsContainer}>
-                    <ScrollView
+                  {/* Google API Predictions */}
+                  {showPredictions && predictions.length > 0 && (
+                    <View style={styles.predictionsContainer}>
+                      <ScrollView
                       nestedScrollEnabled={true}
                       showsVerticalScrollIndicator={true}
                       style={styles.predictionsScrollView}
@@ -789,6 +835,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
+  currentLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#007aff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 12,
+    justifyContent: 'center',
+  },
+  currentLocationButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  
   dropdownText: {
     fontSize: 16,
     fontWeight: '500',

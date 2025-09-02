@@ -73,11 +73,34 @@ const History = () => {
     if (!userId) return;
     setLoading(true);
     try {
+      // Get auth token from AsyncStorage
+      let authToken = null;
+      try {
+        authToken = await AsyncStorage.getItem("token");
+        console.log("Auth token retrieved for history:", authToken ? "Token found" : "No token found");
+      } catch (err) {
+        console.error("Error retrieving auth token:", err);
+      }
+
       const busRes = await fetch(
-        `https://ashtavinayak.itastourism.com/api/Booking/HistoryByUser/${userId}`
+        `https://ashtavinayak.itastourism.com/api/Booking/HistoryByUser/${userId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          }
+        }
       );
       const carRes = await fetch(
-        `https://ashtavinayak.itastourism.com/api/Booking/FamilyBookingHistory/${userId}`
+        `https://ashtavinayak.itastourism.com/api/Booking/FamilyBookingHistory/${userId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          }
+        }
       );
       const busData = await busRes.json();
       const carData = await carRes.json();
