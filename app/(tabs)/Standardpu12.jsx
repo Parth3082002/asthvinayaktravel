@@ -543,9 +543,11 @@ const PackageDetails = ({ route: propRoute }) => {
             {/* Show loaded pickup points directly if selectedBus is true */}
             {selectedBus ? (
               <View style={styles.pickupPointsSection}>
-                <Text style={styles.pickupPointsTitle}>Pickup Points</Text>
-                {pickupPoints.length > 0 ? (
-                  pickupPoints.map((point, idx) => (
+              <Text style={styles.pickupPointsTitle}>Pickup Points</Text>
+              {pickupPoints.length > 0 ? (
+                [...pickupPoints] // copy so original state doesn’t get mutated
+                  .sort((a, b) => (a.time || "").localeCompare(b.time || "")) // sort by time
+                  .map((point, idx) => (
                     <TouchableOpacity
                       key={point.pickupPointId || idx}
                       style={[
@@ -559,7 +561,11 @@ const PackageDetails = ({ route: propRoute }) => {
                       }}
                     >
                       <View style={styles.pickupPointIconContainer}>
-                        <Ionicons name="location-sharp" size={22} color={selectedPickupPointId === point.pickupPointId ? "#007aff" : "#ff6600"} />
+                        <Ionicons
+                          name="location-sharp"
+                          size={22}
+                          color={selectedPickupPointId === point.pickupPointId ? "#007aff" : "#ff6600"}
+                        />
                       </View>
                       <Text
                         style={[
@@ -574,10 +580,11 @@ const PackageDetails = ({ route: propRoute }) => {
                       </Text>
                     </TouchableOpacity>
                   ))
-                ) : (
-                  <Text style={styles.noLocationText}>No pickup points found</Text>
-                )}
-              </View>
+              ) : (
+                <Text style={styles.noLocationText}>No pickup points found</Text>
+              )}
+            </View>
+            
             ) : (
               // Existing search section for when selectedBus is false
               <View style={styles.searchSection}>

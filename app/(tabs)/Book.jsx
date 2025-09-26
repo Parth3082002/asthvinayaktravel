@@ -73,7 +73,7 @@ const Book = () => {
   const [isEditable, setIsEditable] = useState(false);
   const [totalSeats, setTotalSeats] = useState(0);
   const [totalPersons, setTotalPersons] = useState(0);
-  const [availableRoomTypes, setAvailableRoomTypes] = useState(["shared"]);
+  const [availableRoomTypes, setAvailableRoomTypes] = useState(["shared", "family"]);
   const [roomType, setRoomType] = useState("shared");
   const [errorMessage, setErrorMessage] = useState("");
   const [paymentProcessing, setPaymentProcessing] = useState(false);
@@ -192,15 +192,15 @@ const Book = () => {
     setTotalPersons(totalPersonsCount);
 
     // Dynamically set room type options
-    if (totalPersonsCount >= 4) {
+    if (totalPersonsCount >= 2) {
       setAvailableRoomTypes(["shared", "family"]);
     } else {
       setAvailableRoomTypes(["shared"]);
       setRoomType("shared");
     }
 
-    if (totalPersonsCount >= 4 && roomType === "family") {
-      finalPrice += totalPersonsCount * 500;
+    if (totalPersonsCount >= 2 && roomType === "family") {
+      finalPrice += adults * 500;
     }
 
     // Ensure values are valid numbers before setting state
