@@ -10,11 +10,15 @@ import {
   Animated,
   Easing,
   BackHandler,
+  Alert,
+  Platform,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, CommonActions, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import LottieView from "lottie-react-native";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 const History = () => {
   const [busHistoryData, setBusHistoryData] = useState([]);
@@ -163,9 +167,114 @@ const History = () => {
       transactionId : item.transactions[0]?.transactionId,
       bookingId : item.bookingId,
       carPayment: false,
-      razorpayKeyId: 'rzp_test_SqJODX06AyCHj3', // Add the Razorpay key
+      razorpayKeyId: 'rzp_live_RNtnK6vhAQfNS8', // Add the Razorpay key
       token: token // Add the token for API calls
     });
+  };
+
+  const handleDownloadInvoice = async (item) => {
+    try {
+      setLoading(true);
+      
+      // Get auth token from AsyncStorage
+      let authToken = null;
+      try {
+        authToken = await AsyncStorage.getItem("token");
+        console.log("Auth token retrieved for invoice download:", authToken ? "Token found" : "No token found");
+      } catch (err) {
+        console.error("Error retrieving auth token:", err);
+      }
+
+      // API call to download invoice
+      const response = await fetch(
+        `https://ashtavinayak.itastourism.com/api/Booking/DownloadInvoice/${item.bookingId}`, // Replace with actual API endpoint
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          }
+        }
+      );
+
+      if (response.ok) {
+        // Expect base64 content in response.data (JSON)
+        let base64Data = "";
+        try {
+          const json = await response.json();
+          base64Data = (json?.data || "").trim();
+        } catch (e) {
+          console.warn("Invoice response was not valid JSON");
+        }
+
+        if (base64Data) {
+          try {
+            const fileName = `Invoice_${item.bookingId}.pdf`;
+            let savedUri = '';
+
+            if (Platform.OS === 'android' && FileSystem.StorageAccessFramework) {
+              try {
+                const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+                if (permissions.granted) {
+                  const directoryUri = permissions.directoryUri;
+                  const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+                    directoryUri,
+                    fileName,
+                    'application/pdf'
+                  );
+                  await FileSystem.writeAsStringAsync(fileUri, base64Data, {
+                    encoding: FileSystem.EncodingType.Base64,
+                  });
+                  savedUri = fileUri;
+                }
+              } catch (safErr) {
+                console.warn('SAF save failed, falling back to app storage:', safErr);
+              }
+            }
+
+            if (!savedUri) {
+              const appUri = `${FileSystem.documentDirectory}${fileName}`;
+              await FileSystem.writeAsStringAsync(appUri, base64Data, {
+                encoding: FileSystem.EncodingType.Base64,
+              });
+              savedUri = appUri;
+            }
+
+            Alert.alert('Invoice downloaded', `Saved to: ${savedUri}`);
+
+            const canShare = await Sharing.isAvailableAsync();
+            if (canShare) {
+              let shareUri = savedUri;
+              // Sharing requires file:// scheme. SAF returns content://, so create a shareable copy
+              if (shareUri.startsWith('content://')) {
+                const tempShareUri = `${FileSystem.cacheDirectory}${fileName}`;
+                await FileSystem.writeAsStringAsync(tempShareUri, base64Data, {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
+                shareUri = tempShareUri; // file://
+              }
+              await Sharing.shareAsync(shareUri, {
+                mimeType: 'application/pdf',
+                dialogTitle: 'Invoice',
+              });
+            }
+          } catch (fsErr) {
+            console.error("Failed to save/share invoice:", fsErr);
+            Alert.alert("Error", "Could not save or open the invoice file.");
+          }
+        } else {
+          Alert.alert("Not available", "Invoice not available. Please try again later.");
+        }
+      } else {
+        console.error("Failed to download invoice:", response.status);
+        alert("Failed to download invoice. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      alert("Error downloading invoice. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderCard = (item, index) => {
@@ -234,14 +343,24 @@ const History = () => {
             <Text style={styles.expandText}>{isExpanded ? "Hide Details ▲" : "Show Details ▼"}</Text>
           </TouchableOpacity>
 
-                     {pendingAmount > 0 && (
-             <TouchableOpacity
-               style={styles.payButton}
-               onPress={() => handlePayRemaining(item)}
-             >
-               <Text style={styles.payButtonText}>Pay Remaining</Text>
-             </TouchableOpacity>
-           )}
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.downloadButton}
+              onPress={() => handleDownloadInvoice(item)}
+            >
+              <Icon name="download" size={16} color="#fff" />
+              <Text style={styles.downloadButtonText}>Invoice</Text>
+            </TouchableOpacity>
+
+            {pendingAmount > 0 && (
+              <TouchableOpacity
+                style={styles.payButton}
+                onPress={() => handlePayRemaining(item)}
+              >
+                <Text style={styles.payButtonText}>Pay Remaining</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </Animated.View>
     );
@@ -445,6 +564,25 @@ const styles = StyleSheet.create({
     color: "#FF6B00",
     fontWeight: "bold",
     fontSize: 14,
+  },
+  actionButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  downloadButton: {
+    backgroundColor: "#28a745",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  downloadButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+    marginLeft: 4,
   },
   payButton: {
     backgroundColor: "#FF6B00",

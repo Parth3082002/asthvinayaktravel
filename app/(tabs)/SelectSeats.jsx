@@ -9,6 +9,7 @@ import {
   BackHandler,
 } from "react-native";
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 
 const SelectSeats = () => {
@@ -75,8 +76,23 @@ const SelectSeats = () => {
 
   const fetchSeatData = async () => {
     try {
+       // Get auth token from AsyncStorage
+       let authToken = null;
+       try {
+         authToken = await AsyncStorage.getItem("token");
+         console.log("Auth token retrieved for history:", authToken ? "Token found" : "No token found");
+       } catch (err) {
+         console.error("Error retrieving auth token:", err);
+       }
       const bookedSeatsResponse = await fetch(
-        `https://ashtavinayak.itastourism.com/api/BookingSeat/ByTrip/${tripId}`
+        `https://ashtavinayak.itastourism.com/api/BookingSeat/ByTrip/${tripId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          }
+        }
       );
 
       let bookedSeats = [];

@@ -25,7 +25,7 @@ const Book = () => {
 
   // Razorpay Keys - Directly integrated in the code
   // Use these for development/testing
-  const RAZORPAY_KEY_ID = 'rzp_test_SqJODX06AyCHj3';
+  const RAZORPAY_KEY_ID = 'rzp_live_RNtnK6vhAQfNS8';
   const RAZORPAY_KEY_SECRET = 'MXmpWdb28AdoOLWw3Vexsw0Q';
 
   // Add default values to prevent undefined errors

@@ -28,7 +28,7 @@ const CarBook = () => {
 
   // Razorpay Keys - Directly integrated in the code
   // Use these for development/testing
-  const RAZORPAY_KEY_ID = 'rzp_test_SqJODX06AyCHj3';
+  const RAZORPAY_KEY_ID = 'rzp_live_RNtnK6vhAQfNS8';
   const RAZORPAY_KEY_SECRET = 'MXmpWdb28AdoOLWw3Vexsw0Q';
 
   // For production, uncomment these lines and comment out the test keys above
@@ -311,10 +311,10 @@ const CarBook = () => {
     const numChildWithoutSeat = parseInt(childWithoutSeat) || 0;
     const totalExtraPersons = numAdults + numChildWithSeat + numChildWithoutSeat;
 
-    if (totalExtraPersons === 0) {
-      newErrors.seatCount = "Please enter at least one extra person (adult, child with seat, or child without seat)";
-      console.log("❌ Validation failed: No extra persons added");
-    }
+    // if (totalExtraPersons === 0) {
+    //   newErrors.seatCount = "Please enter at least one extra person (adult, child with seat, or child without seat)";
+    //   console.log("❌ Validation failed: No extra persons added");
+    // }
 
     if (!droppoint) {
       newErrors.droppoint = "Please enter a drop location";

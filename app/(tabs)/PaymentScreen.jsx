@@ -204,6 +204,10 @@ export default function PaymentScreen() {
 
       } else {
         // 👥 Standard Passenger Booking with Seats
+        function formatDateToYYYYMMDD(dateStr) {
+          const [day, month, year] = dateStr.split("/"); // "19/06/2025" → ["19","06","2025"]
+          return `${year}-${month}-${day}`;              // "2025-06-19"
+        }
         const seatBookingBody = {
           carType: carType || "",
           date: formattedDate.split("T")[0],
@@ -213,7 +217,7 @@ export default function PaymentScreen() {
           pickupPointId: parseInt(pickupPointId),
           droppoint: droppoint?.trim(),
           droppointId: droppointId ? parseInt(droppointId) : 0,
-          bookingDate: selectedDate,
+          bookingDate: formatDateToYYYYMMDD(selectedDate),
           roomType: "shared",
           status: "Confirmed",
           totalPayment: parseFloat(totalAmount),
