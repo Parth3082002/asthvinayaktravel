@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "AshtavinayakApp",
-    "slug": "ashtavinayak",
+    "name": "Ashtavinayak Yatra",
+    "slug": "ashtavinayak-yatra",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Bappa.png",
+    "icon": "./assets/images/bappalogo.png",
     "scheme": "myapp",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -52,10 +52,10 @@
         "origin": false
       },
       "eas": {
-        "projectId": "0fbdbcb2-2f00-4617-b3a3-cc6deeef0f2b"
+        "projectId": "a1148f79-b48b-4747-ae41-af970bcb0dee"
       }
     },
-    "owner": "parth098",
+    "owner": "pranav1818",
     "updates": {
       "url": "https://u.expo.dev/e1040a26-c62c-4244-9c21-455b0fc00f5a"
     }
